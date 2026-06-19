@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma"
-import ProductCard from "@/components/ProductCard"
+import { prisma } from "../lib/prisma"
+import ProductCard from "../components/ProductCard"
 import Link from "next/link"
 
 export const revalidate = 300
@@ -22,14 +22,11 @@ export default async function HomePage() {
           Game<span className="text-brand">Plaza</span>
         </h1>
         <p className="text-gray-400 text-lg mb-6">Цифровые товары — быстро, безопасно, выгодно</p>
-        <div className="flex gap-4 justify-center">
-          <Link href="/catalog" className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-            Перейти в каталог
-          </Link>
-        </div>
+        <Link href="/catalog" className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+          Перейти в каталог
+        </Link>
         <p className="mt-4 text-gray-500 text-sm">{stats.toLocaleString("ru-RU")} товаров в каталоге</p>
       </section>
-
       <section>
         <h2 className="text-2xl font-bold mb-6">Новые поступления</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
