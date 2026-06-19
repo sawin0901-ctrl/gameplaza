@@ -1,9 +1,14 @@
-import { Queue, Worker, Job } from "bullmq"
-import IORedis from "ioredis"
+import { Queue } from "bullmq"
 
-const connection = new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
-  maxRetriesPerRequest: null,
-})
+function getRedisConnection() {
+  const url = new URL(process.env.REDIS_URL ?? "redis://localhost:6379")
+  return {
+    host: url.hostname,
+    port: parseInt(url.port || "6379"),
+  }
+}
+
+export const connection = getRedisConnection()
 
 export const importQueue = new Queue("product-import", {
   connection,
@@ -24,7 +29,7 @@ export async function scheduleImport(productId: number, priority = 0) {
   await importQueue.add(
     "import-product",
     { productId },
-    { priority, jobId: `product-${productId}`, delay: 0 }
+    { priority, jobId: `product-${productId}` }
   )
 }
 
@@ -34,10 +39,8 @@ export async function scheduleBatchImport(productIds: number[]) {
     data: { productId: id },
     opts: {
       jobId: `product-${id}`,
-      delay: i * 5 * 60 * 1000, // 1 товар каждые 5 минут
+      delay: i * 5 * 60 * 1000,
     },
   }))
   await importQueue.addBulk(jobs)
 }
-
-export { connection }
