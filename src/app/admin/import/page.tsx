@@ -50,7 +50,7 @@ export default function AdminImport() {
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
             <span className="text-emerald-400 text-sm font-medium">Воркер активен</span>
           </div>
-          <a href="https://www.digiseller.com/seller/products/"
+          <a href="https://www.digiseller.ru/seller/"
             target="_blank" rel="noopener noreferrer"
             className="btn-outline w-full py-2.5 text-sm">
             🔗 Открыть Digiseller
