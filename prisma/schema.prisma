@@ -24,6 +24,8 @@ model Product {
   slug                String    @unique
   description         String    @db.Text
   price               Float
+  oldPrice            Float?
+  discountPercent     Int?
   currency            String    @default("RUB")
   imageUrl            String?
   categoryId          String?
@@ -31,6 +33,9 @@ model Product {
   isActive            Boolean   @default(false)
   inStock             Boolean   @default(true)
   quantity            Int       @default(0)
+  rating              Float?
+  reviewCount         Int?
+  soldCount           Int       @default(0)
   metaTitle           String?
   metaDescription     String?
   relatedProducts     Product[] @relation("RelatedProducts")
@@ -47,6 +52,8 @@ model Category {
   name        String
   slug        String    @unique
   description String?
+  imageUrl    String?
+  color       String?
   products    Product[]
   createdAt   DateTime  @default(now())
 }
