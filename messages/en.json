@@ -1,0 +1,114 @@
+{
+  "nav": {
+    "catalog": "Catalog",
+    "categories": "Categories",
+    "deals": "Deals",
+    "search": "Search catalog...",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "profile": "Profile",
+    "logout": "Sign Out"
+  },
+  "hero": {
+    "badge": "products available",
+    "title": "Digital goods",
+    "titleAccent": "at the best prices",
+    "subtitle": "Games, software, activation keys and subscriptions. Instant delivery via Digiseller.",
+    "searchBtn": "Search",
+    "quickLinks": ["Steam Games", "Game Pass", "Windows", "Subscriptions"]
+  },
+  "stats": {
+    "products": "Products",
+    "categories": "Categories",
+    "orders": "Orders completed",
+    "customers": "Happy customers"
+  },
+  "sections": {
+    "categories": "Categories",
+    "categoriesSub": "Choose from a wide catalog of digital goods",
+    "newArrivals": "New Arrivals",
+    "newArrivalsSub": "Fresh products — added today",
+    "popular": "Popular Products",
+    "popularSub": "Best sellers this month",
+    "viewAll": "View all",
+    "allCategories": "All categories"
+  },
+  "product": {
+    "new": "New",
+    "bought": "sold",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "description": "Description",
+    "related": "Related Products",
+    "aiDescription": "AI Description"
+  },
+  "catalog": {
+    "title": "All Products",
+    "found": "Found",
+    "items": "products",
+    "notFound": "Nothing found",
+    "notFoundSub": "Try a different query or reset filters",
+    "showAll": "Show all products",
+    "sort": {
+      "newest": "Newest first",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "popular": "Popular"
+    },
+    "filter": {
+      "categories": "Categories",
+      "price": "Price",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "reset": "Reset filters",
+      "all": "All products"
+    }
+  },
+  "auth": {
+    "loginTitle": "Sign In",
+    "loginSub": "Enter your email and password",
+    "email": "Email",
+    "password": "Password",
+    "loginBtn": "Sign In",
+    "loggingIn": "Signing in...",
+    "noAccount": "No account?",
+    "registerLink": "Sign Up",
+    "wrongCredentials": "Invalid email or password",
+    "registerTitle": "Create Account",
+    "registerSub": "Register for free",
+    "name": "Name",
+    "confirmPassword": "Confirm Password",
+    "registerBtn": "Create Account",
+    "registering": "Creating account...",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Sign In",
+    "registered": "Account created! Please sign in."
+  },
+  "features": {
+    "title": "Why GamePlaza?",
+    "sub": "Safe, fast, convenient",
+    "items": [
+      { "icon": "⚡", "title": "Instant Delivery", "desc": "Activation key arrives in your email immediately after payment" },
+      { "icon": "🔒", "title": "Secure Payment", "desc": "Payment via Digiseller — a trusted payment service" },
+      { "icon": "🏆", "title": "Quality Guarantee", "desc": "All products are verified before being listed" },
+      { "icon": "💬", "title": "24/7 Support", "desc": "We'll answer any question within a few hours" }
+    ]
+  },
+  "cta": {
+    "title": "Ready to start shopping?",
+    "sub": "Thousands of digital goods at the best prices. Instant delivery via Digiseller.",
+    "openCatalog": "Open Catalog",
+    "register": "Sign Up"
+  },
+  "footer": {
+    "catalog": "Catalog",
+    "info": "Information",
+    "support": "Support",
+    "about": "About",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "contact": "Contact",
+    "rights": "All rights reserved"
+  }
+}
