@@ -30,6 +30,7 @@ echo "Build OK: $(cat .next/BUILD_ID)"
 
 echo "==> [6/6] Restarting..."
 pm2 restart gameplaza-web --update-env
+pm2 restart gameplaza-worker --update-env 2>/dev/null || true
 
 echo ""
 echo "✅ Done! Site is live at https://gameplaza.site"
