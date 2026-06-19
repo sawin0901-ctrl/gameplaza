@@ -7,29 +7,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Product {
-  id              String    @id @default(cuid())
-  digisellerProductId Int   @unique
-  name            String
-  slug            String    @unique
-  description     String    @db.Text
-  price           Float
-  currency        String    @default("RUB")
-  imageUrl        String?
-  categoryId      String?
-  category        Category? @relation(fields: [categoryId], references: [id])
-  isActive        Boolean   @default(false)
-  inStock         Boolean   @default(true)
-  quantity        Int       @default(0)
-  metaTitle       String?
-  metaDescription String?
-  relatedProducts Product[] @relation("RelatedProducts")
-  relatedTo       Product[] @relation("RelatedProducts")
-  importedAt      DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  lastCheckedAt   DateTime?
-  hiddenAt        DateTime?
-  hideReason      String?
+  id                  String    @id @default(cuid())
+  digisellerProductId Int       @unique
+  name                String
+  slug                String    @unique
+  description         String    @db.Text
+  price               Float
+  currency            String    @default("RUB")
+  imageUrl            String?
+  categoryId          String?
+  category            Category? @relation(fields: [categoryId], references: [id])
+  isActive            Boolean   @default(false)
+  inStock             Boolean   @default(true)
+  quantity            Int       @default(0)
+  metaTitle           String?
+  metaDescription     String?
+  relatedProducts     Product[] @relation("RelatedProducts")
+  relatedTo           Product[] @relation("RelatedProducts")
+  importedAt          DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastCheckedAt       DateTime?
+  hiddenAt            DateTime?
+  hideReason          String?
 }
 
 model Category {
@@ -42,30 +52,30 @@ model Category {
 }
 
 model ImportQueue {
-  id                  String   @id @default(cuid())
-  digisellerProductId Int      @unique
-  status              String   @default("pending")
-  priority            Int      @default(0)
-  attempts            Int      @default(0)
+  id                  String    @id @default(cuid())
+  digisellerProductId Int       @unique
+  status              String    @default("pending")
+  priority            Int       @default(0)
+  attempts            Int       @default(0)
   lastError           String?
-  scheduledAt         DateTime @default(now())
+  scheduledAt         DateTime  @default(now())
   processedAt         DateTime?
-  createdAt           DateTime @default(now())
+  createdAt           DateTime  @default(now())
 }
 
 model ImportLog {
-  id        String   @id @default(cuid())
-  date      DateTime @default(now())
-  imported  Int      @default(0)
-  updated   Int      @default(0)
-  hidden    Int      @default(0)
-  restored  Int      @default(0)
-  errors    Int      @default(0)
-  duration  Int?
+  id       String   @id @default(cuid())
+  date     DateTime @default(now())
+  imported Int      @default(0)
+  updated  Int      @default(0)
+  hidden   Int      @default(0)
+  restored Int      @default(0)
+  errors   Int      @default(0)
+  duration Int?
 }
 
 model SystemSetting {
-  key       String @id
+  key       String   @id
   value     String
   updatedAt DateTime @updatedAt
 }
