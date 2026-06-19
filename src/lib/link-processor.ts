@@ -10,7 +10,6 @@ const DIGISELLER_PRODUCT_RE = /(?:product_id=|goods\/)(\d+)/i
 
 export async function processDescription(html: string): Promise<string> {
   const $ = cheerio.load(html, { decodeEntities: false })
-
   const linkEls = $("a[href]").toArray()
 
   for (const el of linkEls) {
@@ -42,8 +41,7 @@ export async function processDescription(html: string): Promise<string> {
     }
   }
 
-  let result = $.html("body")
-  result = result.replace(/<\/?body>/g, "")
+  let result = $.html("body").replace(/<\/?body>/g, "")
   for (const pattern of PLATI_PATTERNS) {
     result = result.replace(pattern, SITE_URL)
   }
