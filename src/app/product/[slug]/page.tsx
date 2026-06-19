@@ -36,50 +36,101 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <nav className="text-sm text-gray-500 mb-6">
-        <a href="/" className="hover:text-white">Главная</a>
-        <span className="mx-2">/</span>
-        <a href="/catalog" className="hover:text-white">Каталог</a>
+      {/* Breadcrumb */}
+      <nav className="text-sm text-gray-600 mb-6 flex items-center gap-1.5 flex-wrap">
+        <a href="/" className="hover:text-white transition-colors">Главная</a>
+        <span>/</span>
+        <a href="/catalog" className="hover:text-white transition-colors">Каталог</a>
         {product.category && (
           <>
-            <span className="mx-2">/</span>
-            <a href={`/catalog?category=${product.category.slug}`} className="hover:text-white">{product.category.name}</a>
+            <span>/</span>
+            <a href={`/catalog?category=${product.category.slug}`} className="hover:text-white transition-colors">
+              {product.category.name}
+            </a>
           </>
         )}
+        <span>/</span>
+        <span className="text-gray-400 truncate max-w-[200px]">{product.name}</span>
       </nav>
+
+      {/* Main block */}
       <div className="grid md:grid-cols-2 gap-10">
-        <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-800">
+        {/* Image */}
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-[#1a1a26]">
           {product.imageUrl ? (
             <Image src={product.imageUrl} alt={product.name} fill className="object-cover" priority />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500">Нет изображения</div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-7xl opacity-10">🎮</span>
+            </div>
           )}
         </div>
-        <div>
-          {product.category && <p className="text-brand text-sm mb-2">{product.category.name}</p>}
-          <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
-          <p className="text-3xl font-bold text-brand mb-6">{product.price.toLocaleString("ru-RU")} ₽</p>
-          <DigisellerWidget productId={product.digisellerProductId} price={product.price} />
-          <div className="mt-4 text-xs text-gray-500">
+
+        {/* Info + Widget */}
+        <div className="flex flex-col">
+          {product.category && (
+            <p className="text-brand text-sm font-medium mb-2">{product.category.name}</p>
+          )}
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">{product.name}</h1>
+
+          {/* Availability */}
+          <div className="flex items-center gap-2 mb-6">
             {product.inStock ? (
-              <span className="text-green-400">В наличии: {product.quantity} шт.</span>
+              <>
+                <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                <span className="text-emerald-400 text-sm font-medium">В наличии</span>
+              </>
             ) : (
-              <span className="text-red-400">Нет в наличии</span>
+              <>
+                <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                <span className="text-red-400 text-sm font-medium">Нет в наличии</span>
+              </>
             )}
+          </div>
+
+          {/* Официальный виджет Digiseller: живая цена + кнопка покупки */}
+          <div className="mb-6">
+            <DigisellerWidget productId={product.digisellerProductId} mode="full" />
+          </div>
+
+          {/* Trust badges */}
+          <div className="grid grid-cols-2 gap-3 mt-auto">
+            {[
+              { icon: "⚡", text: "Мгновенная доставка" },
+              { icon: "🔒", text: "Безопасная оплата" },
+              { icon: "🏆", text: "Гарантия качества" },
+              { icon: "💬", text: "Поддержка 24/7" },
+            ].map(b => (
+              <div key={b.text} className="flex items-center gap-2 text-xs text-gray-500">
+                <span>{b.icon}</span>
+                <span>{b.text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* Description */}
       <section className="mt-10">
-        <h2 className="text-xl font-bold mb-4">Описание</h2>
-        <div className="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed"
+        <h2 className="text-xl font-bold text-white mb-4">Описание</h2>
+        <div className="card p-6 text-gray-300 text-sm leading-relaxed"
           dangerouslySetInnerHTML={{ __html: product.description }} />
       </section>
+
+      {/* Related products */}
       {related.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Похожие товары</h2>
+          <h2 className="text-xl font-bold text-white mb-6">Похожие товары</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {related.map(p => (
-              <ProductCard key={p.id} slug={p.slug} name={p.name} price={p.price} imageUrl={p.imageUrl} />
+              <ProductCard
+                key={p.id}
+                slug={p.slug}
+                name={p.name}
+                price={p.price}
+                imageUrl={p.imageUrl}
+                digisellerProductId={p.digisellerProductId}
+              />
             ))}
           </div>
         </section>
