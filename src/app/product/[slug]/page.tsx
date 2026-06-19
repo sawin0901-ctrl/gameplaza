@@ -1,9 +1,9 @@
-import { prisma } from "@/lib/prisma"
-import { buildProductMetadata } from "@/lib/seo"
+import { prisma } from "../../../lib/prisma"
+import { buildProductMetadata } from "../../../lib/seo"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import DigisellerWidget from "@/components/DigisellerWidget"
-import ProductCard from "@/components/ProductCard"
+import DigisellerWidget from "../../../components/DigisellerWidget"
+import ProductCard from "../../../components/ProductCard"
 import type { Metadata } from "next"
 
 export const revalidate = 300
@@ -47,7 +47,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </>
         )}
       </nav>
-
       <div className="grid md:grid-cols-2 gap-10">
         <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-800">
           {product.imageUrl ? (
@@ -56,7 +55,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <div className="absolute inset-0 flex items-center justify-center text-gray-500">Нет изображения</div>
           )}
         </div>
-
         <div>
           {product.category && <p className="text-brand text-sm mb-2">{product.category.name}</p>}
           <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
@@ -71,15 +69,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       </div>
-
       <section className="mt-10">
         <h2 className="text-xl font-bold mb-4">Описание</h2>
-        <div
-          className="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: product.description }}
-        />
+        <div className="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: product.description }} />
       </section>
-
       {related.length > 0 && (
         <section className="mt-12">
           <h2 className="text-xl font-bold mb-4">Похожие товары</h2>
