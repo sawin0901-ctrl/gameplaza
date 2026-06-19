@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../../../../lib/auth"
 import { prisma } from "../../../../lib/prisma"
 import { getDigisellerProducts } from "../../../../lib/digiseller"
 import { scheduleBatchImport } from "../../../../lib/queue"
@@ -6,7 +8,11 @@ import { scheduleBatchImport } from "../../../../lib/queue"
 const MAX_PER_DAY = 200
 
 export async function POST(req: NextRequest) {
-  if (req.headers.get("x-admin-secret") !== process.env.ADMIN_SECRET) {
+  const session = await getServerSession(authOptions)
+  const isAdmin = session && (session.user as any).role === "admin"
+  const hasSecret = req.headers.get("x-admin-secret") === process.env.ADMIN_SECRET
+
+  if (!isAdmin && !hasSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -31,5 +37,5 @@ export async function POST(req: NextRequest) {
 
   if (newIds.length > 0) await scheduleBatchImport(newIds)
 
-  return NextResponse.json({ scheduled: newIds.length, skippedExisting: ids.length - newIds.length })
+  return NextResponse.json({ scheduled: newIds.length, skippedExisting: ids.length - newIds.length, total: ids.length })
 }
