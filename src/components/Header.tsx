@@ -3,22 +3,23 @@ import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import LanguageSwitcher from "./LanguageSwitcher"
 
 const CATS = [
-  { name: "Игры Steam", slug: "steam", emoji: "🎮" },
+  { name: "Steam Games", slug: "steam", emoji: "🎮" },
   { name: "Xbox", slug: "xbox", emoji: "🎯" },
   { name: "PlayStation", slug: "playstation", emoji: "🕹️" },
   { name: "Nintendo", slug: "nintendo", emoji: "🎪" },
   { name: "Game Pass", slug: "game-pass", emoji: "⭐" },
-  { name: "Ключи активации", slug: "keys", emoji: "🔑" },
-  { name: "Программы", slug: "software", emoji: "💻" },
-  { name: "Антивирусы", slug: "antivirus", emoji: "🛡️" },
+  { name: "Keys", slug: "keys", emoji: "🔑" },
+  { name: "Software", slug: "software", emoji: "💻" },
+  { name: "Antivirus", slug: "antivirus", emoji: "🛡️" },
   { name: "Windows", slug: "windows", emoji: "🪟" },
   { name: "Office", slug: "office", emoji: "📊" },
   { name: "VPN", slug: "vpn", emoji: "🔒" },
-  { name: "Подписки", slug: "subscriptions", emoji: "✨" },
-  { name: "Подарочные карты", slug: "gift-cards", emoji: "🎁" },
-  { name: "Steam Пополнение", slug: "steam-wallet", emoji: "💳" },
+  { name: "Subscriptions", slug: "subscriptions", emoji: "✨" },
+  { name: "Gift Cards", slug: "gift-cards", emoji: "🎁" },
+  { name: "Steam Wallet", slug: "steam-wallet", emoji: "💳" },
 ]
 
 export default function Header() {
@@ -54,8 +55,6 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-[#1f2937]">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-3 h-16">
-
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-2">
             <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-white text-sm">G</div>
             <span className="font-bold text-lg hidden sm:block">
@@ -63,7 +62,6 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
             <Link href="/catalog" className="btn-ghost text-sm">Каталог</Link>
             <div className="relative" ref={catRef}>
@@ -87,7 +85,6 @@ export default function Header() {
             <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 Акции</Link>
           </nav>
 
-          {/* Search */}
           <form onSubmit={onSearch} className="flex-1 max-w-lg hidden md:block mx-4">
             <div className="relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,50 +95,44 @@ export default function Header() {
             </div>
           </form>
 
-          {/* Auth */}
           <div className="flex items-center gap-2 ml-auto">
+            <LanguageSwitcher />
             {status === "loading" ? (
               <div className="w-8 h-8 rounded-full bg-[#1a1a26] animate-pulse" />
             ) : session ? (
               <div className="relative hidden md:block" ref={userRef}>
-                <button onClick={() => setUserOpen(v => !v)}
-                  className="flex items-center gap-2 btn-ghost px-3 py-2">
-                  <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-xs font-bold text-white">
-                    {initials}
-                  </div>
-                  <span className="text-sm text-gray-300 max-w-[100px] truncate">
-                    {session.user?.name ?? session.user?.email}
-                  </span>
+                <button onClick={() => setUserOpen(v => !v)} className="flex items-center gap-2 btn-ghost px-3 py-2">
+                  <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-xs font-bold text-white">{initials}</div>
+                  <span className="text-sm text-gray-300 max-w-[100px] truncate">{session.user?.name ?? session.user?.email}</span>
                   <svg className={`w-3.5 h-3.5 transition-transform ${userOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 {userOpen && (
                   <div className="absolute top-full right-0 mt-2 w-48 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl p-1.5 animate-fade-in">
+                    {(session.user as any).role === "admin" && (
+                      <Link href="/admin" onClick={() => setUserOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-brand hover:text-brand-400 transition-colors">
+                        ⚙️ Админ панель
+                      </Link>
+                    )}
                     <Link href="/profile" onClick={() => setUserOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-400 hover:text-white transition-colors">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                      Профиль
+                      👤 Профиль
                     </Link>
                     <button onClick={() => signOut({ callbackUrl: "/" })}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-500/10 text-sm text-gray-400 hover:text-red-400 transition-colors">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                      Выйти
+                      🚪 Выйти
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <Link href="/auth/login" className="btn-ghost text-sm flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                  Войти
-                </Link>
+                <Link href="/auth/login" className="btn-ghost text-sm">Войти</Link>
                 <Link href="/auth/register" className="btn-primary text-sm px-4 py-2">Регистрация</Link>
               </div>
             )}
-
-            {/* Mobile burger */}
             <button onClick={() => setMob(v => !v)} className="md:hidden btn-ghost p-2">
               {mob
                 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -151,7 +142,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mob && (
           <div className="md:hidden border-t border-[#1f2937] py-4 space-y-4 animate-slide-up">
             <form onSubmit={onSearch}>
@@ -165,7 +155,7 @@ export default function Header() {
             {session ? (
               <div className="flex gap-2">
                 <Link href="/profile" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">Профиль</Link>
-                <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-ghost text-sm flex-1 text-center border border-red-500/20 text-red-400 rounded-xl py-2.5">Выйти</button>
+                <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm flex-1 text-center border border-red-500/20 text-red-400 rounded-xl py-2.5">Выйти</button>
               </div>
             ) : (
               <div className="flex gap-2">
