@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma"
-import ProductCard from "@/components/ProductCard"
-import { buildCatalogMetadata } from "@/lib/seo"
+import { prisma } from "../../lib/prisma"
+import ProductCard from "../../components/ProductCard"
+import { buildCatalogMetadata } from "../../lib/seo"
 import type { Metadata } from "next"
 
 export const revalidate = 120
