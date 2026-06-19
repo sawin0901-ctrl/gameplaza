@@ -2,7 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #111118;
+  --bg-card-hover: #1a1a26;
+  --border: #1f2937;
+  --brand: #7c3aed;
+}
+
+html { scroll-behavior: smooth; }
+
 body {
-  background-color: #111827;
+  background-color: var(--bg);
   color: #f9fafb;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--brand); color: white; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #0d0d14; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+
+@layer components {
+  .card {
+    @apply bg-[#111118] border border-[#1f2937] rounded-xl transition-all duration-200;
+  }
+  .btn-primary {
+    @apply bg-brand text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all duration-150 active:scale-95 inline-flex items-center justify-center;
+  }
+  .btn-ghost {
+    @apply text-gray-400 font-medium px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-150;
+  }
+  .badge {
+    @apply text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+  .gp-input {
+    @apply bg-[#111118] border border-[#1f2937] text-white placeholder-gray-600 rounded-xl px-4 py-2.5 outline-none focus:border-brand transition-colors w-full;
+  }
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-white;
+  }
+  .section-sub {
+    @apply text-gray-500 text-sm mt-1;
+  }
 }
