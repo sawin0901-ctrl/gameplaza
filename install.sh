@@ -71,9 +71,9 @@ mkdir -p /var/www && cd /var/www
 git clone https://github.com/sawin0901-ctrl/gameplaza.git
 cd gameplaza
 
-# 9. .env.local
-log "Создание .env.local..."
-cat > .env.local << ENVEOF
+# 9. .env файлы
+# Prisma читает .env, Next.js читает .env.local
+cat > .env << ENVEOF
 DATABASE_URL="postgresql://gameplaza:${DB_PASS}@localhost:5432/gameplaza"
 REDIS_URL="redis://localhost:6379"
 NEXTAUTH_SECRET="${NEXTAUTH_SECRET}"
@@ -85,13 +85,12 @@ NEXT_PUBLIC_DIGISELLER_SELLER_ID="${DIGISELLER_SELLER_ID}"
 ADMIN_SECRET="${ADMIN_SECRET}"
 NODE_ENV="production"
 ENVEOF
-
-# 10. Зависимости
+cp .env .env.local\n\n# 10. Зависимости
 log "Установка npm зависимостей..."
 npm install
 
 # 11. Prisma
-log "Применение схемы БД..."
+log "Применение схемы БД..."\nexport DATABASE_URL="postgresql://gameplaza:${DB_PASS}@localhost:5432/gameplaza"
 npx prisma generate
 npx prisma db push --accept-data-loss
 
