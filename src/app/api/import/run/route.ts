@@ -1,9 +1,7 @@
-export const runtime = "nodejs"
-
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getDigisellerProducts } from "@/lib/digiseller"
-import { scheduleBatchImport } from "@/lib/queue"
+import { prisma } from "../../../../lib/prisma"
+import { getDigisellerProducts } from "../../../../lib/digiseller"
+import { scheduleBatchImport } from "../../../../lib/queue"
 
 const MAX_PER_DAY = 200
 
@@ -22,14 +20,14 @@ export async function POST(req: NextRequest) {
   }
 
   const data = await getDigisellerProducts(1, remaining)
-  const ids = data.rows.map(r => r.id_goods)
+  const ids = data.rows.map((r: { id_goods: number }) => r.id_goods)
 
   const existing = await prisma.product.findMany({
     where: { digisellerProductId: { in: ids } },
     select: { digisellerProductId: true },
   })
   const existingIds = new Set(existing.map(e => e.digisellerProductId))
-  const newIds = ids.filter(id => !existingIds.has(id))
+  const newIds = ids.filter((id: number) => !existingIds.has(id))
 
   if (newIds.length > 0) await scheduleBatchImport(newIds)
 
