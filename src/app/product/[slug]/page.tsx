@@ -90,7 +90,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
           {/* Официальный виджет Digiseller: живая цена + кнопка покупки */}
           <div className="mb-6">
-            <DigisellerWidget productId={product.digisellerProductId} mode="full" />
+            <DigisellerWidget productId={product.digisellerProductId} />
           </div>
 
           {/* Trust badges */}
