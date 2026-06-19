@@ -1,10 +1,10 @@
 "use client"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -12,20 +12,14 @@ export default function LoginPage() {
   const router = useRouter()
   const params = useSearchParams()
   const callbackUrl = params.get("callbackUrl") ?? "/"
+  const registered = params.get("registered") === "1"
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
     setLoading(true)
-
-    const res = await signIn("credentials", {
-      email: email.trim(),
-      password,
-      redirect: false,
-    })
-
+    const res = await signIn("credentials", { email: email.trim(), password, redirect: false })
     setLoading(false)
-
     if (res?.error) {
       setError("Неверный email или пароль")
     } else {
@@ -34,6 +28,47 @@ export default function LoginPage() {
     }
   }
 
+  return (
+    <div className="card p-8">
+      {registered && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 text-emerald-400 text-sm mb-4">
+          Аккаунт создан! Войдите в систему.
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-sm text-gray-400 mb-1.5 block">Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com" required autoComplete="email" className="gp-input" />
+        </div>
+        <div>
+          <label className="text-sm text-gray-400 mb-1.5 block">Пароль</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••" required autoComplete="current-password" className="gp-input" />
+        </div>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+        <button type="submit" disabled={loading}
+          className="btn-primary w-full py-3 text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          {loading ? "Входим..." : "Войти"}
+        </button>
+      </form>
+      <div className="border-t border-[#1f2937] mt-6 pt-6">
+        <p className="text-center text-gray-500 text-sm">
+          Нет аккаунта?{" "}
+          <Link href="/auth/register" className="text-brand hover:text-brand-400 font-medium transition-colors">
+            Зарегистрироваться
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -47,58 +82,9 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-white">Вход в аккаунт</h1>
           <p className="text-gray-500 text-sm mt-1">Введите email и пароль для входа</p>
         </div>
-
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-                className="gp-input"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Пароль</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="gp-input"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full py-3 text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? "Входим..." : "Войти"}
-            </button>
-          </form>
-
-          <div className="border-t border-[#1f2937] mt-6 pt-6">
-            <p className="text-center text-gray-500 text-sm">
-              Нет аккаунта?{" "}
-              <Link href="/auth/register" className="text-brand hover:text-brand-400 font-medium transition-colors">
-                Зарегистрироваться
-              </Link>
-            </p>
-          </div>
-        </div>
+        <Suspense fallback={<div className="card p-8 h-64 animate-pulse" />}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   )
