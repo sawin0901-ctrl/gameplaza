@@ -4,8 +4,8 @@ cd /var/www/gameplaza
 
 echo "==> Syncing code..."
 git fetch origin main
-git checkout -- .
-git pull origin main
+git reset --hard origin/main
+git clean -fd --exclude='.env' --exclude='.env.local' --exclude='ecosystem.config.js'
 
 echo "==> Installing packages..."
 npm install
