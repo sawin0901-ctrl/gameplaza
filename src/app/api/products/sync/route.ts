@@ -1,8 +1,6 @@
-export const runtime = "nodejs"
-
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { checkProductAvailability } from "@/lib/digiseller"
+import { prisma } from "../../../../lib/prisma"
+import { checkProductAvailability } from "../../../../lib/digiseller"
 
 export async function POST(req: NextRequest) {
   if (req.headers.get("x-admin-secret") !== process.env.ADMIN_SECRET) {
