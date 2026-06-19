@@ -3,7 +3,19 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 export type Locale = "ru" | "en"
 
-const T = {
+type Dict = {
+  nav: { catalog: string; categories: string; deals: string; search: string; login: string; register: string; profile: string; logout: string }
+  hero: { badge: string; title: string; titleAccent: string; subtitle: string; searchBtn: string }
+  catalog: { title: string; found: string; notFound: string; showAll: string; sortNewest: string; sortPriceAsc: string; sortPriceDesc: string; sortPopular: string; filterAll: string; filterPrice: string; filterFrom: string; filterTo: string; filterApply: string; filterReset: string }
+  product: { new: string; bought: string; inStock: string; outOfStock: string; description: string; related: string }
+  sections: { categories: string; newArrivals: string; popular: string; viewAll: string; allCategories: string }
+  features: { title: string; sub: string }
+  cta: { title: string; sub: string; catalog: string; register: string }
+  auth: { loginTitle: string; registerTitle: string; email: string; password: string; name: string; loginBtn: string; registerBtn: string; wrongCreds: string }
+  common: { loading: string; error: string; save: string; cancel: string }
+}
+
+const T: Record<Locale, Dict> = {
   ru: {
     nav: { catalog: "Каталог", categories: "Категории", deals: "Акции", search: "Поиск по каталогу...", login: "Войти", register: "Регистрация", profile: "Профиль", logout: "Выйти" },
     hero: { badge: "товаров в наличии", title: "Цифровые товары", titleAccent: "по лучшим ценам", subtitle: "Игры, программы, ключи активации и подписки. Мгновенная доставка.", searchBtn: "Найти" },
@@ -26,15 +38,12 @@ const T = {
     auth: { loginTitle: "Sign In", registerTitle: "Create Account", email: "Email", password: "Password", name: "Name", loginBtn: "Sign In", registerBtn: "Create Account", wrongCreds: "Invalid email or password" },
     common: { loading: "Loading...", error: "Error", save: "Save", cancel: "Cancel" },
   },
-} as const
-
-type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T
-type TKeys = typeof T.ru
+}
 
 interface LocaleCtx {
   locale: Locale
   setLocale: (l: Locale) => void
-  t: TKeys
+  t: Dict
 }
 
 const Ctx = createContext<LocaleCtx>({ locale: "ru", setLocale: () => {}, t: T.ru })
