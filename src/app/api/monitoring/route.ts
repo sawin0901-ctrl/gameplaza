@@ -1,8 +1,6 @@
-export const runtime = "nodejs"
-
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { importQueue } from "@/lib/queue"
+import { prisma } from "../../../lib/prisma"
+import { importQueue } from "../../../lib/queue"
 
 export async function GET() {
   const [totalProducts, activeProducts, hiddenProducts, queuedItems, todayLog, queueStats] = await Promise.all([
