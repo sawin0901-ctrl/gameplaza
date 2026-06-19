@@ -1,22 +1,20 @@
-const SELLER_ID = "1459731"
+const AFFILIATE_ID = "1459731"
 
 interface Props {
   productId: number
-  mode?: "card" | "full"
 }
 
-export default function DigisellerWidget({ productId, mode = "full" }: Props) {
-  const isCard = mode === "card"
+export default function DigisellerWidget({ productId }: Props) {
   return (
     <div
+      style={{ display: "inline-block", width: "100%" }}
       className="digiseller-buy-standalone"
       data-id={String(productId)}
-      data-ai={SELLER_ID}
-      data-img={isCard ? "0" : "1"}
-      data-img-size="180"
-      data-name={isCard ? "0" : "1"}
+      data-ai={AFFILIATE_ID}
+      data-img="0"
+      data-img-size=""
+      data-name="1"
       data-price="1"
-      data-owner={isCard ? "0" : "1"}
       data-no-price="0"
     />
   )
