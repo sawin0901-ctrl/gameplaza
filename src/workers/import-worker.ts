@@ -42,7 +42,7 @@ async function processImport(job: Job) {
       isActive: raw.status === 1 && raw.cnt_goods > 0,
       updatedAt: new Date(),
       lastCheckedAt: new Date(),
-      hiddenAt: raw.status !== 1 || raw.cnt_goods <= 0 ? new Date() : null,
+      hiddenAt: (raw.status !== 1 || raw.cnt_goods <= 0) ? new Date() : null,
       hideReason: raw.status !== 1 ? "Отключён продавцом" : raw.cnt_goods <= 0 ? "Нет в наличии" : null,
     },
     create: {
@@ -67,10 +67,7 @@ async function processImport(job: Job) {
   return { productId: product.id, slug: product.slug }
 }
 
-const worker = new Worker("product-import", processImport, {
-  connection,
-  concurrency: 2,
-})
+const worker = new Worker("product-import", processImport, { connection })
 
 worker.on("failed", (job, err) => {
   console.error(`[import] Job ${job?.id} failed:`, err.message)
