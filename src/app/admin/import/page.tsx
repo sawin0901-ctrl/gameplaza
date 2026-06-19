@@ -1,9 +1,10 @@
 "use client"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function AdminImport() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<{ scheduled: number; skippedExisting: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function runImport() {
@@ -11,14 +12,11 @@ export default function AdminImport() {
     setResult(null)
     setError(null)
     try {
-      const res = await fetch("/api/import/run", {
-        method: "POST",
-        headers: { "x-admin-secret": process.env.NEXT_PUBLIC_ADMIN_SECRET ?? "gameplaza-admin-2024" },
-      })
+      const res = await fetch("/api/import/run", { method: "POST" })
       const data = await res.json()
-      if (res.ok) setResult(JSON.stringify(data, null, 2))
+      if (res.ok) setResult(data)
       else setError(data.error ?? "Ошибка запуска импорта")
-    } catch (e) {
+    } catch {
       setError("Ошибка сети")
     }
     setLoading(false)
@@ -28,15 +26,14 @@ export default function AdminImport() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Импорт товаров</h1>
-        <p className="text-gray-500 text-sm mt-1">Импорт из Digiseller API (Seller ID: 1459731)</p>
+        <p className="text-gray-500 text-sm mt-1">Digiseller API · Seller ID: 1459731</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="card p-5">
-          <h3 className="text-white font-semibold mb-3">Ручной запуск</h3>
+          <h3 className="text-white font-semibold mb-2">Ручной запуск</h3>
           <p className="text-gray-500 text-sm mb-4">
-            Импортирует товары с Digiseller. Максимум 200 товаров за запуск.
-            Автоматически скрывает недоступные товары.
+            Импортирует до 200 товаров за запуск. Автоматически скрывает недоступные.
           </p>
           <button onClick={runImport} disabled={loading}
             className="btn-primary w-full py-3 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -45,29 +42,60 @@ export default function AdminImport() {
         </div>
 
         <div className="card p-5">
-          <h3 className="text-white font-semibold mb-3">Автоматический импорт</h3>
+          <h3 className="text-white font-semibold mb-2">Автоматический режим</h3>
           <p className="text-gray-500 text-sm mb-4">
-            Воркер запускается автоматически через BullMQ. Проверяет новые товары каждые 60 минут.
+            Воркер BullMQ проверяет новые товары каждые 60 минут автоматически.
           </p>
-          <div className="flex items-center gap-2 mt-auto">
+          <div className="flex items-center gap-2 mb-4">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
             <span className="text-emerald-400 text-sm font-medium">Воркер активен</span>
           </div>
+          <a href="https://www.digiseller.com/seller/products/"
+            target="_blank" rel="noopener noreferrer"
+            className="btn-outline w-full py-2.5 text-sm">
+            🔗 Открыть Digiseller
+          </a>
         </div>
       </div>
 
       {result && (
-        <div className="card p-4">
-          <h3 className="text-emerald-400 font-semibold mb-2">✅ Успешно запущен</h3>
-          <pre className="text-gray-400 text-xs overflow-auto bg-black/30 rounded-lg p-3">{result}</pre>
+        <div className="card p-5 border-emerald-500/30">
+          <h3 className="text-emerald-400 font-semibold mb-3">✅ Импорт запущен</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-white">{result.scheduled}</p>
+              <p className="text-gray-500 text-xs mt-1">В очереди</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-gray-400">{result.skippedExisting}</p>
+              <p className="text-gray-500 text-xs mt-1">Уже есть</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-brand">{result.total}</p>
+              <p className="text-gray-500 text-xs mt-1">Всего найдено</p>
+            </div>
+          </div>
+          <p className="text-gray-600 text-xs mt-3">Товары добавятся в каталог через несколько минут</p>
         </div>
       )}
+
       {error && (
         <div className="card p-4 border-red-500/30">
           <h3 className="text-red-400 font-semibold mb-1">❌ Ошибка</h3>
           <p className="text-gray-500 text-sm">{error}</p>
         </div>
       )}
+
+      <div className="card p-5 mt-4">
+        <h3 className="text-white font-semibold mb-3">Быстрые ссылки</h3>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin" className="btn-ghost text-sm py-2">📊 Дашборд</Link>
+          <Link href="/admin/products" className="btn-ghost text-sm py-2">🎮 Товары</Link>
+          <Link href="/catalog" target="_blank" className="btn-ghost text-sm py-2">🌐 Магазин</Link>
+          <a href="https://www.digiseller.com/seller/" target="_blank" rel="noopener noreferrer"
+            className="btn-ghost text-sm py-2">🔗 Digiseller кабинет</a>
+        </div>
+      </div>
     </div>
   )
 }
