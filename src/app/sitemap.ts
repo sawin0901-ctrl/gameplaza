@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { prisma } from "../lib/prisma"
 import { MetadataRoute } from "next"
 
 const SITE_URL = "https://gameplaza.site"
