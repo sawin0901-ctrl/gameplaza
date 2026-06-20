@@ -13,12 +13,17 @@ const SORT_OPTS = [
   { value: "price_asc", label: "Цена: по возрастанию" },
   { value: "price_desc", label: "Цена: по убыванию" },
   { value: "popular", label: "Популярные" },
+  { value: "discount", label: "🔥 Акции" },
 ]
 
 export async function generateMetadata({ searchParams }: { searchParams: Record<string, string> }): Promise<Metadata> {
   const q = searchParams.q ?? ""
+  const sort = searchParams.sort ?? ""
+  const title = sort === "discount"
+    ? "Акции и скидки — GamePlaza"
+    : q ? `Поиск: ${q} — GamePlaza` : "Каталог цифровых товаров — GamePlaza"
   return {
-    title: q ? `Поиск: ${q} — GamePlaza` : "Каталог цифровых товаров — GamePlaza",
+    title,
     description: "Игры, программы, ключи активации. Мгновенная доставка через Digiseller.",
   }
 }
@@ -33,6 +38,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
 
   const where = {
     isActive: true,
+    ...(sort === "discount" ? { discountPercent: { gt: 0 } } : {}),
     ...(query ? {
       OR: [
         { name: { contains: query, mode: "insensitive" as const } },
@@ -52,6 +58,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
     sort === "price_asc" ? { price: "asc" as const } :
     sort === "price_desc" ? { price: "desc" as const } :
     sort === "popular" ? { soldCount: "desc" as const } :
+    sort === "discount" ? { discountPercent: "desc" as const } :
     { importedAt: "desc" as const }
 
   const [products, total] = await Promise.all([
@@ -89,6 +96,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
         <span>/</span>
         <span className="text-gray-300">Каталог</span>
         {query && <><span>/</span><span className="text-gray-300">«{query}»</span></>}
+        {sort === "discount" && <><span>/</span><span className="text-gray-300">Акции</span></>}
       </nav>
 
       <div className="flex gap-6 items-start">
@@ -105,7 +113,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
             <div className="flex-1">
               <h1 className="text-xl font-bold text-white">
-                {query ? `Поиск: «${query}»` : "Все товары"}
+                {sort === "discount" ? "🔥 Акции и скидки" : query ? `Поиск: «${query}»` : "Все товары"}
               </h1>
               <p className="text-gray-500 text-sm mt-0.5">
                 {total > 0 ? `Найдено ${total.toLocaleString("ru-RU")} товаров` : "Товары не найдены"}
@@ -145,9 +153,15 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
             </div>
           ) : (
             <div className="card p-16 text-center border-dashed">
-              <div className="text-5xl mb-4">🔍</div>
-              <h2 className="text-white font-bold text-lg mb-2">Ничего не найдено</h2>
-              <p className="text-gray-500 text-sm mb-6">Попробуйте другой запрос или сбросьте фильтры</p>
+              <div className="text-5xl mb-4">{sort === "discount" ? "🏷️" : "🔍"}</div>
+              <h2 className="text-white font-bold text-lg mb-2">
+                {sort === "discount" ? "Нет товаров со скидкой" : "Ничего не найдено"}
+              </h2>
+              <p className="text-gray-500 text-sm mb-6">
+                {sort === "discount"
+                  ? "Акции появятся при следующей синхронизации с Digiseller"
+                  : "Попробуйте другой запрос или сбросьте фильтры"}
+              </p>
               <Link href="/catalog" className="btn-primary px-8 py-3">Показать все товары</Link>
             </div>
           )}
