@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "../../../../lib/prisma"
 import { checkProductAvailability } from "../../../../lib/digiseller"
+import { revalidatePath } from "next/cache"
 
 export async function POST(req: NextRequest) {
   if (req.headers.get("x-admin-secret") !== process.env.ADMIN_SECRET) {
@@ -32,6 +33,11 @@ export async function POST(req: NextRequest) {
     } else {
       await prisma.product.update({ where: { id: product.id }, data: { lastCheckedAt: new Date() } })
     }
+  }
+
+  if (hidden > 0 || restored > 0) {
+    revalidatePath("/catalog")
+    revalidatePath("/")
   }
 
   return NextResponse.json({ checked: products.length, hidden, restored })
