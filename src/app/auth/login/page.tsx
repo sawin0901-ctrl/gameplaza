@@ -13,6 +13,9 @@ function LoginForm() {
   const params = useSearchParams()
   const callbackUrl = params.get("callbackUrl") ?? "/"
   const registered = params.get("registered") === "1"
+  const verified = params.get("verified") === "1"
+  const reset = params.get("reset") === "1"
+  const invalidToken = params.get("error") === "invalid_token"
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,7 +35,23 @@ function LoginForm() {
     <div className="card p-8">
       {registered && (
         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 text-emerald-400 text-sm mb-4">
-          Аккаунт создан! Войдите в систему.
+          Аккаунт создан! Войдите в систему. Проверьте почту для подтверждения email.
+        </div>
+      )}
+      {verified && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 text-emerald-400 text-sm mb-4">
+          Email подтверждён! Теперь вы можете войти.
+        </div>
+      )}
+      {reset && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 text-emerald-400 text-sm mb-4">
+          Пароль успешно изменён. Войдите с новым паролем.
+        </div>
+      )}
+      {invalidToken && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm mb-4">
+          Ссылка недействительна или устарела.{" "}
+          <Link href="/auth/forgot-password" className="underline">Запросить новую</Link>
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -42,7 +61,13 @@ function LoginForm() {
             placeholder="you@example.com" required autoComplete="email" className="gp-input" />
         </div>
         <div>
-          <label className="text-sm text-gray-400 mb-1.5 block">Пароль</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-sm text-gray-400">Пароль</label>
+            <Link href="/auth/forgot-password"
+              className="text-xs text-gray-500 hover:text-brand transition-colors">
+              Забыли пароль?
+            </Link>
+          </div>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)}
             placeholder="••••••••" required autoComplete="current-password" className="gp-input" />
         </div>
