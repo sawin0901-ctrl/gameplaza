@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
+import { rateLimit } from "./rate-limit"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,13 +12,26 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
-        })
-        if (!user) return null
+        const email = credentials.email.toLowerCase().trim()
+
+        // Защита от brute-force: не более 10 попыток за 15 минут по IP и по email
+        const ip =
+          (req?.headers?.["x-forwarded-for"] as string)?.split(",")[0]?.trim() ??
+          "unknown"
+
+        if (!rateLimit(`login_ip:${ip}`, 10, 15 * 60 * 1000)) return null
+        if (!rateLimit(`login_email:${email}`, 10, 15 * 60 * 1000)) return null
+
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user) {
+          // Искусственная задержка при несуществующем пользователе
+          // предотвращает timing-атаку для перечисления email-адресов
+          await bcrypt.hash(credentials.password, 1)
+          return null
+        }
 
         const ok = await bcrypt.compare(credentials.password, user.password)
         if (!ok) return null
@@ -37,8 +51,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id
-        session.user.role = token.role
+        session.user.id = token.id as string
+        session.user.role = token.role as string
       }
       return session
     },
