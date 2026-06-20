@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const page = Math.max(1, Number(req.nextUrl.searchParams.get("page") ?? 1))
+  const page = Math.max(1, Math.min(10000, parseInt(req.nextUrl.searchParams.get("page") ?? "1") || 1))
   const q = req.nextUrl.searchParams.get("q") ?? ""
   const status = req.nextUrl.searchParams.get("status") ?? "all"
   const PAGE = 50
