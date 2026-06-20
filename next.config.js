@@ -12,12 +12,12 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://cdn.digiseller.ru",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://plati.market https://www.plati.market",
-      "connect-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://cdn.digiseller.ru https://digiseller.com http://digiseller.com https://shop.digiseller.com",
+      "style-src 'self' 'unsafe-inline' https://shop.digiseller.com http://shop.digiseller.com",
+      "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://plati.market https://www.plati.market https://shop.digiseller.com https://digiseller.com",
+      "connect-src 'self' https://digiseller.com https://shop.digiseller.com",
       "font-src 'self'",
-      "frame-src https://digiseller.ru https://www.digiseller.ru",
+      "frame-src https://digiseller.ru https://www.digiseller.ru https://digiseller.com https://shop.digiseller.com",
       "object-src 'none'",
     ].join("; ")
 
