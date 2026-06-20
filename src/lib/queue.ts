@@ -5,6 +5,8 @@ function getRedisConnection() {
   return {
     host: url.hostname,
     port: parseInt(url.port || "6379"),
+    ...(url.password ? { password: decodeURIComponent(url.password) } : {}),
+    ...(url.username ? { username: decodeURIComponent(url.username) } : {}),
   }
 }
 
