@@ -6,22 +6,23 @@ import { useSession, signOut } from "next-auth/react"
 import Image from "next/image"
 import LanguageSwitcher from "./LanguageSwitcher"
 import { useLocale } from "./LocaleProvider"
+import { ThemeToggle } from "./ThemeToggle"
 
 const CATS = [
-  { name: "Steam Games", slug: "steam", emoji: "🎮" },
-  { name: "Xbox", slug: "xbox", emoji: "🎯" },
-  { name: "PlayStation", slug: "playstation", emoji: "🕹️" },
-  { name: "Nintendo", slug: "nintendo", emoji: "🎪" },
-  { name: "Game Pass", slug: "game-pass", emoji: "⭐" },
-  { name: "Keys", slug: "keys", emoji: "🔑" },
-  { name: "Software", slug: "software", emoji: "💻" },
-  { name: "Antivirus", slug: "antivirus", emoji: "🛡️" },
-  { name: "Windows", slug: "windows", emoji: "🪟" },
-  { name: "Office", slug: "office", emoji: "📊" },
-  { name: "VPN", slug: "vpn", emoji: "🔒" },
-  { name: "Subscriptions", slug: "subscriptions", emoji: "✨" },
-  { name: "Gift Cards", slug: "gift-cards", emoji: "🎁" },
-  { name: "Steam Wallet", slug: "steam-wallet", emoji: "💳" },
+  { name: "Steam Games",    slug: "steam",         emoji: "🎮" },
+  { name: "Xbox",           slug: "xbox",           emoji: "🎯" },
+  { name: "PlayStation",    slug: "playstation",    emoji: "🕹️" },
+  { name: "Nintendo",       slug: "nintendo",       emoji: "🎪" },
+  { name: "Game Pass",      slug: "game-pass",      emoji: "⭐" },
+  { name: "Keys",           slug: "keys",           emoji: "🔑" },
+  { name: "Software",       slug: "software",       emoji: "💻" },
+  { name: "Antivirus",      slug: "antivirus",      emoji: "🛡️" },
+  { name: "Windows",        slug: "windows",        emoji: "🪟" },
+  { name: "Office",         slug: "office",         emoji: "📊" },
+  { name: "VPN",            slug: "vpn",            emoji: "🔒" },
+  { name: "Subscriptions",  slug: "subscriptions",  emoji: "✨" },
+  { name: "Gift Cards",     slug: "gift-cards",     emoji: "🎁" },
+  { name: "Steam Wallet",   slug: "steam-wallet",   emoji: "💳" },
 ]
 
 interface Suggestion {
@@ -33,23 +34,24 @@ interface Suggestion {
 }
 
 export default function Header() {
-  const [search, setSearch] = useState("")
+  const [search, setSearch]           = useState("")
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [suggestOpen, setSuggestOpen] = useState(false)
-  const [mob, setMob] = useState(false)
-  const [catOpen, setCatOpen] = useState(false)
-  const [userOpen, setUserOpen] = useState(false)
-  const router = useRouter()
-  const catRef = useRef<HTMLDivElement>(null)
-  const userRef = useRef<HTMLDivElement>(null)
+  const [mob, setMob]                 = useState(false)
+  const [catOpen, setCatOpen]         = useState(false)
+  const [userOpen, setUserOpen]       = useState(false)
+
+  const router    = useRouter()
+  const catRef    = useRef<HTMLDivElement>(null)
+  const userRef   = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const { data: session, status } = useSession()
   const { t } = useLocale()
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
-      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false)
-      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false)
+      if (catRef.current    && !catRef.current.contains(e.target as Node))    setCatOpen(false)
+      if (userRef.current   && !userRef.current.contains(e.target as Node))   setUserOpen(false)
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSuggestOpen(false)
     }
     document.addEventListener("mousedown", fn)
@@ -59,7 +61,7 @@ export default function Header() {
   const fetchSuggestions = useCallback(async (q: string) => {
     if (q.length < 2) { setSuggestions([]); setSuggestOpen(false); return }
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+      const res  = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
       const data = await res.json()
       setSuggestions(data)
       setSuggestOpen(data.length > 0)
@@ -88,16 +90,20 @@ export default function Header() {
     : session?.user?.email?.slice(0, 2).toUpperCase() ?? "??"
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-[#1f2937]">
+    <header className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-[#1f2937] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-3 h-16">
+
+          {/* Логотип */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-2">
             <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-white text-sm">G</div>
             <span className="font-bold text-lg hidden sm:block">
-              <span className="text-brand">Game</span><span className="text-white">Plaza</span>
+              <span className="text-brand">Game</span>
+              <span className="text-white">Plaza</span>
             </span>
           </Link>
 
+          {/* Навигация */}
           <nav className="hidden md:flex items-center gap-1">
             <Link href="/catalog" className="btn-ghost text-sm">{t.nav.catalog}</Link>
             <div className="relative" ref={catRef}>
@@ -108,10 +114,10 @@ export default function Header() {
                 </svg>
               </button>
               {catOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl p-1.5 grid gap-0.5 animate-fade-in">
+                <div className="absolute top-full left-0 mt-2 w-64 card shadow-2xl p-1.5 grid gap-0.5 animate-fade-in">
                   {CATS.map(c => (
                     <Link key={c.slug} href={`/catalog?category=${c.slug}`} onClick={() => setCatOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-400 hover:text-white transition-colors">
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors btn-ghost">
                       <span>{c.emoji}</span><span>{c.name}</span>
                     </Link>
                   ))}
@@ -121,26 +127,24 @@ export default function Header() {
             <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 {t.nav.deals}</Link>
           </nav>
 
-          {/* Search with autocomplete */}
+          {/* Поиск */}
           <div ref={searchRef} className="flex-1 max-w-lg hidden md:block mx-4 relative">
             <form onSubmit={onSearch}>
               <div className="relative">
                 <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input
-                  type="search" value={search}
-                  onChange={e => setSearch(e.target.value)}
+                <input type="search" value={search} onChange={e => setSearch(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setSuggestOpen(true)}
                   placeholder={t.nav.search} className="gp-input pl-10 py-2 text-sm" />
               </div>
             </form>
             {suggestOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-1 card shadow-2xl overflow-hidden z-50">
                 {suggestions.map(s => (
                   <Link key={s.slug} href={`/product/${s.slug}`}
                     onClick={() => { setSuggestOpen(false); setSearch("") }}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors">
+                    className="flex items-center gap-3 px-3 py-2.5 btn-ghost rounded-none border-0">
                     <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#1a1a26] flex-shrink-0">
                       {s.imageUrl
                         ? <Image src={s.imageUrl} alt={s.name} width={36} height={36} className="object-cover w-full h-full" unoptimized />
@@ -148,34 +152,40 @@ export default function Header() {
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{s.name}</p>
+                      <p className="text-sm truncate">{s.name}</p>
                       <p className="text-xs text-brand">{s.price.toLocaleString("ru-RU")} ₽</p>
                     </div>
                   </Link>
                 ))}
                 <button onClick={onSearch}
-                  className="w-full px-3 py-2 text-xs text-gray-500 hover:text-white hover:bg-white/5 transition-colors text-left border-t border-[#1f2937]">
+                  className="w-full px-3 py-2 text-xs text-left btn-ghost rounded-none"
+                  style={{ borderTop: "1px solid var(--border)" }}>
                   {t.catalog.showAll} «{search}»
                 </button>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
+          {/* Правая часть */}
+          <div className="flex items-center gap-1.5 ml-auto">
+            {/* Переключатель темы ☀️/🌙 */}
+            <ThemeToggle />
+
             <LanguageSwitcher />
+
             {status === "loading" ? (
               <div className="w-8 h-8 rounded-full bg-[#1a1a26] animate-pulse" />
             ) : session ? (
               <div className="relative hidden md:block" ref={userRef}>
                 <button onClick={() => setUserOpen(v => !v)} className="flex items-center gap-2 btn-ghost px-3 py-2">
                   <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-xs font-bold text-white">{initials}</div>
-                  <span className="text-sm text-gray-300 max-w-[100px] truncate">{session.user?.name ?? session.user?.email}</span>
+                  <span className="text-sm max-w-[100px] truncate">{session.user?.name ?? session.user?.email}</span>
                   <svg className={`w-3.5 h-3.5 transition-transform ${userOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 {userOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl p-1.5 animate-fade-in">
+                  <div className="absolute top-full right-0 mt-2 w-48 card shadow-2xl p-1.5 animate-fade-in">
                     {session.user.role === "admin" && (
                       <Link href="/admin" onClick={() => setUserOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-brand hover:text-brand-400 transition-colors">
@@ -183,11 +193,11 @@ export default function Header() {
                       </Link>
                     )}
                     <Link href="/profile" onClick={() => setUserOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-400 hover:text-white transition-colors">
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors btn-ghost">
                       👤 {t.nav.profile}
                     </Link>
                     <button onClick={() => signOut({ callbackUrl: "/" })}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-500/10 text-sm text-gray-400 hover:text-red-400 transition-colors">
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors">
                       🚪 {t.nav.logout}
                     </button>
                   </div>
@@ -199,6 +209,7 @@ export default function Header() {
                 <Link href="/auth/register" className="btn-primary text-sm px-4 py-2">{t.nav.register}</Link>
               </div>
             )}
+
             <button onClick={() => setMob(v => !v)} className="md:hidden btn-ghost p-2">
               {mob
                 ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -208,8 +219,9 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Мобильное меню */}
         {mob && (
-          <div className="md:hidden border-t border-[#1f2937] py-4 space-y-4 animate-slide-up">
+          <div className="md:hidden py-4 space-y-4 animate-slide-up" style={{ borderTop: "1px solid var(--border)" }}>
             <form onSubmit={onSearch}>
               <div className="relative">
                 <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,19 +233,19 @@ export default function Header() {
             </form>
             {session ? (
               <div className="flex gap-2">
-                <Link href="/profile" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">{t.nav.profile}</Link>
+                <Link href="/profile" onClick={() => setMob(false)} className="btn-outline text-sm flex-1 text-center py-2.5">{t.nav.profile}</Link>
                 <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm flex-1 text-center border border-red-500/20 text-red-400 rounded-xl py-2.5">{t.nav.logout}</button>
               </div>
             ) : (
               <div className="flex gap-2">
-                <Link href="/auth/login" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">{t.nav.login}</Link>
+                <Link href="/auth/login" onClick={() => setMob(false)} className="btn-outline text-sm flex-1 text-center py-2.5">{t.nav.login}</Link>
                 <Link href="/auth/register" onClick={() => setMob(false)} className="btn-primary text-sm flex-1 text-center">{t.nav.register}</Link>
               </div>
             )}
             <div className="grid grid-cols-2 gap-1">
               {CATS.map(c => (
                 <Link key={c.slug} href={`/catalog?category=${c.slug}`} onClick={() => setMob(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-400">
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm btn-ghost">
                   <span>{c.emoji}</span><span className="truncate">{c.name}</span>
                 </Link>
               ))}
