@@ -20,8 +20,8 @@ export default function RegisterPage() {
       setError("Пароли не совпадают")
       return
     }
-    if (password.length < 6) {
-      setError("Пароль — минимум 6 символов")
+    if (password.length < 8) {
+      setError("Пароль — минимум 8 символов")
       return
     }
 
