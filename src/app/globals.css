@@ -8,13 +8,14 @@
 :root,
 [data-theme="dark"] {
   --bg:           #0a0a0f;
-  --bg-secondary: #111118;
+  --bg-secondary: #0d0d14;
   --card:         #111118;
   --card-hover:   #16161f;
   --border:       #1f2937;
   --text:         #f9fafb;
   --text-2:       #9ca3af;
   --text-3:       #6b7280;
+  --text-4:       #4b5563;
   color-scheme: dark;
 }
 
@@ -23,13 +24,14 @@
    ============================================================ */
 [data-theme="light"] {
   --bg:           #f8f9fc;
-  --bg-secondary: #f1f3f8;
+  --bg-secondary: #eef0f6;
   --card:         #ffffff;
-  --card-hover:   #f8f9fc;
-  --border:       #e5e7eb;
-  --text:         #111827;
-  --text-2:       #6b7280;
-  --text-3:       #9ca3af;
+  --card-hover:   #f4f5fb;
+  --border:       #e2e5f0;
+  --text:         #0f1117;
+  --text-2:       #374151;
+  --text-3:       #6b7280;
+  --text-4:       #9ca3af;
   color-scheme: light;
 }
 
@@ -53,61 +55,106 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
 /* ============================================================
-   СВЕТЛАЯ ТЕМА — переопределяем хардкодные классы Tailwind
-   Specificity [data-theme] (0,1,0,0) + class (0,0,1,0) = 0,1,1,0
-   vs Tailwind single-class (0,0,1,0) → наш селектор побеждает
+   СВЕТЛАЯ ТЕМА — переопределяем хардкодные Tailwind-классы
    ============================================================ */
 
-/* Фоновые цвета */
+/* ── Фоновые цвета ── */
 [data-theme="light"] .bg-\[\#0a0a0f\],
 [data-theme="light"] .bg-\[\#050816\],
-[data-theme="light"] .bg-\[\#0d0d14\] {
-  background-color: var(--bg);
+[data-theme="light"] .bg-\[\#0d0d14\],
+[data-theme="light"] .bg-\[\#0f0f17\],
+[data-theme="light"] .bg-\[\#0f172a\] {
+  background-color: var(--bg) !important;
 }
 
 [data-theme="light"] .bg-\[\#111118\],
-[data-theme="light"] .bg-\[\#0f0f17\],
-[data-theme="light"] .bg-\[\#0f172a\],
-[data-theme="light"] .bg-\[\#131320\] {
-  background-color: var(--card);
+[data-theme="light"] .bg-\[\#131320\],
+[data-theme="light"] .bg-\[\#16161f\] {
+  background-color: var(--card) !important;
 }
 
 [data-theme="light"] .bg-\[\#1a1a26\] {
-  background-color: #eef0f8;
+  background-color: #eef0f6;
 }
 
-[data-theme="light"] .bg-\[\#16161f\] {
-  background-color: var(--card-hover);
+/* ── КРИТИЧНО: Hero-секция — исправляем промежуточный цвет градиента ── */
+/* via-[#0a0a0f] — это класс градиентного СТОПА, а не background-color */
+[data-theme="light"] .via-\[\#0a0a0f\] {
+  --tw-gradient-to: transparent !important;
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(248,249,252,0.95) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
 }
 
-/* Границы */
+/* Делаем тёмный фоновый div героя прозрачным в светлой теме */
+[data-theme="light"] .hero-overlay {
+  background: linear-gradient(135deg,
+    rgba(124, 58, 237, 0.06) 0%,
+    rgba(248, 249, 252, 0.3) 50%,
+    rgba(167, 139, 250, 0.08) 100%
+  ) !important;
+}
+
+/* ── Границы ── */
 [data-theme="light"] .border-\[\#1f2937\],
 [data-theme="light"] .border-\[\#1e1e2e\] {
   border-color: var(--border);
 }
 
-/* Текст */
+/* ── ИСПРАВЛЕНИЕ ТЕКСТА — ключевые fixes ── */
+
+/* text-white → тёмный текст */
 [data-theme="light"] .text-white {
   color: var(--text);
 }
 
+/* gray-300 — заголовки/активный текст */
 [data-theme="light"] .text-gray-300 {
+  color: #1f2937;
+}
+
+/* gray-400 — основной secondary-текст */
+[data-theme="light"] .text-gray-400 {
   color: #374151;
 }
 
-[data-theme="light"] .text-gray-400 {
+/* gray-500 — мuted-текст */
+[data-theme="light"] .text-gray-500 {
   color: #6b7280;
 }
 
-[data-theme="light"] .text-gray-500 {
-  color: #9ca3af;
-}
-
+/* КРИТИЧНО: gray-600 был #d1d5db = невидимый на белом! */
 [data-theme="light"] .text-gray-600 {
-  color: #d1d5db;
+  color: #6b7280;
 }
 
-/* Hover bg */
+/* gray-700 */
+[data-theme="light"] .text-gray-700 {
+  color: #4b5563;
+}
+
+/* gray-800 */
+[data-theme="light"] .text-gray-800 {
+  color: #374151;
+}
+
+/* gray-900 */
+[data-theme="light"] .text-gray-900 {
+  color: #111827;
+}
+
+/* ── Hover-текст ── */
+[data-theme="light"] .hover\:text-white:hover {
+  color: #111827;
+}
+
+[data-theme="light"] .hover\:text-gray-500:hover {
+  color: #6b7280;
+}
+
+[data-theme="light"] .group:hover .group-hover\:text-white {
+  color: #111827;
+}
+
+/* ── Hover-фоны ── */
 [data-theme="light"] .hover\:bg-white\/5:hover,
 [data-theme="light"] .bg-white\/5 {
   background-color: rgba(0, 0, 0, 0.04);
@@ -118,36 +165,188 @@ body {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
-/* Заголовок */
+[data-theme="light"] .bg-white\/2 {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .hover\:bg-white\/2:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* ── Шапка ── */
 [data-theme="light"] header {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(255, 255, 255, 0.96) !important;
   border-color: var(--border) !important;
+  box-shadow: 0 1px 12px rgba(0,0,0,0.06) !important;
 }
 
-/* Hover текст */
-[data-theme="light"] .hover\:text-white:hover {
-  color: #111827;
+/* ── Категорийные карточки — более насыщенные градиенты в светлой теме ── */
+[data-theme="light"] .from-blue-600\/30   { --tw-gradient-from: rgba(37,99,235,0.18);   }
+[data-theme="light"] .to-blue-900\/40     { --tw-gradient-to:   rgba(30,58,138,0.15);   }
+[data-theme="light"] .from-green-600\/30  { --tw-gradient-from: rgba(22,163,74,0.18);   }
+[data-theme="light"] .to-green-900\/40    { --tw-gradient-to:   rgba(20,83,45,0.12);    }
+[data-theme="light"] .from-indigo-600\/30 { --tw-gradient-from: rgba(79,70,229,0.18);   }
+[data-theme="light"] .to-indigo-900\/40   { --tw-gradient-to:   rgba(49,46,129,0.12);   }
+[data-theme="light"] .from-red-600\/30    { --tw-gradient-from: rgba(220,38,38,0.16);   }
+[data-theme="light"] .to-red-900\/40      { --tw-gradient-to:   rgba(127,29,29,0.10);   }
+[data-theme="light"] .from-amber-600\/30  { --tw-gradient-from: rgba(217,119,6,0.20);   }
+[data-theme="light"] .to-amber-900\/40    { --tw-gradient-to:   rgba(120,53,15,0.12);   }
+[data-theme="light"] .from-cyan-600\/30   { --tw-gradient-from: rgba(8,145,178,0.18);   }
+[data-theme="light"] .to-cyan-900\/40     { --tw-gradient-to:   rgba(22,78,99,0.12);    }
+[data-theme="light"] .from-teal-600\/30   { --tw-gradient-from: rgba(13,148,136,0.18);  }
+[data-theme="light"] .to-teal-900\/40     { --tw-gradient-to:   rgba(19,78,74,0.12);    }
+[data-theme="light"] .from-sky-600\/30    { --tw-gradient-from: rgba(2,132,199,0.18);   }
+[data-theme="light"] .to-sky-900\/40      { --tw-gradient-to:   rgba(12,74,110,0.12);   }
+[data-theme="light"] .from-orange-600\/30 { --tw-gradient-from: rgba(234,88,12,0.18);   }
+[data-theme="light"] .to-orange-900\/40   { --tw-gradient-to:   rgba(124,45,18,0.12);   }
+[data-theme="light"] .from-violet-600\/30 { --tw-gradient-from: rgba(124,58,237,0.18);  }
+[data-theme="light"] .to-violet-900\/40   { --tw-gradient-to:   rgba(76,29,149,0.12);   }
+[data-theme="light"] .from-pink-600\/30   { --tw-gradient-from: rgba(219,39,119,0.16);  }
+[data-theme="light"] .to-pink-900\/40     { --tw-gradient-to:   rgba(131,24,67,0.10);   }
+
+/* brand-градиент для card ── */
+[data-theme="light"] .from-brand\/30 {
+  --tw-gradient-from: rgba(124, 58, 237, 0.18);
+}
+[data-theme="light"] .to-purple-900\/40 {
+  --tw-gradient-to: rgba(88, 28, 135, 0.12);
+}
+[data-theme="light"] .from-brand\/15 {
+  --tw-gradient-from: rgba(124, 58, 237, 0.08);
+}
+[data-theme="light"] .to-purple-950\/20 {
+  --tw-gradient-to: rgba(59, 7, 100, 0.06);
 }
 
-/* Placeholder */
+/* ── Placeholder ── */
 [data-theme="light"] .placeholder-gray-600::placeholder {
   color: #9ca3af;
 }
 
-/* Скроллбар */
+/* ── Карточки в светлой теме ── */
+[data-theme="light"] .card {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ── Скроллбар ── */
 [data-theme="light"] .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
+/* ── Badge в светлой теме ── */
+[data-theme="light"] .badge.bg-emerald-500\/20 { background-color: rgba(16,185,129,0.12); }
+[data-theme="light"] .badge.bg-red-500\/20 { background-color: rgba(239,68,68,0.12); }
+[data-theme="light"] .badge.bg-yellow-500\/20 { background-color: rgba(245,158,11,0.12); }
+[data-theme="light"] .badge.bg-blue-500\/20 { background-color: rgba(59,130,246,0.12); }
+[data-theme="light"] .badge.bg-brand\/20 { background-color: rgba(124,58,237,0.12); }
+
+/* ── Hero-секция в светлой теме: декоративные элементы ── */
+[data-theme="light"] .hero-blob {
+  background: radial-gradient(ellipse, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+}
+
+/* ── Навигация ── */
+[data-theme="light"] .bg-brand\/20 {
+  background-color: rgba(124, 58, 237, 0.1);
+}
+
+[data-theme="light"] .hover\:bg-brand\/30:hover {
+  background-color: rgba(124, 58, 237, 0.16);
+}
+
+[data-theme="light"] .bg-brand\/10 {
+  background-color: rgba(124, 58, 237, 0.07);
+}
+
+[data-theme="light"] .border-brand\/20 {
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+/* Более насыщенные кнопки в светлой теме */
+[data-theme="light"] .btn-outline {
+  border-color: #d1d5db;
+  color: #374151;
+  background-color: #ffffff;
+}
+
+[data-theme="light"] .btn-outline:hover {
+  border-color: rgba(124, 58, 237, 0.4);
+  background-color: rgba(124, 58, 237, 0.04);
+  color: #111827;
+}
+
+[data-theme="light"] .btn-ghost:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #111827;
+}
+
+/* ── Входные поля ── */
+[data-theme="light"] .gp-input {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .gp-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.1), 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── Таблицы ── */
+[data-theme="light"] .hover\:bg-white\/2:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* ── Футер ── */
+[data-theme="light"] footer {
+  background-color: #eef0f6 !important;
+  border-color: #e2e5f0 !important;
+}
+
+[data-theme="light"] footer .text-gray-600 {
+  color: #6b7280;
+}
+
+[data-theme="light"] footer .text-gray-700 {
+  color: #4b5563;
+}
+
+[data-theme="light"] footer .text-gray-800 {
+  color: #374151;
+}
+
+[data-theme="light"] footer .hover\:text-white:hover {
+  color: #111827;
+}
+
+[data-theme="light"] footer .border-\[\#1f2937\] {
+  border-color: #d1d5db;
+}
+
+[data-theme="light"] footer .bg-\[\#1a1a26\] {
+  background-color: #fff;
+  border-color: #d1d5db;
+}
+
+[data-theme="light"] footer .text-gray-500 {
+  color: #6b7280;
+}
+
+/* ── Монитор и Аналитика — уже используют CSS-переменные ── */
+
 /* ============================================================
-   КОМПОНЕНТЫ (используют CSS переменные — работают в обоих темах)
+   КОМПОНЕНТЫ (CSS-переменные — работают в обоих темах)
    ============================================================ */
 @layer components {
   .card {
     background-color: var(--card);
     border: 1px solid var(--border);
     border-radius: 0.75rem;
-    transition: background-color 0.25s ease, border-color 0.25s ease;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.2s ease;
   }
 
   .card-hover {
@@ -165,6 +364,10 @@ body {
     @apply bg-brand text-white font-semibold px-5 py-2.5 rounded-xl
            hover:bg-brand-700 transition-all duration-150
            active:scale-95 inline-flex items-center justify-center gap-2;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.45);
   }
 
   .btn-outline {
@@ -209,13 +412,14 @@ body {
     padding: 0.625rem 1rem;
     outline: none;
     width: 100%;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .gp-input::placeholder {
     color: var(--text-3);
   }
   .gp-input:focus {
     border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
   }
 
   .badge {
@@ -247,6 +451,11 @@ body {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
 }
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
 .animate-fade-in  { animation: fadeIn  0.2s ease-out; }
 .animate-slide-up { animation: slideUp 0.3s ease-out; }
 
