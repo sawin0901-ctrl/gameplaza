@@ -8,60 +8,51 @@ datasource db {
 }
 
 model User {
-  id                String     @id @default(cuid())
-  name              String?
-  email             String     @unique
-  password          String
-  role              String     @default("user")
-  emailVerified     DateTime?
-  verificationToken String?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-  wishlist          Wishlist[]
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String    @unique
+  password            String
+  role                String    @default("user")
+  emailVerified       DateTime?
+  verificationToken   String?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  wishlists           Wishlist[]
+  reviews             Review[]
 }
 
 model Product {
-  id                  String     @id @default(cuid())
-  digisellerProductId Int        @unique
+  id                  String    @id @default(cuid())
+  digisellerProductId Int       @unique
   name                String
-  slug                String     @unique
-  description         String     @db.Text
+  slug                String    @unique
+  description         String    @db.Text
   price               Float
   oldPrice            Float?
   discountPercent     Int?
-  currency            String     @default("RUB")
+  currency            String    @default("RUB")
   imageUrl            String?
   categoryId          String?
-  category            Category?  @relation(fields: [categoryId], references: [id])
-  isActive            Boolean    @default(false)
-  inStock             Boolean    @default(true)
-  quantity            Int        @default(0)
+  category            Category? @relation(fields: [categoryId], references: [id])
+  isActive            Boolean   @default(false)
+  inStock             Boolean   @default(true)
+  quantity            Int       @default(0)
   rating              Float?
   reviewCount         Int?
-  soldCount           Int        @default(0)
+  soldCount           Int       @default(0)
   metaTitle           String?
   metaDescription     String?
-  relatedProducts     Product[]  @relation("RelatedProducts")
-  relatedTo           Product[]  @relation("RelatedProducts")
-  wishlisted          Wishlist[]
-  importedAt          DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  relatedProducts     Product[] @relation("RelatedProducts")
+  relatedTo           Product[] @relation("RelatedProducts")
+  importedAt          DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   lastCheckedAt       DateTime?
   hiddenAt            DateTime?
   hideReason          String?
-}
-
-model Wishlist {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
+  wishlists           Wishlist[]
+  reviews             Review[]
 }
 
 model Category {
@@ -102,4 +93,28 @@ model SystemSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
 }
