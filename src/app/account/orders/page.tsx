@@ -43,12 +43,12 @@ export default function AccountOrdersPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="text-gray-500 hover:text-white text-sm">← Главная</Link>
-        <span className="text-gray-700">/</span>
-        <span className="text-white text-sm">Мои заказы</span>
+        <Link href="/" className="text-[var(--text-3)] hover:text-[var(--text)] text-sm">← Главная</Link>
+        <span className="text-[var(--border)]">/</span>
+        <span className="text-[var(--text)] text-sm">Мои заказы</span>
       </div>
 
-      <h1 className="text-2xl font-bold text-white mb-6">Мои заказы</h1>
+      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Мои заказы</h1>
 
       {orders.length === 0 ? (
         <div className="card p-12 text-center">
@@ -87,7 +87,7 @@ export default function AccountOrdersPage() {
               </button>
 
               {expanded === o.id && (
-                <div className="border-t border-[#1f2937] p-4 space-y-3">
+                <div className="border-t border-[var(--border)] p-4 space-y-3">
                   {o.items.map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
                       {item.imageUrl && (
@@ -101,7 +101,7 @@ export default function AccountOrdersPage() {
                     </div>
                   ))}
                   {o.promoCode && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-[#1f2937]">
+                    <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
                       <span className="text-gray-500 text-xs">Промокод:</span>
                       <span className="text-brand text-xs font-mono font-semibold">{o.promoCode}</span>
                       <span className="text-emerald-400 text-xs">−{fmt(o.discount)}</span>
