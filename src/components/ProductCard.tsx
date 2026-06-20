@@ -1,7 +1,9 @@
 import Link from "next/link"
 import Image from "next/image"
+import WishlistButton from "./WishlistButton"
 
 interface Props {
+  id?: string
   slug: string
   name: string
   price: number
@@ -14,6 +16,7 @@ interface Props {
   soldCount?: number
   isNew?: boolean
   digisellerProductId?: number
+  initialWishlisted?: boolean
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -30,8 +33,9 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export default function ProductCard({
-  slug, name, price, oldPrice, discountPercent, imageUrl,
-  category, rating, reviewCount, soldCount, isNew, digisellerProductId,
+  id, slug, name, price, oldPrice, discountPercent, imageUrl,
+  category, rating, reviewCount, soldCount, isNew,
+  digisellerProductId, initialWishlisted,
 }: Props) {
   const discount = discountPercent ?? (oldPrice && oldPrice > price ? Math.round((1 - price / oldPrice) * 100) : null)
   const imgSrc = imageUrl || (digisellerProductId
@@ -40,23 +44,35 @@ export default function ProductCard({
 
   return (
     <div className="group card-hover overflow-hidden flex flex-col">
-      <Link href={`/product/${slug}`} className="block relative aspect-[4/3] bg-[#1a1a26] overflow-hidden flex-shrink-0">
-        {imgSrc ? (
-          <Image src={imgSrc} alt={name} fill unoptimized
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/10 to-purple-950/30">
-            <svg className="w-16 h-16 text-brand/20" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5S14.67 12 15.5 12s1.5.67 1.5 1.5S16.33 15 15.5 15zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 10 18.5 10s1.5.67 1.5 1.5S19.33 12 18.5 12z"/>
-            </svg>
-          </div>
-        )}
-        <div className="absolute top-2 left-2 flex gap-1">
+      {/* Image area */}
+      <div className="relative aspect-[4/3] bg-[#1a1a26] overflow-hidden flex-shrink-0">
+        <Link href={`/product/${slug}`} className="block absolute inset-0">
+          {imgSrc ? (
+            <Image src={imgSrc} alt={name} fill unoptimized
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/10 to-purple-950/30">
+              <svg className="w-16 h-16 text-brand/20" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5S14.67 12 15.5 12s1.5.67 1.5 1.5S16.33 15 15.5 15zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 10 18.5 10s1.5.67 1.5 1.5S19.33 12 18.5 12z"/>
+              </svg>
+            </div>
+          )}
+        </Link>
+
+        {/* Badges */}
+        <div className="absolute top-2 left-2 flex gap-1 pointer-events-none">
           {isNew && <span className="badge bg-emerald-500 text-white">Новинка</span>}
           {discount && discount > 0 && <span className="badge bg-red-500 text-white">-{discount}%</span>}
         </div>
-      </Link>
+
+        {/* Wishlist button */}
+        {id && (
+          <div className="absolute top-2 right-2">
+            <WishlistButton productId={id} initialWishlisted={initialWishlisted} />
+          </div>
+        )}
+      </div>
 
       <div className="p-3.5 flex flex-col flex-1 gap-2">
         {category && <p className="text-brand text-xs font-medium truncate">{category}</p>}
