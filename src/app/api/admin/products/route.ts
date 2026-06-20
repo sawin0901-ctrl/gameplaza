@@ -20,7 +20,29 @@ export async function GET(req: NextRequest) {
     ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     ...(status === "active" ? { isActive: true } : status === "hidden" ? { isActive: false } : {}),
   }
-    param($m)
-    $m.Groups[1].Value + "try {`n" + $m.Groups[1].Value + "  " + $m.Groups[2].Value.Trim() + "`n" + $m.Groups[1].Value + "  " + $m.Groups[3].Value.Trim()
-  { products, total, pages: Math.ceil(total / PAGE) })
+
+  try {
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { importedAt: "desc" },
+        take: PAGE,
+        skip: (page - 1) * PAGE,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          isActive: true,
+          imageUrl: true,
+          digisellerProductId: true,
+          importedAt: true,
+        },
+      }),
+      prisma.product.count({ where }),
+    ])
+    return NextResponse.json({ products, total, pages: Math.ceil(total / PAGE) })
+  } catch {
+    return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 })
+  }
 }
