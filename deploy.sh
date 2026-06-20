@@ -9,10 +9,11 @@ git clean -fd \
   --exclude='.env' \
   --exclude='.env.local' \
   --exclude='ecosystem.config.js' \
-  --exclude='node_modules'
+  --exclude='node_modules' \
+  --exclude='package-lock.json'
 
 echo "==> [2/6] Installing packages..."
-npm ci
+npm install --include=dev
 
 echo "==> [3/6] Prisma migrations..."
 # NOTE: First deploy on an existing db-push database requires running once:
