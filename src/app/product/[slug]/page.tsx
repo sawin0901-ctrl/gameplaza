@@ -1,6 +1,6 @@
 import { cache } from "react"
 import { prisma } from "../../../lib/prisma"
-import { buildProductMetadata } from "../../../lib/seo"
+import { buildProductMetadata, stripHtml } from "../../../lib/seo"
 import { sanitizeDescription } from "../../../lib/sanitize"
 import { notFound } from "next/navigation"
 import { getServerSession } from "next-auth"
@@ -59,7 +59,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       : null,
   ])
 
-  // Похожие товары
+  // Похожие товары — дедупликация по id
   const categoryProducts = product.categoryId
     ? await prisma.product.findMany({
         where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
@@ -67,18 +67,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
         orderBy: { importedAt: "desc" },
       })
     : []
-  const related = [...product.relatedProducts, ...categoryProducts].slice(0, 4)
+  const seenIds = new Set(product.relatedProducts.map(p => p.id))
+  const uniqueCategory = categoryProducts.filter(p => !seenIds.has(p.id))
+  const related = [...product.relatedProducts, ...uniqueCategory].slice(0, 4)
 
-  // JSON-LD с отзывами для SEO
+  // JSON-LD
   const avgRating =
     reviews.length
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : null
+
+  const descriptionText = (stripHtml(product.description) || product.name).slice(0, 300)
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description.replace(/<[^>]+>/g, "").slice(0, 300),
+    description: descriptionText,
     image: product.imageUrl ?? undefined,
     aggregateRating: avgRating
       ? {
@@ -97,6 +102,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
       seller: { "@type": "Organization", name: "GamePlaza" },
     },
   }
+
+  // Экранируем </script> внутри JSON-LD, чтобы предотвратить XSS
+  const jsonLdString = JSON.stringify(jsonLd).replace(/<\/script>/gi, "<\\/script>")
 
   // Галерея
   const galleryImages = product.imageUrl
@@ -129,7 +137,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     <div className="max-w-5xl mx-auto px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
 
       {/* Breadcrumb */}
@@ -198,8 +206,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
               {reviews.length > 0 && avgRating && (
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex text-yellow-400 text-sm leading-none">
-                    {"★".repeat(Math.round(avgRating))}
-                    {"☆".repeat(5 - Math.round(avgRating))}
+                    {"★".repeat(Math.min(5, Math.round(avgRating)))}
+                    {"☆".repeat(5 - Math.min(5, Math.round(avgRating)))}
                   </div>
                   <span className="text-gray-500 text-sm">{reviews.length} отзывов</span>
                 </div>
