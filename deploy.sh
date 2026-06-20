@@ -12,10 +12,12 @@ git clean -fd \
   --exclude='node_modules'
 
 echo "==> [2/6] Installing packages..."
-npm install --include=dev
+npm ci
 
-echo "==> [3/6] Prisma..."
-npx prisma db push
+echo "==> [3/6] Prisma migrations..."
+# NOTE: First deploy on an existing db-push database requires running once:
+#   npx prisma migrate resolve --applied "20260101000000_init"
+npx prisma migrate deploy
 
 echo "==> [4/6] Building..."
 rm -rf .next
@@ -33,4 +35,4 @@ pm2 restart gameplaza-web --update-env
 pm2 restart gameplaza-worker --update-env 2>/dev/null || true
 
 echo ""
-echo "✅ Done! Site is live at https://gameplaza.site"
+echo "Done! Site is live at https://gameplaza.site"
