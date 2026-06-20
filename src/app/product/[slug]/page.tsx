@@ -209,7 +209,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     {"★".repeat(Math.min(5, Math.round(avgRating)))}
                     {"☆".repeat(5 - Math.min(5, Math.round(avgRating)))}
                   </div>
-                  <span className="text-gray-500 text-sm">{reviews.length} отзывов</span>
+                  <span className="text-[var(--text-3)] text-sm">{reviews.length} отзывов</span>
                 </div>
               )}
 
@@ -226,7 +226,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                   </>
                 )}
                 {product.soldCount > 0 && (
-                  <span className="text-gray-600 text-sm">• Продано {product.soldCount}+</span>
+                  <span className="text-[var(--text-3)] text-sm">• Продано {product.soldCount}+</span>
                 )}
               </div>
 
@@ -293,10 +293,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 <tbody>
                   {specs.map((row, i) => (
                     <tr key={row.label} className={i % 2 === 0 ? "bg-white/[0.02]" : ""}>
-                      <td className="px-4 py-3 text-gray-500 font-medium w-[40%] border-b border-[#1e1e2e]">
+                      <td className="px-4 py-3 text-gray-500 font-medium w-[40%] border-b border-[var(--border)]">
                         {row.label}
                       </td>
-                      <td className="px-4 py-3 text-white border-b border-[#1e1e2e]">
+                      <td className="px-4 py-3 text-white border-b border-[var(--border)]">
                         {row.value}
                       </td>
                     </tr>
