@@ -99,7 +99,7 @@ function DigisellerTab() {
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-white font-semibold">Проверить подключение Digiseller</h3>
+            <h3 className="text-[var(--text)] font-semibold">Проверить подключение Digiseller</h3>
             <p className="text-gray-500 text-xs mt-0.5">Проверяет авторизацию и доступность API</p>
           </div>
           <button onClick={testConnection} disabled={testLoading} className="btn-outline py-2 px-4 text-sm disabled:opacity-50">
@@ -109,11 +109,11 @@ function DigisellerTab() {
         {testResult && (
           <div className="space-y-2">
             {testResult.checks.map((c, i) => (
-              <div key={i} className="flex items-start gap-3 py-2 border-b border-[#1f2937]">
+              <div key={i} className="flex items-start gap-3 py-2 border-b border-[var(--border)]">
                 <span className={c.ok ? "text-emerald-400" : "text-red-400"}>{c.ok ? "✅" : "❌"}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm">{c.name}</p>
-                  <p className={`text-xs mt-0.5 ${c.ok ? "text-gray-500" : "text-red-400"}`}>{c.message}</p>
+                  <p className="text-[var(--text)] text-sm">{c.name}</p>
+                  <p className={`text-xs mt-0.5 ${c.ok ? "text-[var(--text-3)]" : "text-red-400"}`}>{c.message}</p>
                   {c.detail && <p className="text-gray-600 text-xs mt-0.5 font-mono truncate">{c.detail}</p>}
                 </div>
                 {c.duration !== undefined && <span className="text-gray-600 text-xs">{c.duration}мс</span>}
@@ -128,14 +128,14 @@ function DigisellerTab() {
 
       {/* Импорт по ID/ссылке */}
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-1">Импорт по ID или ссылке</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-1">Импорт по ID или ссылке</h3>
         <p className="text-gray-500 text-xs mb-3">Введите один или несколько ID, каждый с новой строки</p>
         <div className="card p-3 text-xs text-gray-500 mb-3 space-y-1">
           <p className="font-medium text-gray-400">Поддерживаемые форматы:</p>
-          <p><span className="text-emerald-400">✓</span> <code className="text-gray-300">5853474</code> — просто ID</p>
-          <p><span className="text-emerald-400">✓</span> <code className="text-gray-300">plati.market/itm/name/5853474</code></p>
-          <p><span className="text-emerald-400">✓</span> <code className="text-gray-300">digiseller.ru/info/?id=5853474</code></p>
-          <p><span className="text-red-400">✗</span> <code className="text-gray-600">funpay.com/...</code> — нет публичного API</p>
+          <p><span className="text-emerald-400">✓</span> <code className="text-[var(--text-2)]">5853474</code> — просто ID</p>
+          <p><span className="text-emerald-400">✓</span> <code className="text-[var(--text-2)]">plati.market/itm/name/5853474</code></p>
+          <p><span className="text-emerald-400">✓</span> <code className="text-[var(--text-2)]">digiseller.ru/info/?id=5853474</code></p>
+          <p><span className="text-red-400">✗</span> <code className="text-[var(--text-3)]">funpay.com/...</code> — нет публичного API</p>
         </div>
         <textarea
           value={input}
@@ -156,7 +156,7 @@ function DigisellerTab() {
               <StatGrid items={[
                 { label: "В очереди", value: result.scheduled as number, color: "text-emerald-400" },
                 { label: "Дублей", value: result.duplicates as number, color: "text-yellow-400" },
-                { label: "Не распознано", value: result.unsupported as number, color: "text-gray-500" },
+                { label: "Не распознано", value: result.unsupported as number, color: "text-[var(--text-3)]" },
                 { label: "Всего строк", value: result.total as number },
               ]} />
               <p className="text-gray-600 text-xs">Товары появятся через 1–5 минут после обработки воркером</p>
@@ -167,8 +167,8 @@ function DigisellerTab() {
 
       {/* Полный импорт каталога */}
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-1">Импорт всего каталога Digiseller</h3>
-        <p className="text-gray-500 text-sm mb-4">
+        <h3 className="text-[var(--text)] font-semibold mb-1">Импорт всего каталога Digiseller</h3>
+        <p className="text-[var(--text-3)] text-sm mb-4">
           Получает список всех ваших товаров из личного кабинета Digiseller (до 200 за раз)
         </p>
         <button onClick={runCatalog} disabled={runLoading}
@@ -185,7 +185,7 @@ function DigisellerTab() {
               ) : (
                 <StatGrid items={[
                   { label: "В очереди", value: runResult.scheduled, color: "text-emerald-400" },
-                  { label: "Уже есть", value: runResult.skippedExisting, color: "text-gray-500" },
+                  { label: "Уже есть", value: runResult.skippedExisting, color: "text-[var(--text-3)]" },
                   { label: "Всего найдено", value: runResult.total },
                 ]} />
               )}
@@ -233,8 +233,8 @@ function RangeTab() {
   return (
     <div className="space-y-5">
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-1">Импорт по диапазону ID</h3>
-        <p className="text-gray-500 text-sm mb-4">
+        <h3 className="text-[var(--text)] font-semibold mb-1">Импорт по диапазону ID</h3>
+        <p className="text-[var(--text-3)] text-sm mb-4">
           Система проверит каждый ID в диапазоне. Несуществующие товары будут автоматически пропущены.
         </p>
 
@@ -253,8 +253,8 @@ function RangeTab() {
 
         {fromId && toId && !isNaN(rangeSize) && rangeSize > 0 && (
           <div className="card p-3 mb-4 text-sm space-y-1">
-            <p className="text-gray-400">Диапазон: <span className="text-white font-mono">{parseInt(fromId).toLocaleString("ru-RU")} – {parseInt(toId).toLocaleString("ru-RU")}</span></p>
-            <p className="text-gray-400">Всего ID в диапазоне: <span className={`font-semibold ${rangeSize > 2000 ? "text-red-400" : "text-white"}`}>{rangeSize.toLocaleString("ru-RU")}</span></p>
+            <p className="text-[var(--text-2)]">Диапазон: <span className="text-white font-mono">{parseInt(fromId).toLocaleString("ru-RU")} – {parseInt(toId).toLocaleString("ru-RU")}</span></p>
+            <p className="text-[var(--text-2)]">Всего ID в диапазоне: <span className={`font-semibold ${rangeSize > 2000 ? "text-red-400" : "text-white"}`}>{rangeSize.toLocaleString("ru-RU")}</span></p>
             {rangeSize <= 2000 && <p className="text-gray-500 text-xs">Ориентировочное время: ~{Math.ceil(rangeSize * 5 / 60)} минут</p>}
             {rangeSize > 2000 && <p className="text-red-400 text-xs">Максимум 2000 ID за раз. Уменьшите диапазон.</p>}
           </div>
@@ -274,7 +274,7 @@ function RangeTab() {
                 { label: "В очереди", value: result.scheduled, color: "text-emerald-400" },
                 { label: "Дублей", value: result.duplicates, color: "text-yellow-400" },
                 { label: "Диапазон", value: result.rangeSize },
-                { label: "Время (~мин)", value: result.estimatedMinutes, color: "text-gray-400" },
+                { label: "Время (~мин)", value: result.estimatedMinutes, color: "text-[var(--text-2)]" },
               ]} />
               <p className="text-gray-600 text-xs">
                 ID {result.fromId} – {result.toId} · Воркер проверит каждый ID через Digiseller API
@@ -287,7 +287,7 @@ function RangeTab() {
       <div className="card p-4 text-xs text-gray-500">
         <p className="font-medium text-gray-400 mb-2">Как найти диапазон ID товаров</p>
         <p>1. Откройте <a href="https://plati.market" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">plati.market</a> или <a href="https://www.digiseller.ru" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">digiseller.ru</a></p>
-        <p>2. Откройте любой товар — в URL будет ID: <code className="text-gray-300">plati.market/itm/<strong>5853474</strong></code></p>
+        <p>2. Откройте любой товар — в URL будет ID: <code className="text-[var(--text-2)]">plati.market/itm/<strong>5853474</strong></code></p>
         <p>3. Укажите диапазон вокруг известных ID ваших товаров</p>
       </div>
     </div>
@@ -329,8 +329,8 @@ function FileTab() {
   return (
     <div className="space-y-5">
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-1">Импорт из файла</h3>
-        <p className="text-gray-500 text-sm mb-4">Загрузите файл со списком ID товаров — один ID на строку</p>
+        <h3 className="text-[var(--text)] font-semibold mb-1">Импорт из файла</h3>
+        <p className="text-[var(--text-3)] text-sm mb-4">Загрузите файл со списком ID товаров — один ID на строку</p>
 
         {/* Зона перетаскивания */}
         <div
@@ -338,7 +338,7 @@ function FileTab() {
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-            dragOver ? "border-brand bg-brand/10" : file ? "border-emerald-500/40 bg-emerald-500/5" : "border-[#1f2937] hover:border-brand/40"
+            dragOver ? "border-brand bg-brand/10" : file ? "border-emerald-500/40 bg-emerald-500/5" : "border-[var(--border)] hover:border-brand/40"
           }`}
           onClick={() => document.getElementById("file-input")?.click()}
         >
@@ -353,7 +353,7 @@ function FileTab() {
             <div>
               <p className="text-4xl mb-3">📂</p>
               <p className="text-white font-medium">Перетащите файл сюда или нажмите для выбора</p>
-              <p className="text-gray-500 text-sm mt-1">TXT, CSV — до 2 МБ</p>
+              <p className="text-[var(--text-3)] text-sm mt-1">TXT, CSV — до 2 МБ</p>
             </div>
           )}
         </div>
@@ -379,7 +379,7 @@ function FileTab() {
                 { label: "В очереди", value: result.scheduled as number, color: "text-emerald-400" },
                 { label: "Дублей", value: result.duplicates as number, color: "text-yellow-400" },
                 { label: "Строк в файле", value: result.linesInFile as number },
-                { label: "Не распознано", value: result.unsupported as number, color: "text-gray-500" },
+                { label: "Не распознано", value: result.unsupported as number, color: "text-[var(--text-3)]" },
               ]} />
               {(result.truncated as number) > 0 && (
                 <p className="text-yellow-400 text-sm">⚠ Обработано первые 500. Пропущено: {result.truncated as number}</p>
@@ -398,7 +398,7 @@ function FileTab() {
             <span className="text-emerald-400 mt-0.5">✓</span>
             <div>
               <p className="text-gray-300 font-medium">TXT — текстовый файл</p>
-              <p>Каждый ID на отдельной строке: <code className="text-gray-300">5853474</code></p>
+              <p>Каждый ID на отдельной строке: <code className="text-[var(--text-2)]">5853474</code></p>
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -412,7 +412,7 @@ function FileTab() {
             <span className="text-yellow-400 mt-0.5">→</span>
             <div>
               <p className="text-gray-300 font-medium">Excel (XLSX/XLS)</p>
-              <p>Откройте в Excel → Файл → Сохранить как → <strong className="text-gray-300">CSV UTF-8</strong> → загрузите CSV</p>
+              <p>Откройте в Excel → Файл → Сохранить как → <strong className="text-[var(--text-2)]">CSV UTF-8</strong> → загрузите CSV</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -459,7 +459,7 @@ function QueueTab() {
         <>
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-semibold">Статус очереди</h3>
+              <h3 className="text-[var(--text)] font-semibold">Статус очереди</h3>
               <button onClick={load} disabled={loading} className="btn-ghost text-sm py-1 px-3">
                 {loading ? "↻" : "↻ Обновить"}
               </button>
@@ -469,7 +469,7 @@ function QueueTab() {
                 { label: "Ожидание", value: data.queue.pending, color: "text-yellow-400" },
                 { label: "В работе", value: data.queue.processing, color: "text-brand" },
                 { label: "Готово", value: data.queue.done, color: "text-emerald-400" },
-                { label: "Пропущено", value: data.queue.skipped, color: "text-gray-500" },
+                { label: "Пропущено", value: data.queue.skipped, color: "text-[var(--text-3)]" },
                 { label: "Ошибки", value: data.queue.failed, color: "text-red-400" },
               ].map(s => (
                 <div key={s.label} className="card p-3 text-center">
@@ -490,12 +490,12 @@ function QueueTab() {
       )}
 
       <div>
-        <h3 className="text-white font-semibold mb-3">История импортов</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-3">История импортов</h3>
         {data && data.logs.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-600 text-left border-b border-[#1f2937]">
+                <tr className="text-gray-600 text-left border-b border-[var(--border)]">
                   {["Дата", "Новых", "Обновл.", "Скрыто", "Ошибок", "Время"].map(h => (
                     <th key={h} className="pb-3 pr-4 font-medium">{h}</th>
                   ))}
@@ -503,7 +503,7 @@ function QueueTab() {
               </thead>
               <tbody>
                 {data.logs.map(log => (
-                  <tr key={log.id} className="border-b border-[#1f2937] hover:bg-white/2 transition-colors">
+                  <tr key={log.id} className="border-b border-[var(--border)] hover:bg-white/2 transition-colors">
                     <td className="py-3 pr-4 text-gray-400 text-xs">
                       {new Date(log.date).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </td>
@@ -511,7 +511,7 @@ function QueueTab() {
                     <td className="py-3 pr-4 text-brand font-semibold">{log.updated}</td>
                     <td className="py-3 pr-4 text-yellow-400 font-semibold">{log.hidden}</td>
                     <td className="py-3 pr-4">
-                      <span className={log.errors > 0 ? "text-red-400 font-semibold" : "text-gray-600"}>{log.errors}</span>
+                      <span className={log.errors > 0 ? "text-red-400 font-semibold" : "text-[var(--text-3)]"}>{log.errors}</span>
                     </td>
                     <td className="py-3 text-gray-600 text-xs">
                       {log.duration ? `${Math.round(log.duration / 1000)}с` : "—"}
@@ -523,7 +523,7 @@ function QueueTab() {
           </div>
         ) : (
           <div className="card p-8 text-center">
-            <p className="text-gray-600 text-sm">{loading ? "Загрузка..." : "Импортов ещё не было"}</p>
+            <p className="text-[var(--text-3)] text-sm">{loading ? "Загрузка..." : "Импортов ещё не было"}</p>
           </div>
         )}
 
@@ -531,7 +531,7 @@ function QueueTab() {
           <div className="flex items-center justify-center gap-3 mt-4">
             <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
               className="btn-ghost text-sm py-1.5 px-3 disabled:opacity-40">← Пред</button>
-            <span className="text-gray-500 text-sm">{page} / {data.pages}</span>
+            <span className="text-[var(--text-3)] text-sm">{page} / {data.pages}</span>
             <button disabled={page === data.pages} onClick={() => setPage(p => p + 1)}
               className="btn-ghost text-sm py-1.5 px-3 disabled:opacity-40">След →</button>
           </div>
@@ -574,7 +574,7 @@ function SettingsTab() {
   return (
     <div className="space-y-5 max-w-xl">
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-4">Наценка на товары</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-4">Наценка на товары</h3>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {[["none","Без наценки"],["percent","Процент %"],["fixed","Фикс. ₽"]].map(([v,l]) => (
@@ -601,7 +601,7 @@ function SettingsTab() {
                 </div>
               </div>
               <div className="card p-3 text-sm">
-                <p className="text-gray-500">Цена поставщика: <span className="text-white">{example} ₽</span> → Цена на сайте: <span className="text-brand font-semibold">{preview} ₽</span></p>
+                <p className="text-[var(--text-3)]">Цена поставщика: <span className="text-[var(--text)]">{example} ₽</span> → Цена на сайте: <span className="text-brand font-semibold">{preview} ₽</span></p>
               </div>
             </>
           )}
@@ -610,7 +610,7 @@ function SettingsTab() {
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-white font-semibold">Автосинхронизация</h3>
+          <h3 className="text-[var(--text)] font-semibold">Автосинхронизация</h3>
           <button onClick={() => setForm(f => ({ ...f, syncEnabled: !f.syncEnabled }))}
             className={`relative w-11 h-6 rounded-full transition-colors ${form.syncEnabled ? "bg-brand" : "bg-gray-700"}`}>
             <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${form.syncEnabled ? "translate-x-6" : "translate-x-1"}`} />
@@ -645,8 +645,8 @@ export default function AdminImportPage() {
   return (
     <div className="p-6">
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-white">Импорт товаров</h1>
-        <p className="text-gray-500 text-sm mt-1">Digiseller API · Наполнение каталога</p>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Импорт товаров</h1>
+        <p className="text-[var(--text-3)] text-sm mt-1">Digiseller API · Наполнение каталога</p>
       </div>
 
       {/* Вкладки */}
@@ -664,7 +664,7 @@ export default function AdminImportPage() {
       {tab === "queue" && <QueueTab />}
       {tab === "settings" && <SettingsTab />}
 
-      <div className="mt-8 pt-5 border-t border-[#1f2937] flex flex-wrap gap-2">
+      <div className="mt-8 pt-5 border-t border-[var(--border)] flex flex-wrap gap-2">
         <Link href="/admin" className="btn-ghost text-sm py-2 px-4">📊 Дашборд</Link>
         <Link href="/admin/products" className="btn-ghost text-sm py-2 px-4">🎮 Товары</Link>
         <Link href="/catalog" target="_blank" className="btn-ghost text-sm py-2 px-4">🌐 Магазин</Link>
