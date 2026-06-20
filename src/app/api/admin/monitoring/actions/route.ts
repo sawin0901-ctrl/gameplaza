@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../../../lib/auth"
-import { prisma } from "../../../../lib/prisma"
-import { importQueue } from "../../../../lib/queue"
-import { logInfo } from "../../../../lib/system-logger"
+import { authOptions } from "../../../../../lib/auth"
+import { prisma } from "../../../../../lib/prisma"
+import { importQueue } from "../../../../../lib/queue"
+import { logInfo } from "../../../../../lib/system-logger"
 import { z } from "zod"
 
 const Schema = z.object({
