@@ -4,12 +4,11 @@ import { buildProductMetadata } from "../../../lib/seo"
 import { sanitizeDescription } from "../../../lib/sanitize"
 import { notFound } from "next/navigation"
 import Image from "next/image"
+import DigisellerWidget from "../../../components/DigisellerWidget"
 import ProductCard from "../../../components/ProductCard"
 import type { Metadata } from "next"
 
 export const revalidate = 300
-
-const SELLER_ID = "1459731"
 
 const getProduct = cache(async (slug: string) =>
   prisma.product.findUnique({
@@ -58,9 +57,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
     },
   }
 
-  // Digiseller init inline script (same as their dashboard code)
-  const digisellerScript = `!function(e){var l=function(l){return e.cookie.match(new RegExp("(?:^|; )digiseller-"+l+"=([^;]*)"))},i=l("lang"),s=l("cart_uid"),t=i?"&lang="+i[1]:"",d=s?"&cart_uid="+s[1]:"",r=e.getElementsByTagName("head")[0]||e.documentElement,n=e.createElement("link"),a=e.createElement("script");n.type="text/css",n.rel="stylesheet",n.id="digiseller-css",n.href="//shop.digiseller.com/xml/store2_css.asp?seller_id=${SELLER_ID}",a.async=!0,a.id="digiseller-js",a.src="//digiseller.com/store2/digiseller-api.js.asp?seller_id=${SELLER_ID}"+t+d,!e.getElementById(n.id)&&r.appendChild(n),!e.getElementById(a.id)&&r.appendChild(a)}(document);`
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -85,8 +81,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* Main: image left, info+widget right */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
 
-        {/* LEFT: Image — fixed 420px, square */}
-        <div className="w-full md:w-[420px] shrink-0">
+        {/* LEFT: Image — 280px fixed, square, full image */}
+        <div className="w-full md:w-[280px] shrink-0">
           <div
             className="rounded-xl overflow-hidden bg-[#1a1a26]"
             style={{ position: "relative", width: "100%", paddingTop: "100%" }}
@@ -96,6 +92,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 src={product.imageUrl}
                 alt={product.name}
                 fill
+                sizes="280px"
                 className="object-contain"
                 style={{ position: "absolute", inset: 0 }}
                 priority
@@ -129,21 +126,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
             )}
           </div>
 
-          {/* Digiseller buy widget — inline script + div (exact format from Digiseller dashboard) */}
           <div className="mb-5">
-            {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
-            <script dangerouslySetInnerHTML={{ __html: digisellerScript }} />
-            <div
-              style={{ display: "inline-block" }}
-              className="digiseller-buy-standalone"
-              data-id={String(product.digisellerProductId)}
-              data-ai={SELLER_ID}
-              data-img="0"
-              data-img-size=""
-              data-name="1"
-              data-price="1"
-              data-no-price="0"
-            />
+            <DigisellerWidget productId={product.digisellerProductId} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
