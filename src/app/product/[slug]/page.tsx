@@ -1,6 +1,7 @@
 import { cache } from "react"
 import { prisma } from "../../../lib/prisma"
 import { buildProductMetadata } from "../../../lib/seo"
+import { sanitizeDescription } from "../../../lib/sanitize"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import DigisellerWidget from "../../../components/DigisellerWidget"
@@ -119,7 +120,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <section className="mt-10">
         <h2 className="text-xl font-bold text-white mb-4">Описание</h2>
         <div className="card p-6 text-gray-300 text-sm leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: product.description }} />
+          dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }} />
       </section>
 
       {/* Related products */}
