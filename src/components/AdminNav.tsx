@@ -4,16 +4,16 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const NAV = [
-  { href: "/admin", label: "Дашборд", icon: "📊" },
-  { href: "/admin/products", label: "Товары", icon: "🎮" },
-  { href: "/admin/orders", label: "Заказы", icon: "🧾" },
-  { href: "/admin/promo", label: "Промокоды", icon: "🎟️" },
-  { href: "/admin/import", label: "Импорт", icon: "⬇️" },
-  { href: "/admin/analytics", label: "Аналитика", icon: "📈" },
-  { href: "/admin/monitoring", label: "Мониторинг", icon: "🔍", badge: true },
-  { href: "/admin/categories", label: "Категории", icon: "📁" },
-  { href: "/admin/users", label: "Пользователи", icon: "👥" },
-  { href: "/admin/backup", label: "Резервные копии", icon: "💾" },
+  { href: "/admin",            label: "Дашборд",         icon: "📊" },
+  { href: "/admin/products",   label: "Товары",           icon: "🎮" },
+  { href: "/admin/orders",     label: "Заказы",           icon: "🧾" },
+  { href: "/admin/promo",      label: "Промокоды",        icon: "🎟️" },
+  { href: "/admin/import",     label: "Импорт",           icon: "⬇️" },
+  { href: "/admin/analytics",  label: "Аналитика",        icon: "📈" },
+  { href: "/admin/monitoring", label: "Мониторинг",       icon: "🔍", badge: true },
+  { href: "/admin/categories", label: "Категории",        icon: "📁" },
+  { href: "/admin/users",      label: "Пользователи",     icon: "👥" },
+  { href: "/admin/backup",     label: "Резервные копии",  icon: "💾" },
 ]
 
 export default function AdminNav() {
@@ -43,7 +43,7 @@ export default function AdminNav() {
             className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
               active
                 ? "bg-brand/20 text-brand font-medium"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                : "text-[var(--text-3)] hover:text-[var(--text)] hover:bg-[rgba(0,0,0,0.05)]"
             }`}>
             <span>{n.icon}</span>
             <span>{n.label}</span>
