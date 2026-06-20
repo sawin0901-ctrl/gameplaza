@@ -49,17 +49,17 @@ export default function RegisterPage() {
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center font-bold text-white">G</div>
             <span className="font-bold text-xl">
-              <span className="text-brand">Game</span><span className="text-white">Plaza</span>
+              <span className="text-brand">Game</span><span className="text-[var(--text)]">Plaza</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white">Создать аккаунт</h1>
-          <p className="text-gray-500 text-sm mt-1">Зарегистрируйтесь бесплатно</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Создать аккаунт</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">Зарегистрируйтесь бесплатно</p>
         </div>
 
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Имя</label>
+              <label className="text-sm text-[var(--text-2)] mb-1.5 block">Имя</label>
               <input
                 type="text"
                 value={name}
@@ -71,7 +71,7 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Email</label>
+              <label className="text-sm text-[var(--text-2)] mb-1.5 block">Email</label>
               <input
                 type="email"
                 value={email}
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Пароль</label>
+              <label className="text-sm text-[var(--text-2)] mb-1.5 block">Пароль</label>
               <input
                 type="password"
                 value={password}
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1.5 block">Повторите пароль</label>
+              <label className="text-sm text-[var(--text-2)] mb-1.5 block">Повторите пароль</label>
               <input
                 type="password"
                 value={confirm}
@@ -122,7 +122,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="border-t border-[#1f2937] mt-6 pt-6">
+          <div className="border-t border-[var(--border)] mt-6 pt-6">
             <p className="text-center text-gray-500 text-sm">
               Уже есть аккаунт?{" "}
               <Link href="/auth/login" className="text-brand hover:text-brand-400 font-medium transition-colors">
