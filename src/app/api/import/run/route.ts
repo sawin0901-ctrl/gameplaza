@@ -9,7 +9,7 @@ const MAX_PER_DAY = 200
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  const isAdmin = session && (session.user as any).role === "admin"
+  const isAdmin = session && session.user.role === "admin"
   const hasSecret = req.headers.get("x-admin-secret") === process.env.ADMIN_SECRET
 
   if (!isAdmin && !hasSecret) {
