@@ -2,18 +2,11 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../../lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-
-const NAV = [
-  { href: "/admin", label: "Дашборд", icon: "📊" },
-  { href: "/admin/products", label: "Товары", icon: "🎮" },
-  { href: "/admin/import", label: "Импорт", icon: "⬇️" },
-  { href: "/admin/categories", label: "Категории", icon: "📁" },
-  { href: "/admin/users", label: "Пользователи", icon: "👥" },
-]
+import AdminNav from "../../components/AdminNav"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== "admin") redirect("/auth/login")
+  if (!session || session.user.role !== "admin") redirect("/auth/login")
 
   return (
     <div className="flex min-h-screen">
@@ -24,15 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="font-bold text-sm text-white">Админ панель</span>
           </Link>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {NAV.map(n => (
-            <Link key={n.href} href={n.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-sm transition-colors">
-              <span>{n.icon}</span>
-              <span>{n.label}</span>
-            </Link>
-          ))}
-        </nav>
+        <AdminNav />
         <div className="p-3 border-t border-[#1f2937]">
           <Link href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:text-gray-400 text-xs transition-colors">
             ← На сайт
