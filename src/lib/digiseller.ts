@@ -39,7 +39,8 @@ export async function getDigisellerToken(): Promise<string> {
   const timestamp = Math.floor(Date.now() / 1000)
   const sign = crypto.createHash("md5").update(apiKey + timestamp).digest("hex")
 
-  let res: Awaited<ReturnType<typeof axios.post>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let res: any
   try {
     res = await axios.post(
       `${BASE_URL}/apilogin`,
