@@ -2,8 +2,18 @@ import axios from "axios"
 import * as cheerio from "cheerio"
 
 const BASE_URL = "https://api.digiseller.ru/api"
-const SELLER_ID = process.env.DIGISELLER_SELLER_ID!
-const API_KEY = process.env.DIGISELLER_API_KEY!
+
+function getCredentials() {
+  const sellerId = process.env.DIGISELLER_SELLER_ID
+  const apiKey = process.env.DIGISELLER_API_KEY
+  if (!sellerId || sellerId === "your-seller-id") {
+    throw new Error("DIGISELLER_SELLER_ID не задан в .env файле")
+  }
+  if (!apiKey || apiKey === "your-api-key") {
+    throw new Error("DIGISELLER_API_KEY не задан в .env файле")
+  }
+  return { sellerId, apiKey }
+}
 
 export interface DigisellerProduct {
   id_goods: number
@@ -26,28 +36,73 @@ export interface DigisellerProductList {
 }
 
 export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<DigisellerProductList> {
-  const res = await axios.get(`${BASE_URL}/seller-goods`, {
-    params: {
-      seller_id: SELLER_ID,
-      token: API_KEY,
-      page,
-      rows: pageSize,
-      order: "date",
-      direction: "desc",
-    },
-    headers: { Accept: "application/json" },
-    timeout: 15000,
-  })
-  return res.data
+  const { sellerId, apiKey } = getCredentials()
+
+  try {
+    const res = await axios.get(`${BASE_URL}/seller-goods`, {
+      params: {
+        seller_id: sellerId,
+        token: apiKey,
+        page,
+        rows: pageSize,
+        order: "date",
+        direction: "desc",
+      },
+      headers: { Accept: "application/json" },
+      timeout: 20000,
+    })
+
+    if (!res.data || typeof res.data !== "object") {
+      throw new Error("Digiseller вернул пустой или некорректный ответ")
+    }
+
+    // API может вернуть ошибку в теле с кодом 200
+    if (res.data.retval !== undefined && res.data.retval !== 0) {
+      throw new Error(`Digiseller API ошибка: ${res.data.retdesc ?? `код ${res.data.retval}`}`)
+    }
+
+    if (!Array.isArray(res.data.rows)) {
+      // Пробуем альтернативный ключ
+      const rows = res.data.goods ?? res.data.products ?? res.data.items
+      if (Array.isArray(rows)) return { rows, count: rows.length, pages: 1 }
+      throw new Error(`Не удалось найти список товаров в ответе Digiseller. Ответ: ${JSON.stringify(res.data).slice(0, 300)}`)
+    }
+
+    return res.data as DigisellerProductList
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
+        throw new Error("Таймаут запроса к Digiseller API (>20с). Сервер Digiseller не отвечает.")
+      }
+      if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
+        throw new Error("Нет соединения с api.digiseller.ru. Проверьте интернет-соединение на сервере.")
+      }
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        throw new Error("Неверный токен Digiseller API. Проверьте DIGISELLER_SELLER_ID и DIGISELLER_API_KEY в файле .env")
+      }
+      if (err.response?.status === 429) {
+        throw new Error("Превышен лимит запросов к Digiseller API. Подождите несколько минут и повторите.")
+      }
+      if (err.response) {
+        throw new Error(`Digiseller API вернул ошибку ${err.response.status}: ${JSON.stringify(err.response.data).slice(0, 200)}`)
+      }
+      if (!err.response) {
+        throw new Error(`Ошибка сети при запросе к Digiseller API: ${err.message}`)
+      }
+    }
+    throw err
+  }
 }
 
 export async function getDigisellerProduct(productId: number): Promise<DigisellerProduct | null> {
-  // 1. Try public goods endpoint (works for any product, not just own)
+  const { sellerId } = getCredentials()
+
+  // 1. Public goods endpoint
   try {
     const res = await axios.get(`${BASE_URL}/goods/${productId}`, {
-      params: { seller_id: SELLER_ID, lang: "ru", currency: "RUB" },
+      params: { seller_id: sellerId, lang: "ru", currency: "RUB" },
       headers: { Accept: "application/json" },
-      timeout: 10000,
+      timeout: 12000,
     })
     const g = res.data?.goods_info || res.data?.product
     if (g && (g.name || g.name_goods)) {
@@ -67,17 +122,18 @@ export async function getDigisellerProduct(productId: number): Promise<Digiselle
     }
   } catch {}
 
-  // 2. Try seller products info endpoint
+  // 2. Seller products info
   try {
+    const { apiKey } = getCredentials()
     const res = await axios.get(`${BASE_URL}/products/info`, {
-      params: { product_id: productId, seller_id: SELLER_ID },
+      params: { product_id: productId, seller_id: sellerId, token: apiKey },
       headers: { Accept: "application/json" },
       timeout: 10000,
     })
     if (res.data?.product) return res.data.product
   } catch {}
 
-  // 3. Scrape plati.market directly (works for affiliate/partner products)
+  // 3. Fallback: scrape plati.market
   return scrapePlatiMarket(productId)
 }
 
@@ -105,7 +161,6 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
       $(".buy-btn .price").first().text().replace(/[^\d.]/g, "")
     const price = parseFloat(priceStr) || 0
 
-    // Try to extract old (pre-discount) price
     const oldPriceStr =
       $(".price-old .val").first().text().replace(/[^\d.]/g, "") ||
       $("del .val").first().text().replace(/[^\d.]/g, "") ||
