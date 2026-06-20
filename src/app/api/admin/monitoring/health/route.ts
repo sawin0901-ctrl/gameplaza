@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../../../lib/auth"
-import { prisma } from "../../../../lib/prisma"
-import { importQueue, connection } from "../../../../lib/queue"
+import { authOptions } from "../../../../../lib/auth"
+import { prisma } from "../../../../../lib/prisma"
+import { importQueue, connection } from "../../../../../lib/queue"
 import os from "os"
 
 export const dynamic = "force-dynamic"
