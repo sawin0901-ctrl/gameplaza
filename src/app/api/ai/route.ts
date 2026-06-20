@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../../../lib/auth"
+import { rateLimit } from "../../../lib/rate-limit"
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  if (!rateLimit(`ai:${session.user.email}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Слишком много запросов к AI. Попробуйте через час." }, { status: 429 })
+  }
 
   const { productName, category, price } = await req.json()
   if (!productName) return NextResponse.json({ error: "productName required" }, { status: 400 })
