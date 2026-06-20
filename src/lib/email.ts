@@ -1,16 +1,31 @@
 import nodemailer from "nodemailer"
 
-function createTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === "true",
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  })
+// Синглтон транспорта — создаётся один раз, переиспользуется
+let _transport: nodemailer.Transporter | null = null
+function getTransport(): nodemailer.Transporter {
+  if (!_transport) {
+    _transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true",
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    })
+  }
+  return _transport
 }
 
 const FROM = process.env.SMTP_FROM || '"GamePlaza" <noreply@gameplaza.site>'
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://gameplaza.site"
+
+// Экранирование специальных HTML-символов для безопасной вставки в шаблон
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}
 
 const baseHtml = (content: string) => `<!DOCTYPE html>
 <html><body style="background:#0a0a0f;font-family:system-ui,sans-serif;margin:0;padding:24px">
@@ -27,47 +42,66 @@ const baseHtml = (content: string) => `<!DOCTYPE html>
 </body></html>`
 
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
+  const safeToken = encodeURIComponent(token)
+  const url = `${SITE}/api/auth/verify-email?token=${safeToken}`
+
   if (!process.env.SMTP_HOST) {
-    console.log(`[email] SMTP not configured. Verification link: ${SITE}/api/auth/verify-email?token=${token}`)
+    // В prod без SMTP — только URL в лог, без самого токена
+    console.log(`[email] SMTP not configured. Verification URL logged (token omitted for security).`)
+    console.log(`[email] URL: ${url}`)
     return
   }
-  const url = `${SITE}/api/auth/verify-email?token=${token}`
-  await createTransport().sendMail({
-    from: FROM,
-    to: email,
-    subject: "Подтвердите ваш email — GamePlaza",
-    html: baseHtml(`
-      <h2 style="color:#fff;font-size:20px;margin:0 0 8px">Подтвердите email</h2>
-      <p style="color:#9ca3af;font-size:14px;margin:0 0 24px">Нажмите кнопку ниже, чтобы подтвердить ваш адрес электронной почты.</p>
-      <div style="text-align:center;margin-bottom:24px">
-        <a href="${url}" style="background:#7c3aed;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;display:inline-block">
-          Подтвердить email
-        </a>
-      </div>
-      <p style="color:#6b7280;font-size:12px;text-align:center">Ссылка действительна 24 часа</p>
-    `),
-  })
+
+  try {
+    await getTransport().sendMail({
+      from: FROM,
+      to: escapeHtml(email),
+      subject: "Подтвердите ваш email — GamePlaza",
+      html: baseHtml(`
+        <h2 style="color:#fff;font-size:20px;margin:0 0 8px">Подтвердите email</h2>
+        <p style="color:#9ca3af;font-size:14px;margin:0 0 24px">Нажмите кнопку ниже, чтобы подтвердить ваш адрес электронной почты.</p>
+        <div style="text-align:center;margin-bottom:24px">
+          <a href="${escapeHtml(url)}" style="background:#7c3aed;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;display:inline-block">
+            Подтвердить email
+          </a>
+        </div>
+        <p style="color:#6b7280;font-size:12px;text-align:center">Ссылка действительна 24 часа</p>
+      `),
+    })
+  } catch (err) {
+    console.error("[email] Failed to send verification email:", err)
+    throw err
+  }
 }
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
+  const safeToken = encodeURIComponent(token)
+  const url = `${SITE}/auth/reset-password?token=${safeToken}`
+
   if (!process.env.SMTP_HOST) {
-    console.log(`[email] SMTP not configured. Reset link: ${SITE}/auth/reset-password?token=${token}`)
+    console.log(`[email] SMTP not configured. Reset URL logged (token omitted for security).`)
+    console.log(`[email] URL: ${url}`)
     return
   }
-  const url = `${SITE}/auth/reset-password?token=${token}`
-  await createTransport().sendMail({
-    from: FROM,
-    to: email,
-    subject: "Сброс пароля — GamePlaza",
-    html: baseHtml(`
-      <h2 style="color:#fff;font-size:20px;margin:0 0 8px">Сброс пароля</h2>
-      <p style="color:#9ca3af;font-size:14px;margin:0 0 24px">Вы запросили сброс пароля. Нажмите кнопку ниже для создания нового.</p>
-      <div style="text-align:center;margin-bottom:24px">
-        <a href="${url}" style="background:#7c3aed;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;display:inline-block">
-          Сбросить пароль
-        </a>
-      </div>
-      <p style="color:#6b7280;font-size:12px;text-align:center">Ссылка действительна 1 час</p>
-    `),
-  })
+
+  try {
+    await getTransport().sendMail({
+      from: FROM,
+      to: escapeHtml(email),
+      subject: "Сброс пароля — GamePlaza",
+      html: baseHtml(`
+        <h2 style="color:#fff;font-size:20px;margin:0 0 8px">Сброс пароля</h2>
+        <p style="color:#9ca3af;font-size:14px;margin:0 0 24px">Вы запросили сброс пароля. Нажмите кнопку ниже для создания нового.</p>
+        <div style="text-align:center;margin-bottom:24px">
+          <a href="${escapeHtml(url)}" style="background:#7c3aed;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;display:inline-block">
+            Сбросить пароль
+          </a>
+        </div>
+        <p style="color:#6b7280;font-size:12px;text-align:center">Ссылка действительна 1 час</p>
+      `),
+    })
+  } catch (err) {
+    console.error("[email] Failed to send password reset email:", err)
+    throw err
+  }
 }
