@@ -16,24 +16,30 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null
 
         const email = credentials.email.toLowerCase().trim()
-
-        // Защита от brute-force: не более 10 попыток за 15 минут по IP и по email
-        const ip =
-          (req?.headers?.["x-forwarded-for"] as string)?.split(",")[0]?.trim() ??
-          "unknown"
+        const ip = (req?.headers?.["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? "unknown"
+        const ua = (req?.headers?.["user-agent"] as string) ?? undefined
 
         if (!rateLimit(`login_ip:${ip}`, 10, 15 * 60 * 1000)) return null
         if (!rateLimit(`login_email:${email}`, 10, 15 * 60 * 1000)) return null
 
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user) {
-          // Искусственная задержка при несуществующем пользователе
-          // предотвращает timing-атаку для перечисления email-адресов
           await bcrypt.hash(credentials.password, 1)
           return null
         }
 
         const ok = await bcrypt.compare(credentials.password, user.password)
+
+        // Record login attempt asynchronously (fire-and-forget)
+        prisma.loginHistory.create({
+          data: {
+            userId: user.id,
+            ip: ip !== "unknown" ? ip : null,
+            userAgent: ua ?? null,
+            success: ok,
+          },
+        }).catch(() => {})
+
         if (!ok) return null
 
         return { id: user.id, name: user.name, email: user.email, role: user.role }
