@@ -1,8 +1,25 @@
-import { prisma } from "../lib/prisma"
+﻿import { prisma } from "../lib/prisma"
 import ProductCard from "../components/ProductCard"
 import Link from "next/link"
+import type { Metadata } from "next"
 
-export const revalidate = 300
+export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: "GamePlaza — магазин цифровых товаров",
+  description: "Купить цифровые товары: игры Steam, Xbox, PlayStation, программы, ключи активации. Мгновенная доставка, безопасная оплата через Digiseller.",
+  openGraph: {
+    title: "GamePlaza — магазин цифровых товаров",
+    description: "Игры, программы, подписки и ключи активации по лучшим ценам. Мгновенная доставка.",
+    type: "website",
+    siteName: "GamePlaza",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GamePlaza — магазин цифровых товаров",
+    description: "Игры, программы, подписки и ключи активации. Мгновенная доставка.",
+  },
+}
 
 const CATEGORIES = [
   { name: "Игры Steam", slug: "steam", emoji: "🎮", gradient: "from-blue-600/30 to-blue-900/40", border: "hover:border-blue-500/40" },
