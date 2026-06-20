@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma"
 import { MetadataRoute } from "next"
 
-const SITE_URL = "https://gameplaza.site"
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://gameplaza.site"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await prisma.product.findMany({
