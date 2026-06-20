@@ -3,12 +3,17 @@ import { prisma } from "../../../lib/prisma"
 import { buildProductMetadata } from "../../../lib/seo"
 import { sanitizeDescription } from "../../../lib/sanitize"
 import { notFound } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../../../lib/auth"
 import Image from "next/image"
 import DigisellerWidget from "../../../components/DigisellerWidget"
 import ProductCard from "../../../components/ProductCard"
+import ProductTabs from "../../../components/ProductTabs"
+import ReviewsTabContent from "../../../components/ReviewsTabContent"
+import ImageGallery from "../../../components/ImageGallery"
 import type { Metadata } from "next"
 
-export const revalidate = 300
+export const revalidate = 60
 
 const getProduct = cache(async (slug: string) =>
   prisma.product.findUnique({
@@ -27,9 +32,34 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProduct(params.slug)
+  const [product, session] = await Promise.all([
+    getProduct(params.slug),
+    getServerSession(authOptions),
+  ])
   if (!product) notFound()
 
+  // Отзывы + проверка, оставлял ли текущий пользователь отзыв
+  const [reviews, userReview] = await Promise.all([
+    prisma.review.findMany({
+      where: { productId: product.id },
+      select: {
+        id: true,
+        rating: true,
+        text: true,
+        createdAt: true,
+        user: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    session?.user?.id
+      ? prisma.review.findUnique({
+          where: { productId_userId: { productId: product.id, userId: session.user.id } },
+          select: { id: true },
+        })
+      : null,
+  ])
+
+  // Похожие товары
   const categoryProducts = product.categoryId
     ? await prisma.product.findMany({
         where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
@@ -37,15 +67,26 @@ export default async function ProductPage({ params }: { params: { slug: string }
         orderBy: { importedAt: "desc" },
       })
     : []
-
   const related = [...product.relatedProducts, ...categoryProducts].slice(0, 4)
 
+  // JSON-LD с отзывами для SEO
+  const avgRating =
+    reviews.length
+      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+      : null
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description.replace(/<[^>]+>/g, "").slice(0, 300),
     image: product.imageUrl ?? undefined,
+    aggregateRating: avgRating
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: avgRating.toFixed(1),
+          reviewCount: reviews.length,
+        }
+      : undefined,
     offers: {
       "@type": "Offer",
       price: product.price,
@@ -57,9 +98,39 @@ export default async function ProductPage({ params }: { params: { slug: string }
     },
   }
 
+  // Галерея
+  const galleryImages = product.imageUrl
+    ? [{ url: product.imageUrl, alt: product.name }]
+    : []
+
+  // Характеристики
+  const specs = [
+    { label: "Артикул", value: String(product.digisellerProductId) },
+    product.category ? { label: "Категория", value: product.category.name } : null,
+    { label: "Цена", value: `${product.price.toLocaleString("ru-RU")} ₽` },
+    product.oldPrice
+      ? { label: "Старая цена", value: `${product.oldPrice.toLocaleString("ru-RU")} ₽` }
+      : null,
+    { label: "Наличие", value: product.inStock ? "В наличии" : "Нет в наличии" },
+    product.soldCount > 0
+      ? { label: "Продано", value: `${product.soldCount}+ шт.` }
+      : null,
+    { label: "Доставка", value: "Мгновенная (цифровой товар)" },
+    { label: "Гарантия", value: "Предоставляется" },
+  ].filter(Boolean) as { label: string; value: string }[]
+
+  // Сериализуем даты для клиентских компонентов
+  const serializedReviews = reviews.map(r => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+  }))
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-600 mb-5 flex items-center gap-1.5 flex-wrap">
@@ -69,7 +140,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
         {product.category && (
           <>
             <span>/</span>
-            <a href={`/catalog?category=${product.category.slug}`} className="hover:text-white transition-colors">
+            <a
+              href={`/catalog?category=${product.category.slug}`}
+              className="hover:text-white transition-colors"
+            >
               {product.category.name}
             </a>
           </>
@@ -78,21 +152,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <span className="text-gray-400 truncate max-w-[180px]">{product.name}</span>
       </nav>
 
-      {/*
-        Desktop/Laptop (≥1024px): 2-col grid
-          LEFT  = image + title + description
-          RIGHT = widget (sticky)
-        Mobile/Tablet (<1024px): single column
-          image → title → widget → description
-      */}
+      {/* Главный блок: изображение + инфо | виджет */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-x-10 items-start">
 
-        {/* ═══ LEFT COLUMN ═══ */}
+        {/* ═══ Левая колонка ═══ */}
         <div>
-          {/* Image + Info row */}
-          <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
-
-            {/* Image */}
+          <div className="flex flex-col sm:flex-row gap-5 items-start">
+            {/* Изображение */}
             <div className="w-full sm:w-[220px] shrink-0">
               <div
                 className="rounded-xl overflow-hidden bg-[#1a1a26]"
@@ -109,14 +175,17 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     priority
                   />
                 ) : (
-                  <div style={{ position: "absolute", inset: 0 }} className="flex items-center justify-center">
+                  <div
+                    style={{ position: "absolute", inset: 0 }}
+                    className="flex items-center justify-center"
+                  >
                     <span className="text-7xl opacity-10">🎮</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Title + status + badges */}
+            {/* Заголовок + статус + бейджи */}
             <div className="flex-1 min-w-0">
               {product.category && (
                 <p className="text-brand text-sm font-medium mb-1">{product.category.name}</p>
@@ -125,7 +194,18 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 {product.name}
               </h1>
 
-              <div className="flex items-center gap-2 mb-5">
+              {/* Рейтинг из отзывов */}
+              {reviews.length > 0 && avgRating && (
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex text-yellow-400 text-sm leading-none">
+                    {"★".repeat(Math.round(avgRating))}
+                    {"☆".repeat(5 - Math.round(avgRating))}
+                  </div>
+                  <span className="text-gray-500 text-sm">{reviews.length} отзывов</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mb-5 flex-wrap">
                 {product.inStock ? (
                   <>
                     <span className="w-2 h-2 bg-emerald-400 rounded-full shrink-0" />
@@ -136,6 +216,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     <span className="w-2 h-2 bg-red-400 rounded-full shrink-0" />
                     <span className="text-red-400 text-sm font-medium">Нет в наличии</span>
                   </>
+                )}
+                {product.soldCount > 0 && (
+                  <span className="text-gray-600 text-sm">• Продано {product.soldCount}+</span>
                 )}
               </div>
 
@@ -155,29 +238,69 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
           </div>
 
-          {/* Widget — only on mobile/tablet (hidden on desktop where it's in right column) */}
-          <div className="block lg:hidden mb-5">
+          {/* Виджет на мобильных */}
+          <div className="block lg:hidden mt-5">
             <DigisellerWidget productId={product.digisellerProductId} />
           </div>
-
-          {/* Description — starts right after image+info, no big gap */}
-          <section>
-            <h2 className="text-xl font-bold text-white mb-3">Описание</h2>
-            <div
-              className="card p-5 text-gray-300 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
-            />
-          </section>
         </div>
 
-        {/* ═══ RIGHT COLUMN: Widget desktop only ═══ */}
+        {/* ═══ Правая колонка: виджет sticky ═══ */}
         <div className="hidden lg:block" style={{ position: "sticky", top: "96px" }}>
           <DigisellerWidget productId={product.digisellerProductId} />
         </div>
-
       </div>
 
-      {/* Related products */}
+      {/* ═══ Вкладки ═══ */}
+      <div className="mt-8">
+        <ProductTabs
+          tabs={[
+            { id: "desc", label: "Описание" },
+            { id: "reviews", label: "Отзывы", count: reviews.length },
+            { id: "images", label: "Изображения", count: galleryImages.length },
+            { id: "specs", label: "Характеристики" },
+          ]}
+          panels={[
+            /* ── Описание (в DOM для SEO) ── */
+            <div
+              key="desc"
+              className="card p-5 text-gray-300 text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
+            />,
+
+            /* ── Отзывы ── */
+            <ReviewsTabContent
+              key="reviews"
+              initialReviews={serializedReviews}
+              productId={product.id}
+              userId={session?.user?.id ?? null}
+              alreadyReviewed={!!userReview}
+            />,
+
+            /* ── Галерея ── */
+            <ImageGallery key="images" images={galleryImages} />,
+
+            /* ── Характеристики ── */
+            <div key="specs" className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  {specs.map((row, i) => (
+                    <tr key={row.label} className={i % 2 === 0 ? "bg-white/[0.02]" : ""}>
+                      <td className="px-4 py-3 text-gray-500 font-medium w-[40%] border-b border-[#1e1e2e]">
+                        {row.label}
+                      </td>
+                      <td className="px-4 py-3 text-white border-b border-[#1e1e2e]">
+                        {row.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>,
+          ]}
+        />
+      </div>
+
+      {/* Похожие товары */}
       {related.length > 0 && (
         <section className="mt-10">
           <h2 className="text-xl font-bold text-white mb-5">Похожие товары</h2>
