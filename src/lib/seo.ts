@@ -3,6 +3,18 @@ import { Metadata } from "next"
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 const SITE_NAME = "GamePlaza"
 
+const TRANSLIT: Record<string, string> = {
+  а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
+  з: "z", и: "i", й: "j", к: "k", л: "l", м: "m", н: "n", о: "o",
+  п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts",
+  ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu",
+  я: "ya",
+}
+
+function transliterate(text: string): string {
+  return text.split("").map(ch => TRANSLIT[ch.toLowerCase()] ?? ch).join("")
+}
+
 export function buildProductMetadata(product: {
   name: string
   description: string
@@ -42,9 +54,9 @@ export function buildCatalogMetadata(category?: string): Metadata {
 }
 
 export function generateSlug(name: string, id: number): string {
-  const base = name
+  const base = transliterate(name)
     .toLowerCase()
-    .replace(/[^a-zа-яё0-9\s-]/gi, "")
+    .replace(/[^a-z0-9\s-]/g, "")
     .trim()
     .replace(/\s+/g, "-")
     .slice(0, 60)
