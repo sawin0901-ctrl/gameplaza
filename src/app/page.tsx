@@ -71,8 +71,8 @@ export default async function HomePage() {
     <div>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand/25 via-[#0a0a0f] to-purple-950/20" />
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="hero-overlay absolute inset-0 bg-gradient-to-br from-brand/25 via-[#0a0a0f] to-purple-950/20" />
+        <div className="hero-blob absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand/8 rounded-full blur-3xl pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-brand/10 border border-brand/20 rounded-full px-4 py-1.5 mb-6">
@@ -85,7 +85,7 @@ export default async function HomePage() {
               Цифровые товары{" "}
               <span className="text-brand">по лучшим ценам</span>
             </h1>
-            <p className="text-gray-400 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+            <p className="text-[var(--text-2)] text-lg mb-8 leading-relaxed max-w-xl mx-auto">
               Игры, программы, ключи активации и подписки. Мгновенная доставка, официальный Digiseller.
             </p>
             {/* Search */}
@@ -103,7 +103,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap justify-center gap-2">
               {["Игры Steam", "Game Pass", "Windows", "Подписки"].map(t => (
                 <Link key={t} href={`/catalog?q=${encodeURIComponent(t)}`}
-                  className="text-sm text-gray-500 hover:text-brand transition-colors bg-white/5 hover:bg-white/10 px-3 py-1 rounded-full">
+                  className="text-sm text-[var(--text-3)] hover:text-brand transition-colors bg-white/5 hover:bg-white/10 border border-transparent hover:border-brand/20 px-3 py-1.5 rounded-full">
                   {t}
                 </Link>
               ))}
@@ -135,7 +135,7 @@ export default async function HomePage() {
           ].map(s => (
             <div key={s.l} className="text-center py-2">
               <p className="text-2xl md:text-3xl font-extrabold text-brand">{s.v}</p>
-              <p className="text-gray-600 text-xs mt-1">{s.l}</p>
+              <p className="text-[var(--text-2)] text-xs mt-1">{s.l}</p>
             </div>
           ))}
         </div>
@@ -158,7 +158,7 @@ export default async function HomePage() {
             <Link key={cat.slug} href={`/catalog?category=${cat.slug}`}
               className={`card ${cat.border} bg-gradient-to-br ${cat.gradient} p-4 flex flex-col items-center gap-2 group text-center transition-all duration-200`}>
               <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{cat.emoji}</span>
-              <span className="text-xs font-medium text-gray-300 group-hover:text-white transition-colors leading-tight">{cat.name}</span>
+              <span className="text-xs font-semibold text-[var(--text)] group-hover:text-brand transition-colors leading-tight">{cat.name}</span>
             </Link>
           ))}
         </div>
@@ -166,7 +166,7 @@ export default async function HomePage() {
 
       {/* ── NEW ARRIVALS ── */}
       {newProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-8 border-t border-[#1f2937]">
+        <section className="max-w-7xl mx-auto px-4 py-8 border-t border-[var(--border)]">
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="section-title">🆕 Новые поступления</h2>
@@ -194,7 +194,7 @@ export default async function HomePage() {
 
       {/* ── POPULAR ── */}
       {popularProducts.length > 0 && popularProducts.some(p => p.soldCount > 0) && (
-        <section className="max-w-7xl mx-auto px-4 py-8 border-t border-[#1f2937]">
+        <section className="max-w-7xl mx-auto px-4 py-8 border-t border-[var(--border)]">
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="section-title">🔥 Популярные товары</h2>
@@ -222,7 +222,7 @@ export default async function HomePage() {
 
       {/* Empty state */}
       {newProducts.length === 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-12 border-t border-[#1f2937]">
+        <section className="max-w-7xl mx-auto px-4 py-12 border-t border-[var(--border)]">
           <div className="card p-16 text-center border-dashed">
             <div className="text-5xl mb-4">🎮</div>
             <h3 className="text-white font-bold text-xl mb-2">Товары скоро появятся</h3>
@@ -246,7 +246,7 @@ export default async function HomePage() {
                   {f.icon}
                 </div>
                 <h3 className="text-white font-semibold text-sm mb-1">{f.title}</h3>
-                <p className="text-gray-600 text-xs leading-relaxed">{f.desc}</p>
+                <p className="text-[var(--text-3)] text-xs leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -257,7 +257,7 @@ export default async function HomePage() {
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="card p-10 text-center bg-gradient-to-br from-brand/15 to-purple-950/20 border-brand/20">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Готовы начать покупки?</h2>
-          <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+          <p className="text-[var(--text-2)] mb-6 max-w-md mx-auto text-sm">
             Тысячи цифровых товаров по лучшим ценам. Мгновенная доставка через Digiseller.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
