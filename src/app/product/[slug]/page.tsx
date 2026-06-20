@@ -40,8 +40,27 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   const related = [...product.relatedProducts, ...categoryProducts].slice(0, 4)
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description.replace(/<[^>]+>/g, "").slice(0, 300),
+    image: product.imageUrl ?? undefined,
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "RUB",
+      availability: product.inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      seller: { "@type": "Organization", name: "GamePlaza" },
+    },
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-600 mb-6 flex items-center gap-1.5 flex-wrap">
         <a href="/" className="hover:text-white transition-colors">Главная</a>
@@ -79,7 +98,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           )}
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">{product.name}</h1>
 
-          {/* Availability */}
           <div className="flex items-center gap-2 mb-6">
             {product.inStock ? (
               <>
@@ -94,12 +112,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
             )}
           </div>
 
-          {/* Официальный виджет Digiseller: живая цена + кнопка покупки */}
           <div className="mb-6">
             <DigisellerWidget productId={product.digisellerProductId} />
           </div>
 
-          {/* Trust badges */}
           <div className="grid grid-cols-2 gap-3 mt-auto">
             {[
               { icon: "⚡", text: "Мгновенная доставка" },
