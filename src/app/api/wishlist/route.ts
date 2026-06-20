@@ -5,7 +5,7 @@ import { prisma } from "../../../lib/prisma"
 import { z } from "zod"
 
 const ProductIdSchema = z.object({
-  productId: z.number().int().positive("productId должен быть положительным целым числом"),
+  productId: z.string().min(1).max(128),
 })
 
 export async function GET() {
@@ -56,9 +56,8 @@ export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const raw = req.nextUrl.searchParams.get("productId")
-  const productId = raw ? parseInt(raw, 10) : NaN
-  if (!Number.isInteger(productId) || productId <= 0) {
+  const productId = req.nextUrl.searchParams.get("productId")?.trim()
+  if (!productId || productId.length === 0) {
     return NextResponse.json({ error: "Некорректный productId" }, { status: 400 })
   }
 
