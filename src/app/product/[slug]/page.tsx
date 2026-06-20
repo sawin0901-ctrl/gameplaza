@@ -83,9 +83,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
         {/* LEFT: Image → Description */}
         <div>
-          <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-[#1a1a26] mb-8">
+          <div className="relative aspect-square rounded-xl overflow-hidden bg-[#1a1a26] mb-8">
             {product.imageUrl ? (
-              <Image src={product.imageUrl} alt={product.name} fill className="object-cover" priority />
+              <Image src={product.imageUrl} alt={product.name} fill className="object-contain p-3" priority />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-7xl opacity-10">🎮</span>
