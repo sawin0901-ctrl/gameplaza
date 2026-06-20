@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../../../../lib/auth"
 import { scheduleImport } from "../../../../lib/queue"
 import { prisma } from "../../../../lib/prisma"
+import { z } from "zod"
+
+const Schema = z.object({
+  ids: z.array(z.number().int().positive()).min(1).max(50),
+})
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -10,8 +15,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { ids } = await req.json() as { ids: number[] }
-  if (!ids?.length) return NextResponse.json({ error: "ids required" }, { status: 400 })
+  let body: unknown
+  try { body = await req.json() } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = Schema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "ids должен быть массивом целых чисел (1–50)" }, { status: 400 })
+  }
+  const { ids } = parsed.data
 
   const existing = await prisma.product.findMany({
     where: { digisellerProductId: { in: ids } },
