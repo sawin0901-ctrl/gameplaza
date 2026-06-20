@@ -79,8 +79,8 @@ export default function AdminPromoPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Промокоды</h1>
-          <p className="text-gray-500 text-sm mt-1">Скидки и купоны для покупателей</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Промокоды</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">Скидки и купоны для покупателей</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary py-2 px-4 text-sm">
           {showForm ? "✕ Отмена" : "+ Создать промокод"}
@@ -93,7 +93,7 @@ export default function AdminPromoPage() {
       {/* Create form */}
       {showForm && (
         <form onSubmit={handleCreate} className="card p-5 mb-6">
-          <h3 className="text-white font-semibold mb-4">Новый промокод</h3>
+          <h3 className="text-[var(--text)] font-semibold mb-4">Новый промокод</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-gray-400 text-xs block mb-1">Код *</label>
@@ -153,7 +153,7 @@ export default function AdminPromoPage() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1f2937] text-gray-500 text-xs">
+              <tr className="border-b border-[var(--border)] text-gray-500 text-xs">
                 <th className="text-left px-4 py-3">Код</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Скидка</th>
                 <th className="text-left px-4 py-3 hidden lg:table-cell">Использований</th>
@@ -167,7 +167,7 @@ export default function AdminPromoPage() {
                 const expired = p.expiresAt && new Date(p.expiresAt) < new Date()
                 const exhausted = p.maxUses !== null && p.usedCount >= p.maxUses
                 return (
-                  <tr key={p.id} className="border-b border-[#1f2937] last:border-0 hover:bg-white/2">
+                  <tr key={p.id} className="border-b border-[var(--border)] last:border-0 hover:bg-white/2">
                     <td className="px-4 py-3">
                       <div className="font-mono text-brand font-semibold">{p.code}</div>
                       {p.description && <div className="text-gray-600 text-xs mt-0.5">{p.description}</div>}
@@ -196,7 +196,7 @@ export default function AdminPromoPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-1 justify-end">
                         <button onClick={() => toggleActive(p.id, p.isActive)}
-                          className="px-2 py-1 text-xs rounded border border-[#1f2937] text-gray-400 hover:text-white">
+                          className="px-2 py-1 text-xs rounded border border-[var(--border)] text-gray-400 hover:text-white">
                           {p.isActive ? "Откл." : "Вкл."}
                         </button>
                         <button onClick={() => deletePromo(p.id)}
