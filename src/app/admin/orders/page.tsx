@@ -62,8 +62,8 @@ export default async function AdminOrdersPage({
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Заказы</h1>
-          <p className="text-gray-500 text-sm mt-1">Всего: {stats._count} · Выручка: {fmt(stats._sum.totalAmount ?? 0)}</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Заказы</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">Всего: {stats._count} · Выручка: {fmt(stats._sum.totalAmount ?? 0)}</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export default async function AdminOrdersPage({
         <div className="flex gap-1 flex-wrap">
           {(["all","pending","processing","completed","cancelled","refunded"] as const).map(s => (
             <Link key={s} href={buildUrl({ status: s, page: 1 })}
-              className={`px-3 py-2 rounded-lg text-xs border transition-colors ${status === s ? "bg-brand border-brand text-white" : "border-[#1f2937] text-gray-400 hover:text-white"}`}>
+              className={`px-3 py-2 rounded-lg text-xs border transition-colors ${status === s ? "bg-brand border-brand text-white" : "border-[var(--border)] text-gray-400 hover:text-white"}`}>
               {s === "all" ? "Все" : STATUS_LABELS[s]}
             </Link>
           ))}
@@ -99,7 +99,7 @@ export default async function AdminOrdersPage({
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#1f2937] text-gray-500 text-xs">
+            <tr className="border-b border-[var(--border)] text-gray-500 text-xs">
               <th className="text-left px-4 py-3">Заказ</th>
               <th className="text-left px-4 py-3 hidden md:table-cell">Покупатель</th>
               <th className="text-left px-4 py-3 hidden lg:table-cell">Товары</th>
@@ -110,7 +110,7 @@ export default async function AdminOrdersPage({
           </thead>
           <tbody>
             {orders.map(o => (
-              <tr key={o.id} className="border-b border-[#1f2937] last:border-0 hover:bg-white/2">
+              <tr key={o.id} className="border-b border-[var(--border)] last:border-0 hover:bg-white/2">
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">
                   #{o.id.slice(-8).toUpperCase()}
                 </td>
@@ -122,7 +122,7 @@ export default async function AdminOrdersPage({
                   {o.items.slice(0, 2).map((i, idx) => (
                     <div key={idx} className="line-clamp-1">{i.name}</div>
                   ))}
-                  {o.items.length > 2 && <div className="text-gray-600">+{o.items.length - 2} ещё</div>}
+                  {o.items.length > 2 && <div className="text-[var(--text-3)]">+{o.items.length - 2} ещё</div>}
                 </td>
                 <td className="px-4 py-3 text-right font-semibold text-white">
                   {fmt(o.totalAmount)}
@@ -147,9 +147,9 @@ export default async function AdminOrdersPage({
 
       {totalPages > 1 && (
         <div className="flex gap-1 mt-4 justify-center">
-          {page > 1 && <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1.5 rounded border border-[#1f2937] text-gray-400 hover:text-white text-sm">←</Link>}
+          {page > 1 && <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1.5 rounded border border-[var(--border)] text-gray-400 hover:text-white text-sm">←</Link>}
           <span className="px-3 py-1.5 text-gray-400 text-sm">Стр. {page} из {totalPages}</span>
-          {page < totalPages && <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1.5 rounded border border-[#1f2937] text-gray-400 hover:text-white text-sm">→</Link>}
+          {page < totalPages && <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1.5 rounded border border-[var(--border)] text-gray-400 hover:text-white text-sm">→</Link>}
         </div>
       )}
     </div>
