@@ -18,27 +18,9 @@ export async function GET(req: NextRequest) {
     ...(status !== "all" ? { status } : {}),
     ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" as const } }, { id: { contains: q } }] } : {}),
   }
-
-  const [orders, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: PAGE,
-      skip: (page - 1) * PAGE,
-      include: {
-        items: { select: { name: true, price: true, digiId: true } },
-        user: { select: { name: true, email: true } },
-      },
-    }),
-    prisma.order.count({ where }),
-  ])
-
-  const stats = await prisma.order.aggregate({
-    _count: true,
-    _sum: { totalAmount: true },
-  })
-
-  return NextResponse.json({ orders, total, pages: Math.ceil(total / PAGE), stats })
+    param($m)
+    $m.Groups[1].Value + "try {`n" + $m.Groups[1].Value + "  " + $m.Groups[2].Value.Trim() + "`n" + $m.Groups[1].Value + "  " + $m.Groups[3].Value.Trim()
+  { orders, total, pages: Math.ceil(total / PAGE), stats })
 }
 
 export async function PATCH(req: NextRequest) {
