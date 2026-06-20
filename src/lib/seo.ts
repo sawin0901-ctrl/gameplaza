@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import sanitizeHtml from "sanitize-html"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 const SITE_NAME = "GamePlaza"
@@ -15,6 +16,10 @@ function transliterate(text: string): string {
   return text.split("").map(ch => TRANSLIT[ch.toLowerCase()] ?? ch).join("")
 }
 
+function stripHtml(html: string): string {
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+}
+
 export function buildProductMetadata(product: {
   name: string
   description: string
@@ -23,8 +28,9 @@ export function buildProductMetadata(product: {
   price: number
 }): Metadata {
   const title = `${product.name} — купить | ${SITE_NAME}`
-  const description = product.description.replace(/<[^>]+>/g, "").slice(0, 160)
+  const description = (stripHtml(product.description) || `Купить ${product.name} в GamePlaza`).slice(0, 160)
   const url = `${SITE_URL}/product/${product.slug}`
+  const images = product.imageUrl ? [{ url: product.imageUrl }] : []
 
   return {
     title,
@@ -35,9 +41,14 @@ export function buildProductMetadata(product: {
       url,
       siteName: SITE_NAME,
       type: "website",
-      images: product.imageUrl ? [{ url: product.imageUrl }] : [],
+      images,
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: product.imageUrl ? [product.imageUrl] : [],
+    },
     alternates: { canonical: url },
   }
 }
@@ -62,3 +73,5 @@ export function generateSlug(name: string, id: number): string {
     .slice(0, 60)
   return `${base}-${id}`
 }
+
+export { stripHtml }
