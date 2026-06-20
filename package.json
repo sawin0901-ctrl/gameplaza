@@ -27,7 +27,7 @@
     "bullmq": "^5.7.0",
     "axios": "^1.7.0",
     "cheerio": "^1.0.0",
-    "nodemailer": "^6.9.14",
+    "nodemailer": "^7.0.0",
     "@sentry/nextjs": "^8.0.0",
     "next-sitemap": "^4.2.3",
     "sanitize-html": "^2.13.0",
