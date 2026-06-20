@@ -91,16 +91,16 @@ function DashboardTab({ stats, logs }: {
 
       {/* Recent errors */}
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-4">Последние 10 событий</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-4">Последние 10 событий</h3>
         {logs.length > 0 ? (
           <div className="space-y-2">
             {logs.slice(0, 10).map(log => (
-              <div key={log.id} className="flex items-start gap-3 py-2 border-b border-[#1f2937]">
+              <div key={log.id} className="flex items-start gap-3 py-2 border-b border-[var(--border)]">
                 <span className={`text-xs px-2 py-0.5 rounded font-medium flex-shrink-0 mt-0.5 ${LEVEL_STYLES[log.level]}`}>
                   {log.level.toUpperCase()}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm truncate">{log.message}</p>
+                  <p className="text-[var(--text)] text-sm truncate">{log.message}</p>
                   <p className="text-gray-600 text-xs mt-0.5">
                     {CATEGORY_LABELS[log.category] ?? log.category} · {fmtDate(log.createdAt)}
                   </p>
@@ -114,7 +114,7 @@ function DashboardTab({ stats, logs }: {
         ) : (
           <div className="text-center py-8">
             <p className="text-4xl mb-3">✅</p>
-            <p className="text-gray-500">Ошибок не обнаружено</p>
+            <p className="text-[var(--text-3)]">Ошибок не обнаружено</p>
           </div>
         )}
       </div>
@@ -197,7 +197,7 @@ function LogsTab() {
           <div className="card overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-600 text-left border-b border-[#1f2937] text-xs">
+                <tr className="text-gray-600 text-left border-b border-[var(--border)] text-xs">
                   <th className="p-3 w-8">
                     <input type="checkbox" checked={allChecked}
                       onChange={e => setSelected(e.target.checked ? new Set(data.logs.map(l => l.id)) : new Set())}
@@ -217,7 +217,7 @@ function LogsTab() {
                 ) : data.logs.map(log => (
                   <>
                     <tr key={log.id}
-                      className="border-b border-[#1f2937] hover:bg-white/2 cursor-pointer"
+                      className="border-b border-[var(--border)] hover:bg-white/2 cursor-pointer"
                       onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
                       <td className="p-3" onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={selected.has(log.id)}
@@ -254,9 +254,9 @@ function LogsTab() {
                       <tr key={log.id + "-exp"} className="bg-white/3">
                         <td colSpan={7} className="px-4 py-3">
                           <div className="space-y-2 text-xs">
-                            {log.url && <p><span className="text-gray-500">URL:</span> <span className="text-gray-300">{log.url}</span></p>}
-                            {log.userId && <p><span className="text-gray-500">Пользователь:</span> <span className="text-gray-300">{log.userId}</span></p>}
-                            {log.resolvedAt && <p><span className="text-gray-500">Решено:</span> <span className="text-gray-300">{fmtDate(log.resolvedAt)} — {log.resolvedBy}</span></p>}
+                            {log.url && <p><span className="text-[var(--text-3)]">URL:</span> <span className="text-[var(--text-2)]">{log.url}</span></p>}
+                            {log.userId && <p><span className="text-[var(--text-3)]">Пользователь:</span> <span className="text-[var(--text-2)]">{log.userId}</span></p>}
+                            {log.resolvedAt && <p><span className="text-[var(--text-3)]">Решено:</span> <span className="text-[var(--text-2)]">{fmtDate(log.resolvedAt)} — {log.resolvedBy}</span></p>}
                             {log.details && (
                               <div>
                                 <p className="text-gray-500 mb-1">Детали:</p>
@@ -279,7 +279,7 @@ function LogsTab() {
           {data.pages > 1 && (
             <div className="flex items-center justify-center gap-3">
               <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-ghost text-sm py-1.5 px-3 disabled:opacity-40">← Пред</button>
-              <span className="text-gray-500 text-sm">{page} / {data.pages} (всего: {data.total})</span>
+              <span className="text-[var(--text-3)] text-sm">{page} / {data.pages} (всего: {data.total})</span>
               <button disabled={page === data.pages} onClick={() => setPage(p => p + 1)} className="btn-ghost text-sm py-1.5 px-3 disabled:opacity-40">След →</button>
             </div>
           )}
@@ -307,7 +307,7 @@ function DiagnosticsTab() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-white font-semibold">Диагностика системы</h3>
+          <h3 className="text-[var(--text)] font-semibold">Диагностика системы</h3>
           {data && <p className="text-gray-500 text-xs mt-1">Проверено {new Date(data.checkedAt).toLocaleTimeString("ru-RU")} · {data.duration}мс</p>}
         </div>
         <button onClick={runCheck} disabled={loading} className="btn-primary px-6 py-2.5 disabled:opacity-60">
@@ -326,7 +326,7 @@ function DiagnosticsTab() {
               <p className={`font-semibold text-lg ${overallColor}`}>
                 {data.overall === "ok" ? "Всё работает нормально" : data.overall === "warn" ? "Есть предупреждения" : "Обнаружены ошибки"}
               </p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-[var(--text-3)] text-sm">
                 ✅ {data.okCount} норм &nbsp; ⚠️ {data.warnCount} предупр. &nbsp; ❌ {data.errorCount} ошибок
               </p>
             </div>
@@ -335,20 +335,20 @@ function DiagnosticsTab() {
           {/* Checks list */}
           <div className="card overflow-hidden">
             {data.checks.map((check, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border-b border-[#1f2937] last:border-0">
+              <div key={i} className="flex items-center justify-between p-4 border-b border-[var(--border)] last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="text-xl w-8 text-center">{HEALTH_ICON[check.status]}</span>
                   <div>
-                    <p className="text-white text-sm font-medium">{check.name}</p>
+                    <p className="text-[var(--text)] text-sm font-medium">{check.name}</p>
                     <p className={`text-xs mt-0.5 ${
-                      check.status === "ok" ? "text-gray-500" :
+                      check.status === "ok" ? "text-[var(--text-3)]" :
                       check.status === "warn" ? "text-yellow-400" :
-                      check.status === "error" ? "text-red-400" : "text-gray-600"
+                      check.status === "error" ? "text-red-400" : "text-[var(--text-3)]"
                     }`}>{check.message}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  {check.value && <p className="text-white text-sm font-semibold">{check.value}</p>}
+                  {check.value && <p className="text-[var(--text)] text-sm font-semibold">{check.value}</p>}
                   {check.duration !== undefined && <p className="text-gray-600 text-xs">{check.duration}мс</p>}
                 </div>
               </div>
@@ -361,7 +361,7 @@ function DiagnosticsTab() {
         <div className="card p-12 text-center">
           <p className="text-4xl mb-4">🔍</p>
           <p className="text-white font-medium mb-2">Запустите полную проверку</p>
-          <p className="text-gray-500 text-sm">Нажмите кнопку выше для диагностики всех компонентов системы</p>
+          <p className="text-[var(--text-3)] text-sm">Нажмите кнопку выше для диагностики всех компонентов системы</p>
         </div>
       )}
     </div>
@@ -414,14 +414,14 @@ function ActionsTab() {
       title: "Очистить старые логи",
       desc: "Удаляет системные логи старше 90 дней для освобождения места.",
       icon: "🧹",
-      color: "text-gray-400",
+      color: "text-[var(--text-2)]",
     },
     {
       id: "clear-old-analytics",
       title: "Очистить старую аналитику",
       desc: "Удаляет данные PageView и AnalyticsEvent старше 90 дней.",
       icon: "📊",
-      color: "text-gray-400",
+      color: "text-[var(--text-2)]",
     },
     {
       id: "pause-queue",
@@ -501,8 +501,8 @@ export default function MonitoringPage() {
     <div className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Мониторинг системы</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[var(--text)]">Мониторинг системы</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">
             {lastRefresh ? `Обновлено: ${lastRefresh.toLocaleTimeString("ru-RU")}` : "Загрузка..."}
           </p>
         </div>
