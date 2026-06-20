@@ -33,6 +33,7 @@ export async function processDescription(html: string): Promise<string> {
       }
     }
     for (const pattern of PLATI_PATTERNS) {
+      pattern.lastIndex = 0
       if (pattern.test(href)) {
         $(el).attr("href", SITE_URL)
         $(el).removeAttr("target")
