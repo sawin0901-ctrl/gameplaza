@@ -6,6 +6,22 @@ import { checkProductQuality } from "../lib/quality-check"
 import { processDescription } from "../lib/link-processor"
 import { generateSlug } from "../lib/seo"
 
+async function updateImportLog(field: "imported" | "errors") {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const log = await prisma.importLog.findFirst({ where: { date: { gte: today } } })
+  if (log) {
+    await prisma.importLog.update({
+      where: { id: log.id },
+      data: field === "imported" ? { imported: { increment: 1 } } : { errors: { increment: 1 } },
+    })
+  } else {
+    await prisma.importLog.create({
+      data: field === "imported" ? { imported: 1 } : { errors: 1 },
+    })
+  }
+}
+
 async function processImport(job: Job) {
   const { productId } = job.data as { productId: number }
 
@@ -64,13 +80,16 @@ async function processImport(job: Job) {
     data: { status: "done", processedAt: new Date() },
   })
 
+  await updateImportLog("imported")
+
   return { productId: product.id, slug: product.slug }
 }
 
 const worker = new Worker("product-import", processImport, { connection })
 
-worker.on("failed", (job, err) => {
+worker.on("failed", async (job, err) => {
   console.error(`[import] Job ${job?.id} failed:`, err.message)
+  await updateImportLog("errors")
 })
 
 console.log("[import-worker] Started")
