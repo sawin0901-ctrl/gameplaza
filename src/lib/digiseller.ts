@@ -1,5 +1,6 @@
 import axios from "axios"
 import * as cheerio from "cheerio"
+import { logError } from "./system-logger"
 
 const BASE_URL = "https://api.digiseller.ru/api"
 
@@ -53,42 +54,47 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
     })
 
     if (!res.data || typeof res.data !== "object") {
-      throw new Error("Digiseller вернул пустой или некорректный ответ")
+      throw new Error("Digiseller returned empty or invalid response")
     }
 
-    // API может вернуть ошибку в теле с кодом 200
     if (res.data.retval !== undefined && res.data.retval !== 0) {
-      throw new Error(`Digiseller API ошибка: ${res.data.retdesc ?? `код ${res.data.retval}`}`)
+      throw new Error(`Digiseller API error: ${res.data.retdesc ?? `code ${res.data.retval}`}`)
     }
 
     if (!Array.isArray(res.data.rows)) {
-      // Пробуем альтернативный ключ
       const rows = res.data.goods ?? res.data.products ?? res.data.items
       if (Array.isArray(rows)) return { rows, count: rows.length, pages: 1 }
-      throw new Error(`Не удалось найти список товаров в ответе Digiseller. Ответ: ${JSON.stringify(res.data).slice(0, 300)}`)
+      throw new Error(`Could not find product list in Digiseller response. Data: ${JSON.stringify(res.data).slice(0, 300)}`)
     }
 
     return res.data as DigisellerProductList
   } catch (err) {
     if (axios.isAxiosError(err)) {
       if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
+        const msg = "Digiseller API timeout (>20s)"
+        logError("digiseller", msg, err).catch(() => {})
         throw new Error("Таймаут запроса к Digiseller API (>20с). Сервер Digiseller не отвечает.")
       }
       if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
+        const msg = "Cannot connect to api.digiseller.ru"
+        logError("digiseller", msg, { code: err.code }).catch(() => {})
         throw new Error("Нет соединения с api.digiseller.ru. Проверьте интернет-соединение на сервере.")
       }
       if (err.response?.status === 401 || err.response?.status === 403) {
+        const msg = "Invalid Digiseller API credentials"
+        logError("digiseller", msg, { status: err.response.status }).catch(() => {})
         throw new Error("Неверный токен Digiseller API. Проверьте DIGISELLER_SELLER_ID и DIGISELLER_API_KEY в файле .env")
       }
       if (err.response?.status === 429) {
+        logError("digiseller", "Digiseller API rate limit exceeded", { status: 429 }).catch(() => {})
         throw new Error("Превышен лимит запросов к Digiseller API. Подождите несколько минут и повторите.")
       }
       if (err.response) {
+        logError("digiseller", `Digiseller API HTTP ${err.response.status}`, err.response.data).catch(() => {})
         throw new Error(`Digiseller API вернул ошибку ${err.response.status}: ${JSON.stringify(err.response.data).slice(0, 200)}`)
       }
-      if (!err.response) {
-        throw new Error(`Ошибка сети при запросе к Digiseller API: ${err.message}`)
-      }
+      logError("digiseller", "Digiseller network error", { message: err.message, code: err.code }).catch(() => {})
+      throw new Error(`Ошибка сети при запросе к Digiseller API: ${err.message}`)
     }
     throw err
   }
@@ -164,7 +170,6 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
     const oldPriceStr =
       $(".price-old .val").first().text().replace(/[^\d.]/g, "") ||
       $("del .val").first().text().replace(/[^\d.]/g, "") ||
-      $(".old-price").first().text().replace(/[^\d.]/g, "") ||
       $("[class*='old-price']").first().text().replace(/[^\d.]/g, "")
     const oldPrice = parseFloat(oldPriceStr) || undefined
 
