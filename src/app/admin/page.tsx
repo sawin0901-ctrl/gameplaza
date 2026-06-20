@@ -24,8 +24,8 @@ export default async function AdminDashboard() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Дашборд</h1>
-        <p className="text-gray-500 text-sm mt-1">Обзор магазина GamePlaza</p>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Дашборд</h1>
+        <p className="text-[var(--text-3)] text-sm mt-1">Обзор магазина GamePlaza</p>
       </div>
 
       {/* Stats */}
@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
               <span className="text-2xl">{s.icon}</span>
             </div>
             <p className={`text-3xl font-bold ${s.color}`}>{s.value.toLocaleString("ru-RU")}</p>
-            <p className="text-gray-500 text-sm mt-1">{s.label}</p>
+            <p className="text-[var(--text-3)] text-sm mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
       {/* Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="card p-5">
-          <h3 className="text-white font-semibold mb-3">Быстрые действия</h3>
+          <h3 className="text-[var(--text)] font-semibold mb-3">Быстрые действия</h3>
           <div className="space-y-2">
             <Link href="/admin/import" className="btn-primary w-full py-2.5 text-sm">⬇️ Запустить импорт</Link>
             <Link href="/admin/products" className="btn-outline w-full py-2.5 text-sm">🎮 Управление товарами</Link>
@@ -53,15 +53,15 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="card p-5 md:col-span-2">
-          <h3 className="text-white font-semibold mb-3">Последние импорты</h3>
+          <h3 className="text-[var(--text)] font-semibold mb-3">Последние импорты</h3>
           {recentLogs.length === 0 ? (
-            <p className="text-gray-600 text-sm">Импортов ещё не было</p>
+            <p className="text-[var(--text-3)] text-sm">Импортов ещё не было</p>
           ) : (
             <div className="space-y-2">
               {recentLogs.map(log => (
-                <div key={log.id} className="flex items-center justify-between py-2 border-b border-[#1f2937] last:border-0">
+                <div key={log.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                   <div>
-                    <p className="text-white text-sm">
+                    <p className="text-[var(--text)] text-sm">
                       +{log.imported} новых · {log.updated} обновлено · {log.hidden} скрыто
                     </p>
                     <p className="text-gray-600 text-xs">
