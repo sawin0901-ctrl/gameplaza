@@ -1,11 +1,10 @@
 import { Worker, Job } from "bullmq"
-import { connection } from "../lib/queue"
+import { connection, importQueue } from "../lib/queue"
 import { prisma } from "../lib/prisma"
 import { getDigisellerProduct } from "../lib/digiseller"
 import { checkProductQuality } from "../lib/quality-check"
 import { processDescription } from "../lib/link-processor"
 import { generateSlug } from "../lib/seo"
-import { importQueue } from "../lib/queue"
 
 async function updateImportLog(field: "imported" | "errors") {
   const today = new Date()
@@ -47,12 +46,20 @@ async function processImport(job: Job) {
   const description = await processDescription(raw.info_goods)
   const slug = generateSlug(raw.name_goods, raw.id_goods)
 
+  const hasDiscount = raw.old_price_rub != null && raw.old_price_rub > raw.price_rub
+  const oldPrice = hasDiscount ? raw.old_price_rub! : null
+  const discountPercent = hasDiscount
+    ? Math.round((1 - raw.price_rub / raw.old_price_rub!) * 100)
+    : null
+
   const product = await prisma.product.upsert({
     where: { digisellerProductId: raw.id_goods },
     update: {
       name: raw.name_goods,
       description,
       price: raw.price_rub,
+      oldPrice,
+      discountPercent,
       imageUrl: raw.image_link ?? null,
       inStock: raw.cnt_goods > 0,
       quantity: raw.cnt_goods,
@@ -68,6 +75,8 @@ async function processImport(job: Job) {
       slug,
       description,
       price: raw.price_rub,
+      oldPrice,
+      discountPercent,
       imageUrl: raw.image_link ?? null,
       inStock: raw.cnt_goods > 0,
       quantity: raw.cnt_goods,
