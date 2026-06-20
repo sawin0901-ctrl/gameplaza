@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { prisma } from "../../../lib/prisma"
 import { buildProductMetadata } from "../../../lib/seo"
 import { notFound } from "next/navigation"
@@ -8,20 +9,24 @@ import type { Metadata } from "next"
 
 export const revalidate = 300
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const product = await prisma.product.findUnique({ where: { slug: params.slug } })
-  if (!product) return {}
-  return buildProductMetadata(product)
-}
-
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug, isActive: true },
+const getProduct = cache(async (slug: string) =>
+  prisma.product.findUnique({
+    where: { slug, isActive: true },
     include: {
       category: true,
       relatedProducts: { where: { isActive: true }, take: 4 },
     },
   })
+)
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const product = await getProduct(params.slug)
+  if (!product) return {}
+  return buildProductMetadata(product)
+}
+
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const product = await getProduct(params.slug)
   if (!product) notFound()
 
   const categoryProducts = product.categoryId
