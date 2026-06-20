@@ -46,13 +46,13 @@ export default function AccountSessionsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="text-gray-500 hover:text-white text-sm">← Главная</Link>
-        <span className="text-gray-700">/</span>
-        <span className="text-white text-sm">История входов</span>
+        <Link href="/" className="text-[var(--text-3)] hover:text-[var(--text)] text-sm">← Главная</Link>
+        <span className="text-[var(--border)]">/</span>
+        <span className="text-[var(--text)] text-sm">История входов</span>
       </div>
 
-      <h1 className="text-2xl font-bold text-white mb-2">История входов</h1>
-      <p className="text-gray-500 text-sm mb-6">Последние 50 входов в ваш аккаунт</p>
+      <h1 className="text-2xl font-bold text-[var(--text)] mb-2">История входов</h1>
+      <p className="text-[var(--text-3)] text-sm mb-6">Последние 50 входов в ваш аккаунт</p>
 
       {loading ? (
         <div className="card p-8 text-center text-gray-600">Загрузка...</div>
@@ -62,7 +62,7 @@ export default function AccountSessionsPage() {
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1f2937] text-gray-500 text-xs">
+              <tr className="border-b border-[var(--border)] text-gray-500 text-xs">
                 <th className="text-left px-4 py-3">Дата и время</th>
                 <th className="text-left px-4 py-3 hidden sm:table-cell">Устройство</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">IP</th>
@@ -71,7 +71,7 @@ export default function AccountSessionsPage() {
             </thead>
             <tbody>
               {history.map(h => (
-                <tr key={h.id} className="border-b border-[#1f2937] last:border-0">
+                <tr key={h.id} className="border-b border-[var(--border)] last:border-0">
                   <td className="px-4 py-3 text-gray-400 text-xs">
                     {new Date(h.createdAt).toLocaleString("ru-RU", {
                       day: "numeric", month: "short", year: "numeric",
