@@ -118,3 +118,63 @@ model Review {
 
   @@unique([productId, userId])
 }
+
+model PageView {
+  id             String   @id @default(cuid())
+  sessionId      String
+  userId         String?
+  path           String
+  referrer       String?
+  referrerType   String?
+  referrerSource String?
+  keyword        String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  country        String?
+  city           String?
+  device         String?
+  browser        String?
+  os             String?
+  duration       Int?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([sessionId])
+  @@index([referrerType])
+  @@index([country])
+  @@index([utmCampaign])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String?
+  event     String
+  path      String?
+  productId String?
+  orderId   String?
+  value     Float?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([event])
+  @@index([productId])
+}
+
+model DailyStats {
+  id             String   @id @default(cuid())
+  date           DateTime @unique
+  pageViews      Int      @default(0)
+  sessions       Int      @default(0)
+  uniqueVisitors Int      @default(0)
+  orders         Int      @default(0)
+  revenue        Float    @default(0)
+  registrations  Int      @default(0)
+
+  @@index([date])
+}
