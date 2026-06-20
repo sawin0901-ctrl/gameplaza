@@ -7,7 +7,7 @@ interface Props {
 export default function DigisellerWidget({ productId }: Props) {
   return (
     <div
-      style={{ display: "inline-block", width: "100%" }}
+      style={{ display: "inline-block" }}
       className="digiseller-buy-standalone"
       data-id={String(productId)}
       data-ai={AFFILIATE_ID}
