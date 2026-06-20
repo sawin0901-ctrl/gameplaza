@@ -12,12 +12,12 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://cdn.digiseller.ru https://digiseller.com http://digiseller.com https://shop.digiseller.com",
-      "style-src 'self' 'unsafe-inline' https://shop.digiseller.com http://shop.digiseller.com",
-      "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://plati.market https://www.plati.market https://shop.digiseller.com https://digiseller.com",
-      "connect-src 'self' https://digiseller.com https://shop.digiseller.com",
-      "font-src 'self'",
-      "frame-src https://digiseller.ru https://www.digiseller.ru https://digiseller.com https://shop.digiseller.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.digiseller.ru https://digiseller.com http://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
+      "style-src 'self' 'unsafe-inline' https://shop.digiseller.com http://shop.digiseller.com https://api.digiseller.com",
+      "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://plati.market https://www.plati.market https://shop.digiseller.com https://digiseller.com https://api.digiseller.com",
+      "connect-src 'self' https://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
+      "font-src 'self' data: https://shop.digiseller.com https://api.digiseller.com https://digiseller.com",
+      "frame-src https://digiseller.ru https://www.digiseller.ru https://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
       "object-src 'none'",
     ].join("; ")
 
