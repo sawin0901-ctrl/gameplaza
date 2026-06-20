@@ -56,23 +56,26 @@ export async function POST(req: NextRequest) {
   const { email, items, promoCode, paymentMethod } = parsed.data
 
   let discount = 0
-  let promoRecord: { id: string; value: number; type: string } | null = null
+  let promoId: string | null = null
 
   // Apply promo code
   if (promoCode) {
-    promoRecord = await prisma.promoCode.findFirst({
+    const promo = await prisma.promoCode.findFirst({
       where: {
         code: promoCode.toUpperCase(),
         isActive: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-        OR: [{ maxUses: null }, { maxUses: { gt: prisma.promoCode.fields.usedCount } }],
+        AND: [
+          { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+        ],
       },
     })
-    if (promoRecord) {
+    // Check maxUses in JS (Prisma can't compare two fields in same row)
+    if (promo && (promo.maxUses === null || promo.usedCount < promo.maxUses)) {
+      promoId = promo.id
       const subtotal = items.reduce((s, i) => s + i.price, 0)
-      discount = promoRecord.type === "percent"
-        ? Math.round((subtotal * promoRecord.value) / 100)
-        : Math.min(promoRecord.value, subtotal)
+      discount = promo.type === "percent"
+        ? Math.round((subtotal * promo.value) / 100)
+        : Math.min(promo.value, subtotal)
     }
   }
 
@@ -102,8 +105,8 @@ export async function POST(req: NextRequest) {
   })
 
   // Increment promo usage
-  if (promoRecord) {
-    await prisma.promoCode.update({ where: { id: promoRecord.id }, data: { usedCount: { increment: 1 } } })
+  if (promoId) {
+    await prisma.promoCode.update({ where: { id: promoId }, data: { usedCount: { increment: 1 } } })
   }
 
   // Update DailyStats
