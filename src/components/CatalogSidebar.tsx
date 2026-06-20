@@ -59,7 +59,7 @@ export default function CatalogSidebar({ currentCategory, currentMinPrice, curre
       <div className="sticky top-4 space-y-4">
         {/* Categories */}
         <div className="card p-4">
-          <h3 className="text-white font-semibold text-sm mb-3">Категории</h3>
+          <h3 className="text-[var(--text)] font-semibold text-sm mb-3">Категории</h3>
           <ul className="space-y-0.5">
             {CATEGORIES.map(cat => {
               const active = (currentCategory ?? "") === cat.slug
@@ -82,7 +82,7 @@ export default function CatalogSidebar({ currentCategory, currentMinPrice, curre
 
         {/* Price */}
         <div className="card p-4">
-          <h3 className="text-white font-semibold text-sm mb-3">Цена, ₽</h3>
+          <h3 className="text-[var(--text)] font-semibold text-sm mb-3">Цена, ₽</h3>
           <div className="flex gap-2 mb-3">
             <input type="number" placeholder="От" value={minPrice}
               onChange={e => setMinPrice(e.target.value)}
