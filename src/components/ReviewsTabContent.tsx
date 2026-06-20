@@ -36,7 +36,7 @@ function StarRating({
           className={`text-2xl transition-transform ${onChange ? "hover:scale-110 cursor-pointer" : "cursor-default"}`}
           aria-label={`${star} звезд`}
         >
-          <span className={(hovered || value) >= star ? "text-yellow-400" : "text-gray-600"}>
+          <span className={(hovered || value) >= star ? "text-yellow-400" : "text-[var(--text-3)]"}>
             ★
           </span>
         </button>
@@ -59,13 +59,13 @@ function ReviewCard({ review }: { review: ReviewData }) {
             {(review.user.name ?? "А")[0].toUpperCase()}
           </div>
           <div>
-            <p className="text-white text-sm font-medium">{review.user.name ?? "Аноним"}</p>
+            <p className="text-[var(--text)] text-sm font-medium">{review.user.name ?? "Аноним"}</p>
             <p className="text-gray-600 text-xs">{date}</p>
           </div>
         </div>
         <StarRating value={review.rating} />
       </div>
-      <p className="text-gray-300 text-sm leading-relaxed">{review.text}</p>
+      <p className="text-[var(--text-2)] text-sm leading-relaxed">{review.text}</p>
     </div>
   )
 }
@@ -195,7 +195,7 @@ export default function ReviewsTabContent({
               rows={4}
               maxLength={2000}
               placeholder="Поделитесь впечатлением о товаре..."
-              className="w-full bg-[#0f0f17] border border-[#1e1e2e] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand resize-none"
+              className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand resize-none"
             />
             <div className="text-right text-xs text-gray-600 mt-1">{text.length}/2000</div>
           </div>
