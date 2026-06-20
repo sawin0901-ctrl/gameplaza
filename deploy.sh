@@ -9,9 +9,7 @@ if [ ! -f ".env" ] && [ ! -f ".env.local" ]; then
   exit 1
 fi
 
-# Загружаем переменные для проверки
 set -a
-# shellcheck disable=SC1091
 [ -f ".env.local" ] && source .env.local || source .env
 set +a
 
@@ -26,7 +24,6 @@ echo "Environment OK"
 echo "==> [1/6] Syncing code..."
 git fetch origin main
 git reset --hard origin/main
-# Сохраняем только .env*, ecosystem.config.js и node_modules
 git clean -fd \
   --exclude='.env' \
   --exclude='.env.local' \
@@ -35,8 +32,8 @@ git clean -fd \
   --exclude='package-lock.json'
 
 echo "==> [2/6] Installing packages..."
-# Устанавливаем только prod-зависимости, кроме тех что нужны для сборки
-npm ci --legacy-peer-deps
+# npm install безопаснее npm ci — не требует точного совпадения package-lock.json
+npm install --legacy-peer-deps
 
 echo "==> [3/6] Prisma migrations..."
 npx prisma migrate deploy
@@ -55,7 +52,6 @@ echo "Build OK: $(cat .next/BUILD_ID)"
 echo "==> [6/6] Restarting..."
 pm2 restart gameplaza-web --update-env
 
-# Перезапускаем worker с проверкой результата
 if pm2 restart gameplaza-worker --update-env 2>/dev/null; then
   echo "Worker restarted OK"
 else
