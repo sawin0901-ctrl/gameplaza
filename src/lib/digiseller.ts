@@ -28,6 +28,7 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
   const res = await axios.get(`${BASE_URL}/seller-goods`, {
     params: {
       seller_id: SELLER_ID,
+      token: API_KEY,
       page,
       rows: pageSize,
       order: "date",
