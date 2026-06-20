@@ -2,59 +2,264 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0a0a0f;
-  --bg-card: #111118;
-  --border: #1f2937;
-  --brand: #7c3aed;
+/* ============================================================
+   CSS ПЕРЕМЕННЫЕ — тёмная тема (по умолчанию)
+   ============================================================ */
+:root,
+[data-theme="dark"] {
+  --bg:           #0a0a0f;
+  --bg-secondary: #111118;
+  --card:         #111118;
+  --card-hover:   #16161f;
+  --border:       #1f2937;
+  --text:         #f9fafb;
+  --text-2:       #9ca3af;
+  --text-3:       #6b7280;
+  color-scheme: dark;
 }
 
+/* ============================================================
+   CSS ПЕРЕМЕННЫЕ — светлая тема
+   ============================================================ */
+[data-theme="light"] {
+  --bg:           #f8f9fc;
+  --bg-secondary: #f1f3f8;
+  --card:         #ffffff;
+  --card-hover:   #f8f9fc;
+  --border:       #e5e7eb;
+  --text:         #111827;
+  --text-2:       #6b7280;
+  --text-3:       #9ca3af;
+  color-scheme: light;
+}
+
+/* ============================================================
+   БАЗОВЫЕ СТИЛИ
+   ============================================================ */
 html { scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
-  color: #f9fafb;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.15s ease;
 }
 
-::selection { background: var(--brand); color: white; }
+::selection { background: #7c3aed; color: white; }
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #0d0d14; }
-::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
-/* Digiseller widget dark overrides */
-.digiseller-buy-standalone a,
-.digiseller-buy-standalone button { border-radius: 12px !important; }
+/* ============================================================
+   СВЕТЛАЯ ТЕМА — переопределяем хардкодные классы Tailwind
+   Specificity [data-theme] (0,1,0,0) + class (0,0,1,0) = 0,1,1,0
+   vs Tailwind single-class (0,0,1,0) → наш селектор побеждает
+   ============================================================ */
 
+/* Фоновые цвета */
+[data-theme="light"] .bg-\[\#0a0a0f\],
+[data-theme="light"] .bg-\[\#050816\],
+[data-theme="light"] .bg-\[\#0d0d14\] {
+  background-color: var(--bg);
+}
+
+[data-theme="light"] .bg-\[\#111118\],
+[data-theme="light"] .bg-\[\#0f0f17\],
+[data-theme="light"] .bg-\[\#0f172a\],
+[data-theme="light"] .bg-\[\#131320\] {
+  background-color: var(--card);
+}
+
+[data-theme="light"] .bg-\[\#1a1a26\] {
+  background-color: #eef0f8;
+}
+
+[data-theme="light"] .bg-\[\#16161f\] {
+  background-color: var(--card-hover);
+}
+
+/* Границы */
+[data-theme="light"] .border-\[\#1f2937\],
+[data-theme="light"] .border-\[\#1e1e2e\] {
+  border-color: var(--border);
+}
+
+/* Текст */
+[data-theme="light"] .text-white {
+  color: var(--text);
+}
+
+[data-theme="light"] .text-gray-300 {
+  color: #374151;
+}
+
+[data-theme="light"] .text-gray-400 {
+  color: #6b7280;
+}
+
+[data-theme="light"] .text-gray-500 {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .text-gray-600 {
+  color: #d1d5db;
+}
+
+/* Hover bg */
+[data-theme="light"] .hover\:bg-white\/5:hover,
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .hover\:bg-white\/10:hover,
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Заголовок */
+[data-theme="light"] header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--border) !important;
+}
+
+/* Hover текст */
+[data-theme="light"] .hover\:text-white:hover {
+  color: #111827;
+}
+
+/* Placeholder */
+[data-theme="light"] .placeholder-gray-600::placeholder {
+  color: #9ca3af;
+}
+
+/* Скроллбар */
+[data-theme="light"] .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   КОМПОНЕНТЫ (используют CSS переменные — работают в обоих темах)
+   ============================================================ */
 @layer components {
   .card {
-    @apply bg-[#111118] border border-[#1f2937] rounded-xl transition-all duration-200;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
   }
+
   .card-hover {
-    @apply card hover:border-brand/40 hover:shadow-xl hover:shadow-brand/5;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
   }
+  .card-hover:hover {
+    border-color: rgba(124, 58, 237, 0.4);
+    box-shadow: 0 20px 40px rgba(124, 58, 237, 0.05);
+  }
+
   .btn-primary {
-    @apply bg-brand text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all duration-150 active:scale-95 inline-flex items-center justify-center gap-2;
+    @apply bg-brand text-white font-semibold px-5 py-2.5 rounded-xl
+           hover:bg-brand-700 transition-all duration-150
+           active:scale-95 inline-flex items-center justify-center gap-2;
   }
+
   .btn-outline {
-    @apply border border-[#1f2937] text-gray-300 font-medium px-5 py-2.5 rounded-xl hover:border-brand/50 hover:text-white transition-all duration-150 inline-flex items-center justify-center gap-2;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
+  .btn-outline:hover {
+    border-color: rgba(124, 58, 237, 0.5);
+    color: var(--text);
+  }
+
   .btn-ghost {
-    @apply text-gray-400 font-medium px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-150;
+    color: var(--text-2);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
+  .btn-ghost:hover {
+    background-color: rgba(128, 128, 128, 0.08);
+    color: var(--text);
+  }
+
+  .gp-input {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 0.75rem;
+    padding: 0.625rem 1rem;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s ease;
+  }
+  .gp-input::placeholder {
+    color: var(--text-3);
+  }
+  .gp-input:focus {
+    border-color: #7c3aed;
+  }
+
   .badge {
     @apply text-xs font-bold px-2 py-0.5 rounded-full;
   }
-  .gp-input {
-    @apply bg-[#111118] border border-[#1f2937] text-white placeholder-gray-600 rounded-xl px-4 py-2.5 outline-none focus:border-brand transition-colors w-full;
-  }
+
   .section-title {
-    @apply text-2xl md:text-3xl font-bold text-white;
+    color: var(--text);
+    @apply text-2xl md:text-3xl font-bold;
   }
+
   .section-sub {
-    @apply text-gray-500 text-sm mt-1;
+    color: var(--text-2);
+    @apply text-sm mt-1;
   }
+
   .star-filled { @apply text-yellow-400; }
-  .star-empty { @apply text-gray-700; }
+  .star-empty  { color: var(--border); }
 }
+
+/* ============================================================
+   АНИМАЦИИ
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+.animate-fade-in  { animation: fadeIn  0.2s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+
+/* ============================================================
+   DIGISELLER WIDGET
+   ============================================================ */
+.digiseller-buy-standalone a,
+.digiseller-buy-standalone button {
+  border-radius: 12px !important;
+}
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+.scrollbar-hide { scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
