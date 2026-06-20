@@ -17,18 +17,18 @@ export default function AdminBackupPage() {
 
   return (
     <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-white mb-2">Резервные копии</h1>
-      <p className="text-gray-500 text-sm mb-6">Бэкап базы данных PostgreSQL в <code className="text-gray-400">/var/backups/gameplaza/</code></p>
+      <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Резервные копии</h1>
+      <p className="text-[var(--text-3)] text-sm mb-6">Бэкап базы данных PostgreSQL в <code className="text-[var(--text-2)]">/var/backups/gameplaza/</code></p>
 
       {/* Setup instructions */}
       <div className="card p-5 mb-6">
-        <h3 className="text-white font-semibold mb-3">Настройка автоматического бэкапа</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-3">Настройка автоматического бэкапа</h3>
         <ol className="space-y-3 text-sm">
           <li className="flex gap-3">
             <span className="text-brand font-bold shrink-0">1.</span>
             <div>
               <p className="text-gray-300 mb-1">Разрешить выполнение скрипта:</p>
-              <code className="block bg-black/40 px-3 py-2 rounded text-green-400 text-xs">
+              <code className="block bg-[var(--bg-secondary)] px-3 py-2 rounded text-green-400 text-xs">
                 chmod +x /var/www/gameplaza/scripts/backup.sh
               </code>
             </div>
@@ -37,10 +37,10 @@ export default function AdminBackupPage() {
             <span className="text-brand font-bold shrink-0">2.</span>
             <div>
               <p className="text-gray-300 mb-1">Добавить в cron (запуск каждую ночь в 03:00):</p>
-              <code className="block bg-black/40 px-3 py-2 rounded text-green-400 text-xs">
+              <code className="block bg-[var(--bg-secondary)] px-3 py-2 rounded text-green-400 text-xs">
                 crontab -e
               </code>
-              <code className="block bg-black/40 px-3 py-2 rounded text-green-400 text-xs mt-1">
+              <code className="block bg-[var(--bg-secondary)] px-3 py-2 rounded text-green-400 text-xs mt-1">
                 0 3 * * * bash /var/www/gameplaza/scripts/backup.sh &gt;&gt; /var/log/gameplaza-backup.log 2&gt;&amp;1
               </code>
             </div>
@@ -49,7 +49,7 @@ export default function AdminBackupPage() {
             <span className="text-brand font-bold shrink-0">3.</span>
             <div>
               <p className="text-gray-300 mb-1">Убедиться что pg_dump установлен:</p>
-              <code className="block bg-black/40 px-3 py-2 rounded text-green-400 text-xs">
+              <code className="block bg-[var(--bg-secondary)] px-3 py-2 rounded text-green-400 text-xs">
                 which pg_dump || apt install postgresql-client -y
               </code>
             </div>
@@ -59,7 +59,7 @@ export default function AdminBackupPage() {
 
       {/* Manual backup */}
       <div className="card p-5 mb-6">
-        <h3 className="text-white font-semibold mb-1">Ручной бэкап</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-1">Ручной бэкап</h3>
         <p className="text-gray-500 text-xs mb-4">Запускает скрипт немедленно через API. Занимает 10–60 секунд.</p>
         <button onClick={runBackup} disabled={running}
           className="btn-primary py-2 px-5 disabled:opacity-50">
@@ -83,7 +83,7 @@ export default function AdminBackupPage() {
 
       {/* Info */}
       <div className="card p-5">
-        <h3 className="text-white font-semibold mb-3">Расположение файлов</h3>
+        <h3 className="text-[var(--text)] font-semibold mb-3">Расположение файлов</h3>
         <div className="space-y-2 text-sm">
           {[
             ["/var/backups/gameplaza/", "Папка с бэкапами (gzip, .sql.gz)"],
