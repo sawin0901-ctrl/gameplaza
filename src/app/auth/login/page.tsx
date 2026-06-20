@@ -4,6 +4,18 @@ import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
+// Допускаем только внутренние пути (начинаются с /) без //, чтобы не было protocol-relative redirect
+function getSafeCallbackUrl(raw: string | null): string {
+  if (!raw) return "/"
+  try {
+    if (raw.startsWith("//") || raw.startsWith("http://") || raw.startsWith("https://")) return "/"
+    if (!raw.startsWith("/")) return "/"
+    return raw
+  } catch {
+    return "/"
+  }
+}
+
 function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -11,7 +23,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const params = useSearchParams()
-  const callbackUrl = params.get("callbackUrl") ?? "/"
+  const callbackUrl = getSafeCallbackUrl(params.get("callbackUrl"))
   const registered = params.get("registered") === "1"
   const verified = params.get("verified") === "1"
   const reset = params.get("reset") === "1"
