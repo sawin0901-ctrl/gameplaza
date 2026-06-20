@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
     if (!token || !password) {
       return NextResponse.json({ error: "Неверный запрос" }, { status: 400 })
     }
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Пароль — минимум 6 символов" }, { status: 400 })
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Пароль — минимум 8 символов" }, { status: 400 })
     }
 
     const user = await prisma.user.findFirst({
