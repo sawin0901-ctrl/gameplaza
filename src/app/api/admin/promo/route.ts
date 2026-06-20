@@ -15,7 +15,7 @@ async function requireAdmin(req: NextRequest) {
 export async function GET(req: NextRequest) {
   if (!await requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const page = Math.max(1, Number(req.nextUrl.searchParams.get("page") ?? 1))
+  const page = Math.max(1, Math.min(10000, parseInt(req.nextUrl.searchParams.get("page") ?? "1") || 1))
   const PAGE = 30
 
   const [promos, total] = await Promise.all([
