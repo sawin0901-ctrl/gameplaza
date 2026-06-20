@@ -36,4 +36,10 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+let config = nextConfig
+try {
+  const { withSentryConfig } = require("@sentry/nextjs")
+  config = withSentryConfig(nextConfig, { silent: true, disableLogger: true, hideSourceMaps: true })
+} catch {}
+
+module.exports = config
