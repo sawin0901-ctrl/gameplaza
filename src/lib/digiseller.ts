@@ -7,8 +7,10 @@ const BASE_URL = "https://api.digiseller.ru/api"
 
 // ── Credentials ───────────────────────────────────────────────────────────────
 function getCredentials() {
-  const sellerId = process.env.DIGISELLER_SELLER_ID
-  const apiKey = process.env.DIGISELLER_API_KEY
+  // .trim() is critical — .env values often have trailing newline/spaces
+  const sellerId = (process.env.DIGISELLER_SELLER_ID ?? "").trim()
+  const apiKey   = (process.env.DIGISELLER_API_KEY   ?? "").trim()
+
   if (!sellerId || sellerId === "your-seller-id") {
     throw new Error("DIGISELLER_SELLER_ID не задан в .env файле")
   }
@@ -19,7 +21,6 @@ function getCredentials() {
 }
 
 // ── Token cache ───────────────────────────────────────────────────────────────
-// Digiseller session tokens expire after ~1 hour; we refresh at 50 min
 let _cachedToken: string | null = null
 let _tokenExpiry = 0
 let _tokenSellerId: string | null = null
@@ -36,6 +37,7 @@ export async function getDigisellerToken(): Promise<string> {
     return _cachedToken
   }
 
+  // Digiseller requires timestamp in body so it can verify MD5(apikey + timestamp)
   const timestamp = Math.floor(Date.now() / 1000)
   const sign = crypto.createHash("md5").update(apiKey + timestamp).digest("hex")
 
@@ -44,8 +46,17 @@ export async function getDigisellerToken(): Promise<string> {
   try {
     res = await axios.post(
       `${BASE_URL}/apilogin`,
-      { seller_id: parseInt(sellerId, 10), apikey: apiKey, sign, lang: "ru-RU" },
-      { headers: { Accept: "application/json", "Content-Type": "application/json" }, timeout: 15000 },
+      {
+        seller_id: parseInt(sellerId, 10),
+        apikey: apiKey,
+        sign,
+        timestamp,   // Must include timestamp so Digiseller can verify MD5(apikey+timestamp)
+        lang: "ru-RU",
+      },
+      {
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        timeout: 15000,
+      },
     )
   } catch (err) {
     _cachedToken = null
@@ -55,23 +66,39 @@ export async function getDigisellerToken(): Promise<string> {
         throw new Error("Таймаут авторизации Digiseller (>15с)")
       }
       if (err.response) {
-        throw new Error(`Ошибка авторизации Digiseller (HTTP ${err.response.status}): ${JSON.stringify(err.response.data).slice(0, 300)}`)
+        const detail = JSON.stringify(err.response.data).slice(0, 400)
+        throw new Error(`Ошибка авторизации Digiseller HTTP ${err.response.status}: ${detail}`)
       }
-      throw new Error(`Нет соединения с api.digiseller.ru при авторизации: ${err.message}`)
+      throw new Error(`Нет соединения с api.digiseller.ru: ${err.message}`)
     }
     throw err
   }
 
   if (!res.data || res.data.retval !== 0) {
-    const desc = res.data?.retdesc ?? "неизвестная ошибка"
-    const code = res.data?.retval
-    throw new Error(`Ошибка авторизации Digiseller: ${desc} (код ${code}). Проверьте DIGISELLER_API_KEY в .env`)
+    const code = res.data?.retval ?? "?"
+    const desc = res.data?.retdesc ?? "нет описания"
+    const hint = getHintForCode(code)
+    throw new Error(
+      `Ошибка авторизации Digiseller (код ${code}): ${desc}.\n${hint}`
+    )
   }
 
   _cachedToken = res.data.token as string
   _tokenSellerId = sellerId
-  _tokenExpiry = Date.now() + 50 * 60 * 1000 // 50 минут
+  _tokenExpiry = Date.now() + 50 * 60 * 1000
   return _cachedToken
+}
+
+function getHintForCode(code: number | string): string {
+  switch (Number(code)) {
+    case -2: return "Неверные параметры запроса. Проверьте формат DIGISELLER_SELLER_ID."
+    case -3: return "Продавец не найден. Проверьте DIGISELLER_SELLER_ID."
+    case -4: return "Неверная подпись (sign). Проверьте DIGISELLER_API_KEY — скопируйте его заново без пробелов."
+    case -5: return "Дублирующийся запрос (тот же timestamp). Подождите секунду и повторите."
+    case -7: return "Доступ запрещён. Проверьте права API-ключа в личном кабинете Digiseller."
+    case -10: return "API ключ заблокирован или отозван. Создайте новый ключ в личном кабинете."
+    default:  return "Проверьте DIGISELLER_API_KEY и DIGISELLER_SELLER_ID в .env файле."
+  }
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -120,7 +147,8 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
     }
 
     if (res.data.retval !== undefined && res.data.retval !== 0) {
-      throw new Error(`Digiseller API ошибка: ${res.data.retdesc ?? `код ${res.data.retval}`}`)
+      const hint = getHintForCode(res.data.retval)
+      throw new Error(`Digiseller API ошибка: ${res.data.retdesc ?? `код ${res.data.retval}`}. ${hint}`)
     }
 
     if (!Array.isArray(res.data.rows)) {
@@ -134,33 +162,30 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
     return res.data as DigisellerProductList
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      // Token may have expired — clear cache so next call re-authenticates
       if (err.response?.status === 401 || err.response?.status === 403) {
         clearTokenCache()
-        logError("digiseller", "Digiseller: token expired or invalid", { status: err.response.status }).catch(() => {})
-        throw new Error("Токен Digiseller истёк или недействителен. Повторите попытку.")
+        logError("digiseller", "Digiseller: token expired", { status: err.response.status }).catch(() => {})
+        throw new Error("Токен Digiseller истёк. Повторите попытку.")
       }
       if (err.response?.status === 405) {
-        throw new Error("Digiseller API: метод запроса не поддерживается (405). Обратитесь к разработчику.")
+        throw new Error("Digiseller API: метод 405. Обратитесь к разработчику.")
       }
       if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
-        throw new Error("Таймаут запроса к Digiseller API (>20с). Сервер Digiseller не отвечает.")
+        throw new Error("Таймаут запроса к Digiseller API (>20с).")
       }
       if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
         logError("digiseller", "Cannot connect to api.digiseller.ru", { code: err.code }).catch(() => {})
-        throw new Error("Нет соединения с api.digiseller.ru. Проверьте интернет-соединение на сервере.")
+        throw new Error("Нет соединения с api.digiseller.ru. Проверьте интернет на сервере.")
       }
       if (err.response?.status === 429) {
-        logError("digiseller", "Digiseller rate limit exceeded", { status: 429 }).catch(() => {})
-        throw new Error("Превышен лимит запросов к Digiseller API. Подождите несколько минут и повторите.")
+        throw new Error("Превышен лимит запросов к Digiseller API. Подождите минуту.")
       }
       if (err.response) {
         const detail = JSON.stringify(err.response.data).slice(0, 200)
         logError("digiseller", `Digiseller seller-goods HTTP ${err.response.status}`, err.response.data).catch(() => {})
         throw new Error(`Digiseller API вернул ошибку ${err.response.status}: ${detail}`)
       }
-      logError("digiseller", "Digiseller network error", { message: err.message }).catch(() => {})
-      throw new Error(`Ошибка сети при запросе к Digiseller API: ${err.message}`)
+      throw new Error(`Ошибка сети: ${err.message}`)
     }
     throw err
   }
@@ -170,7 +195,6 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
 export async function getDigisellerProduct(productId: number): Promise<DigisellerProduct | null> {
   const { sellerId } = getCredentials()
 
-  // 1. Public goods info (GET — no auth needed, public endpoint)
   try {
     const res = await axios.get(`${BASE_URL}/goods/${productId}`, {
       params: { seller_id: sellerId, lang: "ru", currency: "RUB" },
@@ -195,7 +219,6 @@ export async function getDigisellerProduct(productId: number): Promise<Digiselle
     }
   } catch {}
 
-  // 2. Authenticated product info (POST with session token)
   try {
     const token = await getDigisellerToken()
     const res = await axios.post(
@@ -206,7 +229,6 @@ export async function getDigisellerProduct(productId: number): Promise<Digiselle
     if (res.data?.product) return res.data.product
   } catch {}
 
-  // 3. Fallback: scrape plati.market
   return scrapePlatiMarket(productId)
 }
 
@@ -236,19 +258,16 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
 
     const oldPriceStr =
       $(".price-old .val").first().text().replace(/[^\d.]/g, "") ||
-      $("del .val").first().text().replace(/[^\d.]/g, "") ||
-      $("[class*='old-price']").first().text().replace(/[^\d.]/g, "")
+      $("del .val").first().text().replace(/[^\d.]/g, "")
     const oldPrice = parseFloat(oldPriceStr) || undefined
 
     const desc =
       $(".goods-description-main").first().text().trim() ||
-      $("[itemprop='description']").first().text().trim() ||
-      $(".description").first().text().trim()
+      $("[itemprop='description']").first().text().trim()
 
     const imgSrc =
       $("img[itemprop='image']").first().attr("src") ||
-      $("img.goods-img").first().attr("src") ||
-      $(".goods-img img").first().attr("src")
+      $("img.goods-img").first().attr("src")
     const imageUrl = imgSrc
       ? imgSrc.startsWith("http") ? imgSrc : `https://plati.market${imgSrc}`
       : undefined
