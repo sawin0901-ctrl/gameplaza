@@ -69,17 +69,35 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ promo }, { status: 201 })
 }
 
+const updateSchema = z.object({
+  id: z.string().min(1),
+  isActive: z.boolean().optional(),
+  code: z.string().min(3).max(50).regex(/^[A-Z0-9_-]+$/).optional(),
+  description: z.string().max(200).nullable().optional(),
+  type: z.enum(["percent", "fixed"]).optional(),
+  value: z.number().positive().optional(),
+  minOrderAmount: z.number().positive().nullable().optional(),
+  maxUses: z.number().int().positive().nullable().optional(),
+  expiresAt: z.string().datetime().nullable().optional(),
+})
+
 export async function PATCH(req: NextRequest) {
   if (!await requireAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  let body: { id: string; isActive?: boolean; [k: string]: unknown }
+  let body: unknown
   try { body = await req.json() } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) }
 
-  const { id, ...data } = body
-  if (!id || typeof id !== "string") return NextResponse.json({ error: "id required" }, { status: 422 })
+  const parsed = updateSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
-  const promo = await prisma.promoCode.update({ where: { id }, data })
-  return NextResponse.json({ promo })
+  const { id, ...data } = parsed.data
+
+  try {
+    const promo = await prisma.promoCode.update({ where: { id }, data })
+    return NextResponse.json({ promo })
+  } catch {
+    return NextResponse.json({ error: "Ошибка обновления" }, { status: 500 })
+  }
 }
 
 export async function DELETE(req: NextRequest) {
