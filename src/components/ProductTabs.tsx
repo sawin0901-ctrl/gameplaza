@@ -17,8 +17,7 @@ export default function ProductTabs({ tabs, panels }: Props) {
 
   return (
     <div>
-      {/* Tab navigation — горизонтальный скролл на мобильных */}
-      <div className="flex overflow-x-auto border-b border-[#1e1e2e] scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex overflow-x-auto border-b border-[var(--border)] scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {tabs.map((tab, i) => (
           <button
             key={tab.id}
@@ -27,8 +26,8 @@ export default function ProductTabs({ tabs, panels }: Props) {
               relative whitespace-nowrap px-4 sm:px-5 py-3 text-sm font-medium
               transition-colors duration-150 shrink-0
               ${i === active
-                ? "text-white border-b-2 border-brand -mb-px"
-                : "text-gray-500 hover:text-gray-300 border-b-2 border-transparent -mb-px"
+                ? "text-[var(--text)] border-b-2 border-brand -mb-px"
+                : "text-[var(--text-3)] hover:text-[var(--text-2)] border-b-2 border-transparent -mb-px"
               }
             `}
             aria-selected={i === active}
@@ -40,7 +39,7 @@ export default function ProductTabs({ tabs, panels }: Props) {
                 className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-normal
                   ${i === active
                     ? "bg-brand/20 text-brand"
-                    : "bg-white/5 text-gray-500"
+                    : "bg-[var(--border)] text-[var(--text-3)]"
                   }`}
               >
                 {tab.count}
@@ -50,7 +49,6 @@ export default function ProductTabs({ tabs, panels }: Props) {
         ))}
       </div>
 
-      {/* Tab panels — все в DOM для SEO, показываем/скрываем через CSS */}
       <div className="mt-6">
         {panels.map((panel, i) => (
           <div
