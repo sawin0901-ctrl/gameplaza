@@ -72,8 +72,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
     if (query) sp.set("q", query)
     if (category) sp.set("category", category)
     if (sort !== "newest") sp.set("sort", sort)
-    if (minPrice) sp.set("minPrice", String(minPrice))
-    if (maxPrice) sp.set("maxPrice", String(maxPrice))
+    if (minPrice !== undefined) sp.set("minPrice", String(minPrice))
+    if (maxPrice !== undefined) sp.set("maxPrice", String(maxPrice))
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== "") sp.set(k, String(v))
       else sp.delete(k)
