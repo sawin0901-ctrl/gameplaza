@@ -27,7 +27,7 @@ const FEATURES = [
 ]
 
 export default async function HomePage() {
-  const [newProducts, popularProducts, totalProducts, totalCategories] = await Promise.all([
+  const [newProducts, popularProducts, totalProducts, totalCategories, salesAgg] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: { importedAt: "desc" },
@@ -42,7 +42,13 @@ export default async function HomePage() {
     }).catch(() => []),
     prisma.product.count({ where: { isActive: true } }).catch(() => 0),
     prisma.category.count().catch(() => 0),
+    prisma.product.aggregate({
+      where: { isActive: true },
+      _sum: { soldCount: true },
+    }).catch(() => ({ _sum: { soldCount: null } })),
   ])
+
+  const totalSold = salesAgg._sum.soldCount ?? 0
 
   return (
     <div>
@@ -93,10 +99,22 @@ export default async function HomePage() {
       <section className="border-y border-[#1f2937] bg-[#0d0d14]">
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { v: totalProducts > 0 ? `${totalProducts.toLocaleString("ru-RU")}+` : "10 000+", l: "Товаров" },
-            { v: totalCategories > 0 ? String(totalCategories) : "50+", l: "Категорий" },
-            { v: "100 000+", l: "Заказов выполнено" },
-            { v: "50 000+", l: "Довольных покупателей" },
+            {
+              v: totalProducts > 0 ? `${totalProducts.toLocaleString("ru-RU")}+` : "—",
+              l: "Товаров в каталоге",
+            },
+            {
+              v: totalCategories > 0 ? String(totalCategories) : "—",
+              l: "Категорий",
+            },
+            {
+              v: totalSold > 0 ? `${totalSold.toLocaleString("ru-RU")}+` : "—",
+              l: "Продаж через Digiseller",
+            },
+            {
+              v: "Digiseller",
+              l: "Официальная платёжная система",
+            },
           ].map(s => (
             <div key={s.l} className="text-center py-2">
               <p className="text-2xl md:text-3xl font-extrabold text-brand">{s.v}</p>
