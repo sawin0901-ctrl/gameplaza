@@ -3,22 +3,45 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../../../../lib/auth"
 import { prisma } from "../../../../lib/prisma"
 import bcrypt from "bcryptjs"
+import { rateLimit } from "../../../../lib/rate-limit"
+import { z } from "zod"
+
+const Schema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
+})
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { currentPassword, newPassword } = await req.json()
-
-  if (!currentPassword || !newPassword) {
-    return NextResponse.json({ error: "Заполните все поля" }, { status: 400 })
-  }
-  if (newPassword.length < 6) {
-    return NextResponse.json({ error: "Новый пароль — минимум 6 символов" }, { status: 400 })
+  // Rate limit: 5 попыток за 15 минут на пользователя
+  if (!rateLimit(`chpwd:${session.user.id}`, 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: "Слишком много попыток. Попробуйте позже." }, { status: 429 })
   }
 
-  const user = await prisma.user.findUnique({ where: { email: session.user.email! } })
+  let body: unknown
+  try { body = await req.json() } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = Schema.safeParse(body)
+  if (!parsed.success) {
+    const msg = parsed.error.errors[0]?.message ?? "Ошибка валидации"
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+  const { currentPassword, newPassword } = parsed.data
+
+  const email = session.user.email
+  if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const user = await prisma.user.findUnique({ where: { email } })
   if (!user) return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 })
+
+  // OAuth-пользователи не имеют пароля
+  if (!user.password) {
+    return NextResponse.json({ error: "Аккаунт не поддерживает смену пароля (OAuth)" }, { status: 400 })
+  }
 
   const valid = await bcrypt.compare(currentPassword, user.password)
   if (!valid) return NextResponse.json({ error: "Неверный текущий пароль" }, { status: 400 })
