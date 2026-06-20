@@ -110,7 +110,7 @@ export default function Header() {
                 </button>
                 {userOpen && (
                   <div className="absolute top-full right-0 mt-2 w-48 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl p-1.5 animate-fade-in">
-                    {(session.user as any).role === "admin" && (
+                    {session.user.role === "admin" && (
                       <Link href="/admin" onClick={() => setUserOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-brand hover:text-brand-400 transition-colors">
                         ⚙️ Админ панель
