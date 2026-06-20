@@ -1,12 +1,26 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
 
-export async function GET() {
-  const [db, redis] = await Promise.all([
-    prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
-    (async () => {
+export async function GET(req: NextRequest) {
+  const secret = process.env.ADMIN_SECRET
+  const hasSecret = secret && req.headers.get("x-admin-secret") === secret
+
+  const dbOk = await prisma.$queryRaw`SELECT 1`
+    .then(() => true)
+    .catch(() => false)
+
+  const status = dbOk ? "ok" : "error"
+
+  // Без секрета возвращаем только статус — без деталей инфраструктуры
+  if (!hasSecret) {
+    return NextResponse.json({ status }, { status: dbOk ? 200 : 503 })
+  }
+
+  // С секретом — полная диагностика для мониторинг-систем
+  const redisOk = await (async () => {
+    try {
       const { default: Redis } = await import("ioredis")
       const r = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
         maxRetriesPerRequest: 1,
@@ -21,12 +35,14 @@ export async function GET() {
       } finally {
         r.disconnect()
       }
-    })(),
-  ])
+    } catch {
+      return false
+    }
+  })()
 
-  const status = db && redis ? "ok" : db ? "degraded" : "error"
+  const fullStatus = dbOk && redisOk ? "ok" : dbOk ? "degraded" : "error"
   return NextResponse.json(
-    { status, services: { db, redis }, ts: new Date().toISOString() },
-    { status: db ? 200 : 503 },
+    { status: fullStatus, services: { db: dbOk, redis: redisOk }, ts: new Date().toISOString() },
+    { status: dbOk ? 200 : 503 },
   )
 }
