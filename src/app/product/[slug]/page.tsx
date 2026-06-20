@@ -58,7 +58,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Breadcrumb */}
@@ -78,38 +78,36 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <span className="text-gray-400 truncate max-w-[200px]">{product.name}</span>
       </nav>
 
-      {/* Main layout: left = image + description, right = info + widget */}
-      <div className="grid md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_420px] gap-10 items-start">
+      {/* Main: image left, info+widget right */}
+      <div className="flex flex-col md:flex-row gap-8 items-start">
 
-        {/* LEFT: Image → Description */}
-        <div>
-          <div className="relative aspect-square rounded-xl overflow-hidden bg-[#1a1a26] mb-8">
+        {/* LEFT: Image */}
+        <div className="w-full md:w-[420px] shrink-0">
+          <div className="relative w-full rounded-xl overflow-hidden bg-[#1a1a26]" style={{ aspectRatio: "1/1" }}>
             {product.imageUrl ? (
-              <Image src={product.imageUrl} alt={product.name} fill className="object-contain p-3" priority />
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-contain"
+                priority
+              />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-7xl opacity-10">🎮</span>
               </div>
             )}
           </div>
-
-          <section>
-            <h2 className="text-xl font-bold text-white mb-4">Описание</h2>
-            <div
-              className="card p-6 text-gray-300 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
-            />
-          </section>
         </div>
 
         {/* RIGHT: Info + Widget */}
-        <div className="flex flex-col gap-4">
+        <div className="flex-1 min-w-0">
           {product.category && (
-            <p className="text-brand text-sm font-medium">{product.category.name}</p>
+            <p className="text-brand text-sm font-medium mb-2">{product.category.name}</p>
           )}
-          <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">{product.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-3">{product.name}</h1>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-5">
             {product.inStock ? (
               <>
                 <span className="w-2 h-2 bg-emerald-400 rounded-full" />
@@ -123,9 +121,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
             )}
           </div>
 
-          <DigisellerWidget productId={product.digisellerProductId} />
+          {/* Digiseller widget */}
+          <div className="mb-5">
+            <DigisellerWidget productId={product.digisellerProductId} />
+          </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-3">
             {[
               { icon: "⚡", text: "Мгновенная доставка" },
               { icon: "🔒", text: "Безопасная оплата" },
@@ -140,6 +141,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       </div>
+
+      {/* Description */}
+      <section className="mt-8">
+        <h2 className="text-xl font-bold text-white mb-4">Описание</h2>
+        <div
+          className="card p-6 text-gray-300 text-sm leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
+        />
+      </section>
 
       {/* Related products */}
       {related.length > 0 && (
