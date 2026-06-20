@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/monitoring", label: "Мониторинг", icon: "🔍", badge: true },
   { href: "/admin/categories", label: "Категории", icon: "📁" },
   { href: "/admin/users", label: "Пользователи", icon: "👥" },
+  { href: "/admin/backup", label: "Резервные копии", icon: "💾" },
 ]
 
 export default function AdminNav() {
@@ -33,7 +34,7 @@ export default function AdminNav() {
   }, [])
 
   return (
-    <nav className="flex-1 p-3 space-y-1">
+    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
       {NAV.map(n => {
         const active = n.href === "/admin" ? pathname === "/admin" : pathname.startsWith(n.href)
         const count = n.badge ? errorCount : 0
