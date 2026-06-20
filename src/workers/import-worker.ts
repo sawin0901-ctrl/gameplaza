@@ -5,6 +5,7 @@ import { getDigisellerProduct } from "../lib/digiseller"
 import { checkProductQuality } from "../lib/quality-check"
 import { processDescription } from "../lib/link-processor"
 import { generateSlug } from "../lib/seo"
+import { importQueue } from "../lib/queue"
 
 async function updateImportLog(field: "imported" | "errors") {
   const today = new Date()
@@ -91,5 +92,16 @@ worker.on("failed", async (job, err) => {
   console.error(`[import] Job ${job?.id} failed:`, err.message)
   await updateImportLog("errors")
 })
+
+async function shutdown(signal: string) {
+  console.log(`[import-worker] ${signal} received, shutting down gracefully...`)
+  await worker.close()
+  await importQueue.close()
+  await prisma.$disconnect()
+  process.exit(0)
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"))
+process.on("SIGINT", () => shutdown("SIGINT"))
 
 console.log("[import-worker] Started")
