@@ -53,7 +53,7 @@ function DigisellerTab() {
   const [runError, setRunError] = useState<string | null>(null)
 
   const [testLoading, setTestLoading] = useState(false)
-  const [testResult, setTestResult] = useState<{ ok: boolean; checks: { name: string; ok: boolean; message: string; detail?: string; duration?: number }[] } | null>(null)
+  const [testResult, setTestResult] = useState<{ ok: boolean; checks: { name: string; ok: boolean; message: string; detail?: string; duration?: number; raw?: unknown }[] } | null>(null)
 
   async function testConnection() {
     setTestLoading(true); setTestResult(null)
