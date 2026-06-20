@@ -1,8 +1,9 @@
 "use client"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import Image from "next/image"
 import LanguageSwitcher from "./LanguageSwitcher"
 
 const CATS = [
@@ -22,29 +23,62 @@ const CATS = [
   { name: "Steam Wallet", slug: "steam-wallet", emoji: "💳" },
 ]
 
+interface Suggestion {
+  slug: string
+  name: string
+  price: number
+  imageUrl?: string | null
+  digisellerProductId: number
+}
+
 export default function Header() {
   const [search, setSearch] = useState("")
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [suggestOpen, setSuggestOpen] = useState(false)
   const [mob, setMob] = useState(false)
   const [catOpen, setCatOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
   const router = useRouter()
   const catRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
   const { data: session, status } = useSession()
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
       if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false)
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false)
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSuggestOpen(false)
     }
     document.addEventListener("mousedown", fn)
     return () => document.removeEventListener("mousedown", fn)
   }, [])
 
+  const fetchSuggestions = useCallback(async (q: string) => {
+    if (q.length < 2) { setSuggestions([]); setSuggestOpen(false); return }
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+      const data = await res.json()
+      setSuggestions(data)
+      setSuggestOpen(data.length > 0)
+    } catch {
+      setSuggestions([])
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchSuggestions(search), 300)
+    return () => clearTimeout(timer)
+  }, [search, fetchSuggestions])
+
   function onSearch(e: React.FormEvent) {
     e.preventDefault()
     const q = search.trim()
-    if (q) { router.push(`/catalog?q=${encodeURIComponent(q)}`); setMob(false) }
+    if (q) {
+      router.push(`/catalog?q=${encodeURIComponent(q)}`)
+      setMob(false)
+      setSuggestOpen(false)
+    }
   }
 
   const initials = session?.user?.name
@@ -85,15 +119,45 @@ export default function Header() {
             <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 Акции</Link>
           </nav>
 
-          <form onSubmit={onSearch} className="flex-1 max-w-lg hidden md:block mx-4">
-            <div className="relative">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="search" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Поиск по каталогу..." className="gp-input pl-10 py-2 text-sm" />
-            </div>
-          </form>
+          {/* Search with autocomplete */}
+          <div ref={searchRef} className="flex-1 max-w-lg hidden md:block mx-4 relative">
+            <form onSubmit={onSearch}>
+              <div className="relative">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="search" value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setSuggestOpen(true)}
+                  placeholder="Поиск по каталогу..." className="gp-input pl-10 py-2 text-sm" />
+              </div>
+            </form>
+            {suggestOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#111118] border border-[#1f2937] rounded-xl shadow-2xl overflow-hidden z-50">
+                {suggestions.map(s => (
+                  <Link key={s.slug} href={`/product/${s.slug}`}
+                    onClick={() => { setSuggestOpen(false); setSearch("") }}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#1a1a26] flex-shrink-0">
+                      {s.imageUrl
+                        ? <Image src={s.imageUrl} alt={s.name} width={36} height={36} className="object-cover w-full h-full" unoptimized />
+                        : <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">🎮</div>
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{s.name}</p>
+                      <p className="text-xs text-brand">{s.price.toLocaleString("ru-RU")} ₽</p>
+                    </div>
+                  </Link>
+                ))}
+                <button onClick={onSearch}
+                  className="w-full px-3 py-2 text-xs text-gray-500 hover:text-white hover:bg-white/5 transition-colors text-left border-t border-[#1f2937]">
+                  Показать все результаты для «{search}»
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <LanguageSwitcher />
