@@ -68,15 +68,15 @@ function LoginForm() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-sm text-gray-400 mb-1.5 block">Email</label>
+          <label className="text-sm text-[var(--text-2)] mb-1.5 block">Email</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="you@example.com" required autoComplete="email" className="gp-input" />
         </div>
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm text-gray-400">Пароль</label>
+            <label className="text-sm text-[var(--text-2)]">Пароль</label>
             <Link href="/auth/forgot-password"
-              className="text-xs text-gray-500 hover:text-brand transition-colors">
+              className="text-xs text-[var(--text-3)] hover:text-brand transition-colors">
               Забыли пароль?
             </Link>
           </div>
@@ -93,8 +93,8 @@ function LoginForm() {
           {loading ? "Входим..." : "Войти"}
         </button>
       </form>
-      <div className="border-t border-[#1f2937] mt-6 pt-6">
-        <p className="text-center text-gray-500 text-sm">
+      <div className="border-t border-[var(--border)] mt-6 pt-6">
+        <p className="text-center text-[var(--text-3)] text-sm">
           Нет аккаунта?{" "}
           <Link href="/auth/register" className="text-brand hover:text-brand-400 font-medium transition-colors">
             Зарегистрироваться
@@ -113,11 +113,11 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center font-bold text-white">G</div>
             <span className="font-bold text-xl">
-              <span className="text-brand">Game</span><span className="text-white">Plaza</span>
+              <span className="text-brand">Game</span><span className="text-[var(--text)]">Plaza</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white">Вход в аккаунт</h1>
-          <p className="text-gray-500 text-sm mt-1">Введите email и пароль для входа</p>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Вход в аккаунт</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">Введите email и пароль для входа</p>
         </div>
         <Suspense fallback={<div className="card p-8 h-64 animate-pulse" />}>
           <LoginForm />
