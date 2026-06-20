@@ -9,17 +9,20 @@ import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Профиль — GamePlaza",
+  robots: { index: false, follow: false },
 }
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/auth/login")
 
-  const wishlistCount = await prisma.wishlist.count({ where: { userId: session.user.id } }).catch(() => 0)
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { emailVerified: true },
-  }).catch(() => null)
+  const [wishlistCount, user] = await Promise.all([
+    prisma.wishlist.count({ where: { userId: session.user.id } }).catch(() => 0),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { emailVerified: true },
+    }).catch(() => null),
+  ])
 
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
