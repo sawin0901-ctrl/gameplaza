@@ -20,21 +20,7 @@ export async function GET(req: NextRequest) {
     ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     ...(status === "active" ? { isActive: true } : status === "hidden" ? { isActive: false } : {}),
   }
-
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { importedAt: "desc" },
-      take: PAGE,
-      skip: (page - 1) * PAGE,
-      select: {
-        id: true, name: true, price: true, isActive: true,
-        digisellerProductId: true, categoryId: true,
-        category: { select: { name: true } },
-      },
-    }),
-    prisma.product.count({ where }),
-  ])
-
-  return NextResponse.json({ products, total, pages: Math.ceil(total / PAGE) })
+    param($m)
+    $m.Groups[1].Value + "try {`n" + $m.Groups[1].Value + "  " + $m.Groups[2].Value.Trim() + "`n" + $m.Groups[1].Value + "  " + $m.Groups[3].Value.Trim()
+  { products, total, pages: Math.ceil(total / PAGE) })
 }
