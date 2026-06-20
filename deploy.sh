@@ -13,7 +13,7 @@ git clean -fd \
   --exclude='package-lock.json'
 
 echo "==> [2/6] Installing packages..."
-npm install --include=dev
+npm install --include=dev --legacy-peer-deps
 
 echo "==> [3/6] Prisma migrations..."
 # NOTE: First deploy on an existing db-push database requires running once:
