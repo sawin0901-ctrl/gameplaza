@@ -139,7 +139,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
                     className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                       sort === opt.value
                         ? "bg-brand border-brand text-white"
-                        : "border-[#1f2937] text-gray-400 hover:text-white hover:border-gray-600"
+                        : "border-[var(--border)] text-gray-400 hover:text-white hover:border-gray-600"
                     }`}>
                     {opt.label}
                   </Link>
@@ -182,7 +182,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
             <div className="flex items-center justify-center gap-1 mt-8">
               {page > 1 && (
                 <Link href={buildUrl({ page: page - 1 })}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1f2937] text-gray-400 hover:text-white hover:border-gray-600 transition-colors">
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--border)] text-gray-400 hover:text-white hover:border-gray-600 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
@@ -199,7 +199,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
                     className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors ${
                       p2 === page
                         ? "bg-brand text-white font-medium"
-                        : "border border-[#1f2937] text-gray-400 hover:text-white hover:border-gray-600"
+                        : "border border-[var(--border)] text-gray-400 hover:text-white hover:border-gray-600"
                     }`}>
                     {p2}
                   </Link>
@@ -207,7 +207,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
               })}
               {page < totalPages && (
                 <Link href={buildUrl({ page: page + 1 })}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#1f2937] text-gray-400 hover:text-white hover:border-gray-600 transition-colors">
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--border)] text-gray-400 hover:text-white hover:border-gray-600 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
