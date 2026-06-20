@@ -90,7 +90,7 @@ function HBar({ items, colorClass = "bg-brand/70", max: maxProp }: {
   items: { label: string; value: number; sublabel?: string }[]
   colorClass?: string; max?: number
 }) {
-  if (!items.length) return <p className="text-gray-600 text-sm text-center py-4">Нет данных</p>
+  if (!items.length) return <p className="text-[var(--text-3)] text-sm text-center py-4">Нет данных</p>
   const max = maxProp ?? Math.max(...items.map(i => i.value), 1)
   return (
     <div className="space-y-2.5">
@@ -162,7 +162,7 @@ function StatCard({ label, value, change, icon, format = "number" }: {
         <span className="text-gray-500 text-xs">{label}</span>
         <span className="text-xl">{icon}</span>
       </div>
-      <div className="text-2xl font-bold text-white mb-1">{display}</div>
+      <div className="text-2xl font-bold text-[var(--text)] mb-1">{display}</div>
       {change !== undefined && (
         <div className={`text-xs font-medium ${up ? "text-emerald-400" : "text-red-400"}`}>
           {up ? "↑" : "↓"} {Math.abs(change)}% к прошлому периоду
@@ -183,7 +183,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 
 // ── Section Title ──────────────────────────────────────────────────────────────
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-white font-semibold mb-4">{children}</h3>
+  return <h3 className="text-[var(--text)] font-semibold mb-4">{children}</h3>
 }
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"]
@@ -223,8 +223,8 @@ function OverviewTab({ d }: { d: DashboardData }) {
         <div className="flex items-center justify-between mb-4">
           <SectionTitle>Динамика за {d.period} дней</SectionTitle>
           <div className="flex gap-1 bg-white/5 rounded-lg p-1">
-            <button onClick={() => setChartMode("views")} className={`text-xs px-3 py-1 rounded-md transition-colors ${chartMode === "views" ? "bg-brand text-white" : "text-gray-500"}`}>Просмотры</button>
-            <button onClick={() => setChartMode("sessions")} className={`text-xs px-3 py-1 rounded-md transition-colors ${chartMode === "sessions" ? "bg-brand text-white" : "text-gray-500"}`}>Визиты</button>
+            <button onClick={() => setChartMode("views")} className={`text-xs px-3 py-1 rounded-md transition-colors ${chartMode === "views" ? "bg-brand text-white" : "text-[var(--text-3)]"}`}>Просмотры</button>
+            <button onClick={() => setChartMode("sessions")} className={`text-xs px-3 py-1 rounded-md transition-colors ${chartMode === "sessions" ? "bg-brand text-white" : "text-[var(--text-3)]"}`}>Визиты</button>
           </div>
         </div>
         <LineChart data={chartMode === "views" ? daily : dailySess} />
@@ -235,7 +235,7 @@ function OverviewTab({ d }: { d: DashboardData }) {
         <StatCard label="Регистрации" value={d.overview.registrations.current} change={d.overview.registrations.change} icon="📝" />
         <div className="card p-4">
           <p className="text-gray-500 text-xs mb-1">Страниц за визит</p>
-          <p className="text-2xl font-bold text-white">{d.overview.visitors.current > 0 ? (d.overview.views.current / d.overview.visitors.current).toFixed(1) : "—"}</p>
+          <p className="text-2xl font-bold text-[var(--text)]">{d.overview.visitors.current > 0 ? (d.overview.views.current / d.overview.visitors.current).toFixed(1) : "—"}</p>
         </div>
       </div>
     </div>
@@ -266,7 +266,7 @@ function TrafficTab({ d }: { d: DashboardData }) {
               items={totalByType.map(t => ({ name: t.label, count: t.value }))}
               colors={COLORS}
             />
-          ) : <p className="text-gray-600 text-sm text-center py-8">Нет данных</p>}
+          ) : <p className="text-[var(--text-3)] text-sm text-center py-8">Нет данных</p>}
         </div>
       </div>
 
@@ -287,9 +287,9 @@ function TrafficTab({ d }: { d: DashboardData }) {
           <SectionTitle>↗ Сайты-источники переходов</SectionTitle>
           <div className="space-y-2">
             {d.sources.referral.map((r, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-[#1f2937]">
+              <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--border)]">
                 <a href={`https://${r.source}`} target="_blank" rel="noopener noreferrer" className="text-brand text-sm hover:underline">{r.source}</a>
-                <span className="text-white font-semibold text-sm">{r.count}</span>
+                <span className="text-[var(--text)] font-semibold text-sm">{r.count}</span>
               </div>
             ))}
           </div>
@@ -308,15 +308,15 @@ function PagesTab({ d }: { d: DashboardData }) {
           {d.topPages.length ? (
             <div className="space-y-2">
               {d.topPages.slice(0, 15).map((p, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-[#1f2937]">
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)]">
                   <span className="text-gray-600 text-xs w-4 text-right">{i + 1}</span>
                   <a href={p.path} target="_blank" rel="noopener noreferrer"
                     className="flex-1 text-sm text-brand hover:underline truncate" title={p.path}>{p.path}</a>
-                  <span className="text-white font-semibold text-sm">{p.views}</span>
+                  <span className="text-[var(--text)] font-semibold text-sm">{p.views}</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-gray-600 text-sm py-8 text-center">Нет данных</p>}
+          ) : <p className="text-[var(--text-3)] text-sm py-8 text-center">Нет данных</p>}
         </div>
 
         <div className="card p-5">
@@ -326,7 +326,7 @@ function PagesTab({ d }: { d: DashboardData }) {
             <HBar items={d.keywords.map(k => ({ label: k.keyword, value: k.count }))} colorClass="bg-blue-500/70" />
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">Нет данных о поисковых запросах</p>
+              <p className="text-[var(--text-3)] text-sm">Нет данных о поисковых запросах</p>
               <p className="text-gray-700 text-xs mt-2">Запросы собираются из параметра ?q= реферера поисковых систем</p>
             </div>
           )}
@@ -347,19 +347,19 @@ function AudienceTab({ d }: { d: DashboardData }) {
               items={d.devices.filter(d => d.name)}
               colors={["#6366f1", "#10b981", "#f59e0b"]}
             />
-          ) : <p className="text-gray-600 text-sm text-center py-4">Нет данных</p>}
+          ) : <p className="text-[var(--text-3)] text-sm text-center py-4">Нет данных</p>}
         </div>
         <div className="card p-5">
           <SectionTitle>🌐 Браузеры</SectionTitle>
           {d.browsers.length ? (
             <DonutChart items={d.browsers.filter(b => b.name)} colors={COLORS} />
-          ) : <p className="text-gray-600 text-sm text-center py-4">Нет данных</p>}
+          ) : <p className="text-[var(--text-3)] text-sm text-center py-4">Нет данных</p>}
         </div>
         <div className="card p-5">
           <SectionTitle>💻 Операционные системы</SectionTitle>
           {d.os.length ? (
             <DonutChart items={d.os.filter(o => o.name)} colors={["#3b82f6", "#22c55e", "#a855f7", "#f97316", "#64748b"]} />
-          ) : <p className="text-gray-600 text-sm text-center py-4">Нет данных</p>}
+          ) : <p className="text-[var(--text-3)] text-sm text-center py-4">Нет данных</p>}
         </div>
       </div>
 
@@ -370,20 +370,20 @@ function AudienceTab({ d }: { d: DashboardData }) {
             {d.countries.map((c, i) => {
               const total = d.countries.reduce((s, x) => s + x.count, 0) || 1
               return (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-[#1f2937]">
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)]">
                   <span className="text-gray-600 text-xs w-4 text-right">{i + 1}</span>
                   <span className="flex-1 text-sm text-gray-300">{c.name}</span>
                   <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
                     <div className="h-full bg-brand/70 rounded-full" style={{ width: `${(c.count / total) * 100}%` }} />
                   </div>
-                  <span className="text-white text-sm font-medium w-10 text-right">{c.count}</span>
+                  <span className="text-[var(--text)] text-sm font-medium w-10 text-right">{c.count}</span>
                 </div>
               )
             })}
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-600 text-sm">Данные о географии собираются через ip-api.com</p>
+            <p className="text-[var(--text-3)] text-sm">Данные о географии собираются через ip-api.com</p>
             <p className="text-gray-700 text-xs mt-2">Появятся после накопления трафика</p>
           </div>
         )}
@@ -401,17 +401,17 @@ function ProductsTab({ d }: { d: DashboardData }) {
           {d.productViews.length ? (
             <div className="space-y-2">
               {d.productViews.map((p, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-[#1f2937]">
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)]">
                   <span className="text-gray-600 text-xs w-4 text-right">{i + 1}</span>
                   <Link href={`/catalog/${p.slug}`} target="_blank" className="flex-1 text-sm text-brand hover:underline truncate" title={p.name}>{p.name}</Link>
-                  <span className="text-white font-semibold text-sm">{p.views} просм.</span>
+                  <span className="text-[var(--text)] font-semibold text-sm">{p.views} просм.</span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">Просмотры товаров будут отображаться здесь</p>
-              <p className="text-gray-700 text-xs mt-2">Вызывайте <code className="text-gray-500">trackEvent("product_view")</code> на странице товара</p>
+              <p className="text-[var(--text-3)] text-sm">Просмотры товаров будут отображаться здесь</p>
+              <p className="text-gray-700 text-xs mt-2">Вызывайте <code className="text-[var(--text-3)]">trackEvent("product_view")</code> на странице товара</p>
             </div>
           )}
         </div>
@@ -421,7 +421,7 @@ function ProductsTab({ d }: { d: DashboardData }) {
           {d.productPurchases.length ? (
             <div className="space-y-2">
               {d.productPurchases.map((p, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 border-b border-[#1f2937]">
+                <div key={i} className="flex items-center gap-3 py-2 border-b border-[var(--border)]">
                   <span className="text-gray-600 text-xs w-4 text-right">{i + 1}</span>
                   <span className="flex-1 text-sm text-gray-300 truncate" title={p.name}>{p.name}</span>
                   <div className="text-right">
@@ -433,8 +433,8 @@ function ProductsTab({ d }: { d: DashboardData }) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-600 text-sm">Продажи появятся после покупок</p>
-              <p className="text-gray-700 text-xs mt-2">Вызывайте <code className="text-gray-500">trackEvent("purchase", {"{"} value, productId {"}"} )</code></p>
+              <p className="text-[var(--text-3)] text-sm">Продажи появятся после покупок</p>
+              <p className="text-gray-700 text-xs mt-2">Вызывайте <code className="text-[var(--text-3)]">trackEvent("purchase", {"{"} value, productId {"}"} )</code></p>
             </div>
           )}
         </div>
@@ -452,7 +452,7 @@ function UtmTab({ d }: { d: DashboardData }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-600 text-left border-b border-[#1f2937]">
+                <tr className="text-gray-600 text-left border-b border-[var(--border)]">
                   {["utm_source", "utm_medium", "utm_campaign", "Переходы"].map(h => (
                     <th key={h} className="pb-3 pr-4 font-medium">{h}</th>
                   ))}
@@ -460,7 +460,7 @@ function UtmTab({ d }: { d: DashboardData }) {
               </thead>
               <tbody>
                 {d.utmCampaigns.map((u, i) => (
-                  <tr key={i} className="border-b border-[#1f2937] hover:bg-white/2">
+                  <tr key={i} className="border-b border-[var(--border)] hover:bg-white/2">
                     <td className="py-2.5 pr-4 text-brand">{u.source}</td>
                     <td className="py-2.5 pr-4 text-gray-400">{u.medium}</td>
                     <td className="py-2.5 pr-4 text-gray-300">{u.campaign}</td>
@@ -474,7 +474,7 @@ function UtmTab({ d }: { d: DashboardData }) {
           <div className="text-center py-12">
             <p className="text-4xl mb-4">📣</p>
             <p className="text-white font-medium mb-2">UTM-метки не найдены</p>
-            <p className="text-gray-600 text-sm">Добавляйте UTM-параметры к ссылкам в рекламных кампаниях</p>
+            <p className="text-[var(--text-3)] text-sm">Добавляйте UTM-параметры к ссылкам в рекламных кампаниях</p>
             <div className="card p-4 mt-4 text-left text-xs text-gray-500">
               <p className="font-medium text-gray-400 mb-2">Пример ссылки:</p>
               <code className="text-gray-300 break-all">gameplaza.site/?utm_source=telegram&utm_medium=post&utm_campaign=sale2024</code>
@@ -573,8 +573,8 @@ export default function AdminAnalyticsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Аналитика</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[var(--text)]">Аналитика</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">
             {lastRefresh ? `Обновлено: ${lastRefresh.toLocaleTimeString("ru-RU")}` : "Загрузка..."}
           </p>
         </div>
@@ -613,7 +613,7 @@ export default function AdminAnalyticsPage() {
         <div className="flex items-center justify-center py-24">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Загрузка аналитики...</p>
+            <p className="text-[var(--text-3)] text-sm">Загрузка аналитики...</p>
           </div>
         </div>
       )}
@@ -630,7 +630,7 @@ export default function AdminAnalyticsPage() {
         </div>
       )}
 
-      <div className="mt-8 pt-5 border-t border-[#1f2937] flex flex-wrap gap-2">
+      <div className="mt-8 pt-5 border-t border-[var(--border)] flex flex-wrap gap-2">
         <Link href="/admin" className="btn-ghost text-sm py-2 px-4">← Дашборд</Link>
         <Link href="/admin/import" className="btn-ghost text-sm py-2 px-4">⬇ Импорт</Link>
         <Link href="/" target="_blank" className="btn-ghost text-sm py-2 px-4">🌐 Сайт</Link>
