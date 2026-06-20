@@ -13,16 +13,10 @@ module.exports = {
           700: '#6d28d9',
           800: '#5b21b6',
         },
-        // Семантические цвета на основе CSS-переменных
-        // Используются в новых компонентах вместо хардкодных hex
-        surface: 'var(--bg)',
-        'surface-secondary': 'var(--bg-secondary)',
-        'card-bg': 'var(--card)',
-        'card-hover': 'var(--card-hover)',
-        'border-default': 'var(--border)',
-        'text-base': 'var(--text)',
-        'text-secondary': 'var(--text-2)',
-        'text-muted': 'var(--text-3)',
+        // ВНИМАНИЕ: CSS-переменные как значения цветов Tailwind приводят к
+        // невалидному CSS вида rgb(var(--bg) / opacity). Убраны из конфига.
+        // Тема реализована через CSS-переменные напрямую в globals.css
+        // в компонентах .card, .btn-*, .gp-input и CSS-оверрайдах.
       },
       animation: {
         'fade-in':  'fadeIn 0.2s ease-out',
