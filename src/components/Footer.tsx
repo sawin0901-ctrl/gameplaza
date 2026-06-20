@@ -1,24 +1,26 @@
 import Link from "next/link"
 
 const CATALOG_LINKS = [
-  { name: "Все товары", href: "/catalog" },
-  { name: "Игры Steam", href: "/catalog?category=steam" },
-  { name: "Xbox", href: "/catalog?category=xbox" },
-  { name: "PlayStation", href: "/catalog?category=playstation" },
-  { name: "Подписки", href: "/catalog?category=subscriptions" },
-  { name: "Акции", href: "/catalog?sort=discount" },
+  { name: "Все товары",   href: "/catalog" },
+  { name: "Игры Steam",   href: "/catalog?category=steam" },
+  { name: "Xbox",         href: "/catalog?category=xbox" },
+  { name: "PlayStation",  href: "/catalog?category=playstation" },
+  { name: "Подписки",     href: "/catalog?category=subscriptions" },
+  { name: "Акции",        href: "/catalog?sort=discount" },
 ]
 
 const INFO_LINKS = [
-  { name: "О нас", href: "/about" },
-  { name: "Помощь", href: "/help" },
-  { name: "Контакты", href: "/contact" },
-  { name: "Политика конфиденциальности", href: "/privacy" },
-  { name: "Условия использования", href: "/terms" },
+  { name: "Каталог товаров",         href: "/catalog" },
+  { name: "Игры Steam",              href: "/catalog?category=steam" },
+  { name: "Программы и ПО",          href: "/catalog?category=software" },
+  { name: "Подарочные карты",        href: "/catalog?category=gift-cards" },
+  { name: "Все категории",           href: "/catalog" },
 ]
 
 export default function Footer() {
+  // Год рендерится на сервере при каждом запросе (не статически)
   const year = new Date().getFullYear()
+
   return (
     <footer className="bg-[#0d0d14] border-t border-[#1f2937] mt-20">
       <div className="max-w-7xl mx-auto px-4 py-14">
@@ -37,7 +39,7 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Каталог</h4>
             <ul className="space-y-2.5">
               {CATALOG_LINKS.map(l => (
-                <li key={l.href}>
+                <li key={l.href + l.name}>
                   <Link href={l.href} className="text-gray-600 hover:text-white text-sm transition-colors">{l.name}</Link>
                 </li>
               ))}
@@ -45,10 +47,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Информация</h4>
+            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Разделы</h4>
             <ul className="space-y-2.5">
               {INFO_LINKS.map(l => (
-                <li key={l.href}>
+                <li key={l.href + l.name}>
                   <Link href={l.href} className="text-gray-600 hover:text-white text-sm transition-colors">{l.name}</Link>
                 </li>
               ))}
