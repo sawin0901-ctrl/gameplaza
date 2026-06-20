@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import Image from "next/image"
 import LanguageSwitcher from "./LanguageSwitcher"
+import { useLocale } from "./LocaleProvider"
 
 const CATS = [
   { name: "Steam Games", slug: "steam", emoji: "🎮" },
@@ -43,6 +44,7 @@ export default function Header() {
   const userRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const { data: session, status } = useSession()
+  const { t } = useLocale()
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -97,10 +99,10 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="/catalog" className="btn-ghost text-sm">Каталог</Link>
+            <Link href="/catalog" className="btn-ghost text-sm">{t.nav.catalog}</Link>
             <div className="relative" ref={catRef}>
               <button onClick={() => setCatOpen(v => !v)} className="btn-ghost text-sm flex items-center gap-1">
-                Категории
+                {t.nav.categories}
                 <svg className={`w-3.5 h-3.5 transition-transform ${catOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -116,7 +118,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-            <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 Акции</Link>
+            <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 {t.nav.deals}</Link>
           </nav>
 
           {/* Search with autocomplete */}
@@ -130,7 +132,7 @@ export default function Header() {
                   type="search" value={search}
                   onChange={e => setSearch(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setSuggestOpen(true)}
-                  placeholder="Поиск по каталогу..." className="gp-input pl-10 py-2 text-sm" />
+                  placeholder={t.nav.search} className="gp-input pl-10 py-2 text-sm" />
               </div>
             </form>
             {suggestOpen && (
@@ -153,7 +155,7 @@ export default function Header() {
                 ))}
                 <button onClick={onSearch}
                   className="w-full px-3 py-2 text-xs text-gray-500 hover:text-white hover:bg-white/5 transition-colors text-left border-t border-[#1f2937]">
-                  Показать все результаты для «{search}»
+                  {t.catalog.showAll} «{search}»
                 </button>
               </div>
             )}
@@ -182,19 +184,19 @@ export default function Header() {
                     )}
                     <Link href="/profile" onClick={() => setUserOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-gray-400 hover:text-white transition-colors">
-                      👤 Профиль
+                      👤 {t.nav.profile}
                     </Link>
                     <button onClick={() => signOut({ callbackUrl: "/" })}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-500/10 text-sm text-gray-400 hover:text-red-400 transition-colors">
-                      🚪 Выйти
+                      🚪 {t.nav.logout}
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <Link href="/auth/login" className="btn-ghost text-sm">Войти</Link>
-                <Link href="/auth/register" className="btn-primary text-sm px-4 py-2">Регистрация</Link>
+                <Link href="/auth/login" className="btn-ghost text-sm">{t.nav.login}</Link>
+                <Link href="/auth/register" className="btn-primary text-sm px-4 py-2">{t.nav.register}</Link>
               </div>
             )}
             <button onClick={() => setMob(v => !v)} className="md:hidden btn-ghost p-2">
@@ -213,18 +215,19 @@ export default function Header() {
                 <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск..." className="gp-input pl-10 text-sm" />
+                <input type="search" value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder={t.nav.search} className="gp-input pl-10 text-sm" />
               </div>
             </form>
             {session ? (
               <div className="flex gap-2">
-                <Link href="/profile" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">Профиль</Link>
-                <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm flex-1 text-center border border-red-500/20 text-red-400 rounded-xl py-2.5">Выйти</button>
+                <Link href="/profile" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">{t.nav.profile}</Link>
+                <button onClick={() => signOut({ callbackUrl: "/" })} className="text-sm flex-1 text-center border border-red-500/20 text-red-400 rounded-xl py-2.5">{t.nav.logout}</button>
               </div>
             ) : (
               <div className="flex gap-2">
-                <Link href="/auth/login" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">Войти</Link>
-                <Link href="/auth/register" onClick={() => setMob(false)} className="btn-primary text-sm flex-1">Регистрация</Link>
+                <Link href="/auth/login" onClick={() => setMob(false)} className="btn-ghost text-sm flex-1 text-center border border-[#1f2937] rounded-xl py-2.5">{t.nav.login}</Link>
+                <Link href="/auth/register" onClick={() => setMob(false)} className="btn-primary text-sm flex-1 text-center">{t.nav.register}</Link>
               </div>
             )}
             <div className="grid grid-cols-2 gap-1">
