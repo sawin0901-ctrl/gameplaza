@@ -78,11 +78,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <span className="text-gray-400 truncate max-w-[200px]">{product.name}</span>
       </nav>
 
-      {/* Main: image left, info+widget right */}
-      <div className="flex flex-col md:flex-row gap-8 items-start">
+      {/* Main: 3 columns — image | info | widget */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-        {/* LEFT: Image — 280px fixed, square, full image */}
-        <div className="w-full md:w-[280px] shrink-0">
+        {/* Column 1: Image — 260px */}
+        <div className="w-full lg:w-[260px] shrink-0">
           <div
             className="rounded-xl overflow-hidden bg-[#1a1a26]"
             style={{ position: "relative", width: "100%", paddingTop: "100%" }}
@@ -92,7 +92,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                sizes="280px"
+                sizes="260px"
                 className="object-contain"
                 style={{ position: "absolute", inset: 0 }}
                 priority
@@ -105,14 +105,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
 
-        {/* RIGHT: Info + Widget */}
+        {/* Column 2: Title + Info + Trust badges */}
         <div className="flex-1 min-w-0">
           {product.category && (
             <p className="text-brand text-sm font-medium mb-2">{product.category.name}</p>
           )}
           <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-3">{product.name}</h1>
 
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-6">
             {product.inStock ? (
               <>
                 <span className="w-2 h-2 bg-emerald-400 rounded-full" />
@@ -124,10 +124,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 <span className="text-red-400 text-sm font-medium">Нет в наличии</span>
               </>
             )}
-          </div>
-
-          <div className="mb-5">
-            <DigisellerWidget productId={product.digisellerProductId} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -143,6 +139,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Column 3: Digiseller widget — right edge */}
+        <div className="w-full lg:w-auto shrink-0">
+          <DigisellerWidget productId={product.digisellerProductId} />
         </div>
       </div>
 
