@@ -4,7 +4,8 @@ import { prisma } from "../../../../lib/prisma"
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token")
 
-  if (!token) {
+  // Базовая валидация токена
+  if (!token || token.length < 10 || token.length > 256) {
     return NextResponse.redirect(new URL("/auth/login?error=invalid_token", req.url))
   }
 
