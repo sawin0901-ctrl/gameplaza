@@ -52,6 +52,19 @@ function DigisellerTab() {
   const [runResult, setRunResult] = useState<{ scheduled: number; skippedExisting: number; total: number; message?: string } | null>(null)
   const [runError, setRunError] = useState<string | null>(null)
 
+  const [testLoading, setTestLoading] = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; checks: { name: string; ok: boolean; message: string; detail?: string; duration?: number }[] } | null>(null)
+
+  async function testConnection() {
+    setTestLoading(true); setTestResult(null)
+    try {
+      const res = await fetch("/api/admin/import/test-digiseller")
+      const data = await res.json()
+      setTestResult(data)
+    } catch { setTestResult({ ok: false, checks: [{ name: "Соединение", ok: false, message: "Ошибка запроса" }] }) }
+    setTestLoading(false)
+  }
+
   async function doImport() {
     const text = input.trim()
     if (!text) { setError("Введите ID или ссылку"); return }
@@ -82,6 +95,37 @@ function DigisellerTab() {
 
   return (
     <div className="space-y-5">
+      {/* Проверка подключения */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-white font-semibold">Проверить подключение Digiseller</h3>
+            <p className="text-gray-500 text-xs mt-0.5">Проверяет авторизацию и доступность API</p>
+          </div>
+          <button onClick={testConnection} disabled={testLoading} className="btn-outline py-2 px-4 text-sm disabled:opacity-50">
+            {testLoading ? "⏳ Проверяем..." : "🔍 Проверить подключение"}
+          </button>
+        </div>
+        {testResult && (
+          <div className="space-y-2">
+            {testResult.checks.map((c, i) => (
+              <div key={i} className="flex items-start gap-3 py-2 border-b border-[#1f2937]">
+                <span className={c.ok ? "text-emerald-400" : "text-red-400"}>{c.ok ? "✅" : "❌"}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm">{c.name}</p>
+                  <p className={`text-xs mt-0.5 ${c.ok ? "text-gray-500" : "text-red-400"}`}>{c.message}</p>
+                  {c.detail && <p className="text-gray-600 text-xs mt-0.5 font-mono truncate">{c.detail}</p>}
+                </div>
+                {c.duration !== undefined && <span className="text-gray-600 text-xs">{c.duration}мс</span>}
+              </div>
+            ))}
+            <p className={`text-sm font-semibold mt-2 ${testResult.ok ? "text-emerald-400" : "text-red-400"}`}>
+              {testResult.ok ? "✅ Всё работает корректно" : "❌ Обнаружены проблемы с подключением"}
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Импорт по ID/ссылке */}
       <div className="card p-5">
         <h3 className="text-white font-semibold mb-1">Импорт по ID или ссылке</h3>
