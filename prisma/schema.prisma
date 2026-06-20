@@ -178,3 +178,21 @@ model DailyStats {
 
   @@index([date])
 }
+model SystemLog {
+  id         String    @id @default(cuid())
+  level      String
+  category   String
+  message    String
+  details    Json?
+  url        String?
+  userId     String?
+  status     String    @default("new")
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([level])
+  @@index([category])
+  @@index([status])
+}
