@@ -6,9 +6,10 @@ const NAV = [
   { href: "/admin", label: "Дашборд", icon: "📊" },
   { href: "/admin/products", label: "Товары", icon: "🎮" },
   { href: "/admin/import", label: "Импорт", icon: "⬇️" },
+  { href: "/admin/analytics", label: "Аналитика", icon: "📈" },
   { href: "/admin/categories", label: "Категории", icon: "📁" },
   { href: "/admin/users", label: "Пользователи", icon: "👥" },
-  { href: "/admin/monitoring", label: "Мониторинг", icon: "📈" },
+  { href: "/admin/monitoring", label: "Мониторинг", icon: "🔍" },
 ]
 
 export default function AdminNav() {
