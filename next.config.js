@@ -5,6 +5,8 @@ const nextConfig = {
       { protocol: "https", hostname: "digiseller.ru" },
       { protocol: "https", hostname: "cdn.digiseller.ru" },
       { protocol: "https", hostname: "graph.digiseller.ru" },
+      { protocol: "https", hostname: "plati.market" },
+      { protocol: "https", hostname: "www.plati.market" },
     ],
   },
   async headers() {
