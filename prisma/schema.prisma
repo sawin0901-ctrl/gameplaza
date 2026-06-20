@@ -8,19 +8,21 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(cuid())
+  id                  String         @id @default(cuid())
   name                String?
-  email               String    @unique
+  email               String         @unique
   password            String
-  role                String    @default("user")
+  role                String         @default("user")
   emailVerified       DateTime?
   verificationToken   String?
   resetToken          String?
   resetTokenExpiry    DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   wishlists           Wishlist[]
   reviews             Review[]
+  orders              Order[]
+  loginHistory        LoginHistory[]
 }
 
 model Product {
@@ -53,6 +55,7 @@ model Product {
   hideReason          String?
   wishlists           Wishlist[]
   reviews             Review[]
+  orderItems          OrderItem[]
 }
 
 model Category {
@@ -64,6 +67,73 @@ model Category {
   color       String?
   products    Product[]
   createdAt   DateTime  @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String?
+  email         String
+  status        String      @default("pending")
+  totalAmount   Float
+  promoCode     String?
+  discount      Float       @default(0)
+  paymentMethod String?
+  paymentId     String?
+  notes         String?
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String?
+  name      String
+  price     Float
+  digiId    Int
+  imageUrl  String?
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model PromoCode {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  description    String?
+  type           String    @default("percent")
+  value          Float
+  minOrderAmount Float?
+  maxUses        Int?
+  usedCount      Int       @default(0)
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String?
+  userAgent String?
+  city      String?
+  country   String?
+  success   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model ImportQueue {
@@ -178,6 +248,7 @@ model DailyStats {
 
   @@index([date])
 }
+
 model SystemLog {
   id         String    @id @default(cuid())
   level      String
