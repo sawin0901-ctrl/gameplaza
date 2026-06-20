@@ -11,6 +11,7 @@ export interface DigisellerProduct {
   info_goods: string
   price_usd: number
   price_rub: number
+  old_price_rub?: number
   currency: string
   image_link?: string
   cnt_goods: number
@@ -56,6 +57,7 @@ export async function getDigisellerProduct(productId: number): Promise<Digiselle
         info_goods: g.info || g.info_goods || "",
         price_usd: g.price_usd || 0,
         price_rub: g.price_rub || g.price || 0,
+        old_price_rub: g.price_rub_old || g.old_price || undefined,
         currency: "RUB",
         image_link: g.images?.[0]?.url || g.image_link || undefined,
         cnt_goods: g.cnt_in ?? g.cnt_goods ?? 999,
@@ -103,6 +105,14 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
       $(".buy-btn .price").first().text().replace(/[^\d.]/g, "")
     const price = parseFloat(priceStr) || 0
 
+    // Try to extract old (pre-discount) price
+    const oldPriceStr =
+      $(".price-old .val").first().text().replace(/[^\d.]/g, "") ||
+      $("del .val").first().text().replace(/[^\d.]/g, "") ||
+      $(".old-price").first().text().replace(/[^\d.]/g, "") ||
+      $("[class*='old-price']").first().text().replace(/[^\d.]/g, "")
+    const oldPrice = parseFloat(oldPriceStr) || undefined
+
     const desc =
       $(".goods-description-main").first().text().trim() ||
       $("[itemprop='description']").first().text().trim() ||
@@ -116,16 +126,13 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
       ? imgSrc.startsWith("http") ? imgSrc : `https://plati.market${imgSrc}`
       : undefined
 
-    const soldText = $("[data-count]").first().attr("data-count") ||
-      $(".sold-count").first().text().replace(/[^\d]/g, "")
-    const soldCount = parseInt(soldText || "0") || 0
-
     return {
       id_goods: productId,
       name_goods: name,
       info_goods: desc,
       price_usd: 0,
       price_rub: price,
+      old_price_rub: oldPrice && oldPrice > price ? oldPrice : undefined,
       currency: "RUB",
       image_link: imageUrl,
       cnt_goods: 999,
