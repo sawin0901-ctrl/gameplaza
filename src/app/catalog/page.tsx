@@ -16,25 +16,37 @@ const SORT_OPTS = [
   { value: "discount", label: "🔥 Акции" },
 ]
 
+const VALID_SORTS = new Set(["newest", "price_asc", "price_desc", "popular", "discount"])
+
 export async function generateMetadata({ searchParams }: { searchParams: Record<string, string> }): Promise<Metadata> {
-  const q = searchParams.q ?? ""
-  const sort = searchParams.sort ?? ""
+  // Обрезаем и санитизируем q, чтобы не вставлять пользовательский ввод напрямую в title
+  const rawQ = searchParams.q ?? ""
+  const q = rawQ.replace(/[<>"'&]/g, "").trim().slice(0, 60)
+  const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "") : ""
+
   const title = sort === "discount"
     ? "Акции и скидки — GamePlaza"
     : q ? `Поиск: ${q} — GamePlaza` : "Каталог цифровых товаров — GamePlaza"
   return {
     title,
     description: "Игры, программы, ключи активации. Мгновенная доставка через Digiseller.",
+    robots: { index: !q, follow: true },
   }
 }
 
 export default async function CatalogPage({ searchParams }: { searchParams: Record<string, string> }) {
-  const query = searchParams.q ?? ""
-  const category = searchParams.category ?? ""
-  const sort = searchParams.sort ?? "newest"
-  const page = Math.max(1, Number(searchParams.page ?? 1))
-  const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined
-  const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined
+  const query = (searchParams.q ?? "").trim().slice(0, 100)
+  const category = (searchParams.category ?? "").replace(/[^a-z0-9-]/g, "").slice(0, 50)
+  const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
+
+  // Безопасный парсинг номера страницы — без NaN
+  const rawPage = parseInt(searchParams.page ?? "1", 10)
+  const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1
+
+  const rawMin = parseFloat(searchParams.minPrice ?? "")
+  const rawMax = parseFloat(searchParams.maxPrice ?? "")
+  const minPrice = Number.isFinite(rawMin) && rawMin >= 0 ? rawMin : undefined
+  const maxPrice = Number.isFinite(rawMax) && rawMax >= 0 ? rawMax : undefined
 
   const where = {
     isActive: true,
@@ -46,7 +58,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
       ]
     } : {}),
     ...(category ? { category: { slug: category } } : {}),
-    ...(minPrice !== undefined || maxPrice !== undefined ? {
+    ...((minPrice !== undefined || maxPrice !== undefined) ? {
       price: {
         ...(minPrice !== undefined ? { gte: minPrice } : {}),
         ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
@@ -55,16 +67,15 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
   }
 
   const orderBy =
-    sort === "price_asc" ? { price: "asc" as const } :
+    sort === "price_asc"  ? { price: "asc" as const } :
     sort === "price_desc" ? { price: "desc" as const } :
-    sort === "popular" ? { soldCount: "desc" as const } :
-    sort === "discount" ? { discountPercent: "desc" as const } :
+    sort === "popular"    ? { soldCount: "desc" as const } :
+    sort === "discount"   ? { discountPercent: "desc" as const } :
     { importedAt: "desc" as const }
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
-      where,
-      orderBy,
+      where, orderBy,
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
       include: { category: true },
@@ -74,7 +85,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  function buildUrl(params: Record<string, string | number>) {
+  function buildUrl(params: Record<string, string | number | undefined>) {
     const sp = new URLSearchParams()
     if (query) sp.set("q", query)
     if (category) sp.set("category", category)
