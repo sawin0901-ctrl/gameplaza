@@ -234,6 +234,13 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
 
     if (!name || name.length < 3) return null
 
+    // Skip Plati.Market service/category/search pages — not real products
+    const PLATI_SERVICE_RE = /(?:plati\.?market|плати[\s.]маркет|магазин цифровых товаров|каталог товаров|результаты поиска)/i
+    if (PLATI_SERVICE_RE.test(name)) {
+      console.warn("[plati-scraper] Service page for " + productId + ": " + name.slice(0, 80))
+      return null
+    }
+
     // Price — try multiple approaches
     const priceAttr  = $("[itemprop='price']").first().attr("content")
     const ogPrice    = $("meta[property='product:price:amount']").first().attr("content")
@@ -363,6 +370,12 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       descHtml = ogDesc || metaDesc
     }
     const description = descHtml.trim()
+    // Skip Plati.Market generic marketplace description (category/search pages)
+    const PLATI_MARKETPLACE_RE = /(?:более миллиона лотов|маркетплейс цифровых товаров|игры,\s*ключи,\s*аккаунты,\s*подписки,\s*софт)/i
+    if (PLATI_MARKETPLACE_RE.test(descHtml.replace(/<[^>]+>/g, " "))) {
+      console.warn("[plati-scraper] Plati marketplace description for " + productId + ", skipping")
+      return null
+    }
     const plainText = descHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
     const shortDesc = plainText.slice(0, 300).trim()
 
