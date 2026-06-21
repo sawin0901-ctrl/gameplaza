@@ -181,6 +181,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
                     className="object-contain"
                     style={{ position: "absolute", inset: 0 }}
                     priority
+                    unoptimized={product.imageUrl.startsWith("/uploads/")}
                   />
                 ) : (
                   <div
