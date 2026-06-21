@@ -32,8 +32,8 @@ export default function ProductCard({
   return (
     <div className="group flex flex-col rounded-xl overflow-hidden bg-[#16161f] border border-white/5 card-hover transition-shadow hover:shadow-lg hover:shadow-black/40">
 
-      {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#0d0d16] flex-shrink-0">
+      {/* Image — square container like Plati.Market (idp CDN images are square) */}
+      <div className="relative aspect-square overflow-hidden bg-[#0d0d16] flex-shrink-0">
         <Link href={`/product/${slug}`} className="block absolute inset-0">
           {imgSrc ? (
             <Image
