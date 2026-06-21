@@ -6,18 +6,21 @@ import type { Metadata } from "next"
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: "GamePlaza — магазин цифровых товаров",
-  description: "Купить цифровые товары: игры Steam, Xbox, PlayStation, программы, ключи активации. Мгновенная доставка, безопасная оплата через Digiseller.",
+  title: "Магазин цифровых игр, программ и подписок",
+  description: "Современный магазин цифровых товаров. Игры для Steam, Xbox, PlayStation, подписки, программы, ключи активации и аккаунты по выгодным ценам.",
+  keywords: "игры, купить игры, steam, xbox, playstation, цифровые товары, ключи активации, подписки, программы, аккаунты",
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "GamePlaza — магазин цифровых товаров",
-    description: "Игры, программы, подписки и ключи активации по лучшим ценам. Мгновенная доставка.",
+    title: "Магазин цифровых игр, программ и подписок",
+    description: "Современный магазин цифровых товаров. Игры для Steam, Xbox, PlayStation, подписки, программы, ключи активации.",
     type: "website",
     siteName: "GamePlaza",
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "GamePlaza — магазин цифровых товаров",
-    description: "Игры, программы, подписки и ключи активации. Мгновенная доставка.",
+    title: "Магазин цифровых игр, программ и подписок",
+    description: "Игры Steam, Xbox, PlayStation, ключи активации, подписки по выгодным ценам.",
   },
 }
 
@@ -82,8 +85,8 @@ export default async function HomePage() {
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-5">
-              Цифровые товары{" "}
-              <span className="text-brand">по лучшим ценам</span>
+              Магазин{" "}
+              <span className="text-brand">цифровых товаров</span>
             </h1>
             <p className="text-[var(--text-2)] text-lg mb-8 leading-relaxed max-w-xl mx-auto">
               Игры, программы, ключи активации и подписки. Мгновенная доставка, официальный Digiseller.
