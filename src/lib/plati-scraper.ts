@@ -74,20 +74,29 @@ const BROWSER_HEADERS = {
 function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: number): { main: string; gallery: string[] } {
   const seen = new Set<string>()
 
-  // Priority 1: Open Graph image — seller's uploaded marketing image from Plati.Market (best for cards)
-  const ogImg = toAbs($("meta[property='og:image']").first().attr("content"))
-  // Upscale CDN URLs from w=400 to w=800 for better resolution
-  const ogImgHq = ogImg
-    ? ogImg.replace(/([?&])w=400(&|$)/, "$1w=800$2").replace(/maxlength=400/, "maxlength=800")
-    : ""
-  if (ogImgHq && ogImgHq.startsWith("http")) seen.add(ogImgHq)
-  else if (ogImg && ogImg.startsWith("http")) seen.add(ogImg)
+  // Helper: upscale CDN thumbnail params
+  const upscale = (u: string) => u
+    .replace(/([?&])w=(?:88|200|400)(&|$)/, "$1w=800$2")
+    .replace(/maxlength=(?:88|200|400)/, "maxlength=800")
 
-  // Priority 2: Twitter card image
+  // Priority 1: og:image from digiseller.mycdn.ink CDN — high-quality WebP (not graph.digiseller.ru)
+  const ogImg = toAbs($("meta[property='og:image']").first().attr("content"))
+  if (ogImg && ogImg.startsWith("http") && !ogImg.includes("graph.digiseller.ru")) {
+    seen.add(upscale(ogImg))
+  }
+
+  // Priority 2: Plati.Market main product image — img.preview-image uses data-src for full res
+  const previewEl = $("img.preview-image").first()
+  const previewSrc = toAbs(previewEl.attr("data-src") ?? previewEl.attr("src") ?? "")
+  if (previewSrc && previewSrc.startsWith("http") && !seen.has(upscale(previewSrc))) {
+    seen.add(upscale(previewSrc))
+  }
+
+  // Priority 3: Twitter card image
   const twImg = toAbs($("meta[name='twitter:image']").first().attr("content"))
   if (twImg && twImg.startsWith("http") && !seen.has(twImg)) seen.add(twImg)
 
-  // Priority 3: JSON-LD structured data
+  // Priority 4: JSON-LD structured data
   try {
     $("script[type='application/ld+json']").each((_, el) => {
       const txt = $(el).html() ?? ""
@@ -100,11 +109,16 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     })
   } catch {}
 
-  // Priority 4: itemprop="image"
+  // Priority 5: itemprop="image"
   const itemImg = toAbs($("[itemprop='image']").first().attr("content") || $("img[itemprop='image']").first().attr("src"))
   if (itemImg && itemImg.startsWith("http") && !seen.has(itemImg)) seen.add(itemImg)
 
-  // Priority 5: Common plati.market selectors
+  // Priority 6: og:image from graph.digiseller.ru (fallback — PNG, may be lower quality)
+  if (ogImg && ogImg.startsWith("http") && ogImg.includes("graph.digiseller.ru") && !seen.has(ogImg)) {
+    seen.add(ogImg)
+  }
+
+  // Priority 7: Common plati.market selectors — prefer data-src (lazy-loaded full res) over src (thumbnail)
   const htmlSelectors = [
     ".goods-img-large img",
     ".goods-photo img",
@@ -117,15 +131,16 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     ".card-img img",
   ]
   for (const sel of htmlSelectors) {
-    const src = toAbs($(sel).first().attr("src") ?? $(sel).first().attr("data-src") ?? "")
-    if (src && src.startsWith("http") && !seen.has(src)) { seen.add(src); break }
+    const el = $(sel).first()
+    const src = toAbs(el.attr("data-src") ?? el.attr("src") ?? "")
+    if (src && src.startsWith("http") && !seen.has(upscale(src))) { seen.add(upscale(src)); break }
   }
 
-  // Priority 6: Any img with a meaningful src (not 1x1 pixel, not icon)
+  // Priority 8: Any img with meaningful src
   if (seen.size === 0) {
     $("img").each((_, el) => {
       if (seen.size >= 1) return false
-      const src = toAbs($(el).attr("src") ?? $(el).attr("data-src") ?? "")
+      const src = toAbs($(el).attr("data-src") ?? $(el).attr("src") ?? "")
       const w = parseInt($(el).attr("width") ?? "0")
       const h = parseInt($(el).attr("height") ?? "0")
       if (src && src.startsWith("http") && !src.includes("logo") && !src.includes("icon") &&
@@ -135,35 +150,32 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     })
   }
 
-  // Gallery: additional images
+  // Gallery: additional images (Plati.Market thumbnails use data-src for full res)
   const gallery: string[] = []
   const gallerySelectors = [
     ".product-images img",
     ".goods-gallery img",
     ".goods-photo-list img",
     ".gallery-thumb img",
+    "img.icon--thumbnail",
     ".product-gallery img",
     "[data-gallery] img",
   ]
   for (const sel of gallerySelectors) {
     $(sel).each((_, el) => {
-      const src = toAbs($(el).attr("src") ?? $(el).attr("data-src") ?? "")
-      if (src && src.startsWith("http") && !seen.has(src)) {
-        seen.add(src)
-        gallery.push(src)
+      const src = toAbs($(el).attr("data-src") ?? $(el).attr("src") ?? "")
+      const hq = upscale(src)
+      if (hq && hq.startsWith("http") && !seen.has(hq)) {
+        seen.add(hq)
+        gallery.push(hq)
       }
     })
   }
 
   const allImages = Array.from(seen)
-  let mainImage = allImages[0] ||
+  const mainImage = allImages[0] ||
     `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=800`
-  // Upscale digiseller CDN thumbnail URLs to higher resolution
-  mainImage = mainImage
-    .replace(/([?&])w=400(&|$)/, "$1w=800$2")
-    .replace(/maxlength=400/, "maxlength=800")
 
-  // Extra gallery from remaining images
   const extraGallery = allImages.slice(1).concat(gallery).slice(0, 8)
 
   return { main: mainImage, gallery: extraGallery }
