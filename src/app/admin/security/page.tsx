@@ -1,11 +1,13 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 type Check = Record<string, boolean>
 type SuspiciousIp = { ip: string; count: number }
 type AdminLogin = { email: string; ip: string | null; userAgent: string | null; createdAt: string }
+type CspViolation = { message: string; count: number; lastSeen: string; hasNew: boolean }
 type Data = {
   failedTotal: number; failedToday: number; cspViolations: number
+  cspViolationsList: CspViolation[]
   suspiciousIps: SuspiciousIp[]; recentAdminLogins: AdminLogin[]; checks: Check
 }
 
@@ -23,7 +25,7 @@ const CHECK_LABELS: Record<string, string> = {
 
 function Badge({ ok }: { ok: boolean }) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ok ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
+    <span className={"text-xs px-2 py-0.5 rounded-full font-medium " + (ok ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400")}>
       {ok ? "✓ OK" : "✗ РИСК"}
     </span>
   )
@@ -32,25 +34,33 @@ function Badge({ ok }: { ok: boolean }) {
 export default function SecurityPage() {
   const [data, setData] = useState<Data | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dismissing, setDismissing] = useState(false)
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
     fetch("/api/admin/security").then(r => r.json()).then(setData).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function dismissAllCsp() {
+    setDismissing(true)
+    await fetch("/api/admin/security", { method: "DELETE" })
+    await load()
+    setDismissing(false)
+  }
 
   if (loading) return <div className="p-6 text-[var(--text-3)]">Загрузка...</div>
   if (!data)   return <div className="p-6 text-red-400">Ошибка загрузки</div>
 
   const riskScore = data.failedToday > 20 ? "high" : data.failedToday > 5 ? "medium" : "low"
+  const newCsp = data.cspViolationsList.filter(v => v.hasNew).length
 
   return (
     <div className="p-6 max-w-4xl">
       <div className="mb-6 flex items-center gap-3">
         <h1 className="text-2xl font-bold text-[var(--text)]">Безопасность</h1>
-        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-          riskScore === "high" ? "bg-red-500/20 text-red-400" :
-          riskScore === "medium" ? "bg-yellow-500/20 text-yellow-400" :
-          "bg-green-500/20 text-green-400"
-        }`}>
+        <span className={"px-3 py-1 rounded-full text-sm font-semibold " + (riskScore === "high" ? "bg-red-500/20 text-red-400" : riskScore === "medium" ? "bg-yellow-500/20 text-yellow-400" : "bg-green-500/20 text-green-400")}>
           {riskScore === "high" ? "⚠ Высокий риск" : riskScore === "medium" ? "⚡ Средний риск" : "✓ Норма"}
         </span>
       </div>
@@ -63,12 +73,47 @@ export default function SecurityPage() {
           { label: "Подозрительных IP",        value: data.suspiciousIps.length, warn: data.suspiciousIps.length > 0 },
           { label: "CSP нарушений за 7д",      value: data.cspViolations, warn: data.cspViolations > 0 },
         ].map(s => (
-          <div key={s.label} className={`card p-4 ${s.warn && s.value > 0 ? "border-yellow-500/30" : ""}`}>
-            <p className={`text-2xl font-bold ${s.warn && s.value > 0 ? "text-yellow-400" : "text-[var(--text)]"}`}>{s.value}</p>
+          <div key={s.label} className={"card p-4 " + (s.warn && s.value > 0 ? "border-yellow-500/30" : "")}>
+            <p className={"text-2xl font-bold " + (s.warn && s.value > 0 ? "text-yellow-400" : "text-[var(--text)]")}>{s.value}</p>
             <p className="text-xs text-[var(--text-3)] mt-1">{s.label}</p>
           </div>
         ))}
       </div>
+
+      {/* CSP Violations */}
+      {data.cspViolationsList.length > 0 && (
+        <div className="card p-5 mb-6 border-yellow-500/20">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-[var(--text)]">CSP нарушения</h2>
+              {newCsp > 0 && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">{newCsp} новых</span>}
+            </div>
+            {newCsp > 0 && (
+              <button
+                onClick={dismissAllCsp}
+                disabled={dismissing}
+                className="text-xs px-3 py-1.5 rounded bg-[var(--bg-3)] hover:bg-[var(--bg-2)] text-[var(--text-2)] disabled:opacity-50 transition-colors"
+              >
+                {dismissing ? "Сбрасываем..." : "Отметить все решёнными"}
+              </button>
+            )}
+          </div>
+          <div className="space-y-1">
+            {data.cspViolationsList.map((v, i) => (
+              <div key={i} className={"flex items-start justify-between gap-4 py-2 border-b border-[var(--border)] last:border-0 " + (v.hasNew ? "opacity-100" : "opacity-50")}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-mono text-[var(--text-2)] break-all">{v.message}</p>
+                  <p className="text-xs text-[var(--text-3)] mt-0.5">{new Date(v.lastSeen).toLocaleString("ru")}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-[var(--text-3)]">{v.count}x</span>
+                  {v.hasNew && <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">новая</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Security checklist */}
       <div className="card p-5 mb-6">
