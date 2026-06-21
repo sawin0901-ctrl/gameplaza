@@ -475,20 +475,21 @@ function HistoryTab({ errorsOnly = false }: { errorsOnly?: boolean }) {
   const [stats, setStats] = useState<LogStats | null>(null)
   const [total, setTotal] = useState(0); const [page, setPage] = useState(1); const [pages, setPages] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState(errorsOnly ? "error" : "")
   const [updateMsg, setUpdateMsg] = useState("")
 
   const load = useCallback(async (p = page) => {
     setLoading(true)
     const params = new URLSearchParams({ page: String(p) })
-    if (errorsOnly) params.set("status", "error")
+    if (statusFilter) params.set("status", statusFilter)
     try {
       const r = await fetch("/api/admin/import/plati/logs?" + params)
       if (r.ok) { const d = await r.json(); setLogs(d.logs); setTotal(d.total); setPage(d.page); setPages(d.pages); if (d.stats) setStats(d.stats) }
     } catch {}
     setLoading(false)
-  }, [page, errorsOnly])
+  }, [page, statusFilter])
 
-  useEffect(() => { load(1) }, [errorsOnly])
+  useEffect(() => { load(1) }, [errorsOnly, statusFilter])
 
   async function triggerUpdate() {
     setUpdateMsg("")
@@ -533,10 +534,17 @@ function HistoryTab({ errorsOnly = false }: { errorsOnly?: boolean }) {
       {updateMsg && <p className="text-sm text-[var(--text-2)]">{updateMsg}</p>}
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <p className="text-sm font-medium text-[var(--text)]">
-            {errorsOnly ? "Ошибки" : "История"} · {total}
-          </p>
+        <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-[var(--border)]">
+          <p className="text-sm font-medium text-[var(--text)] flex-1">История · {total}</p>
+          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); load(1) }}
+            className="text-xs bg-[var(--bg)] border border-[var(--border)] rounded-lg px-2 py-1 text-[var(--text-2)]">
+            <option value="">Все</option>
+            <option value="success">Импортировано</option>
+            <option value="updated">Обновлено</option>
+            <option value="error">Ошибки</option>
+            <option value="skipped">Пропущено</option>
+            <option value="not_found">Не найдено</option>
+          </select>
           <button onClick={() => load(1)} disabled={loading} className="text-xs text-[var(--text-3)] hover:text-[var(--text)]">
             {loading ? "..." : "↻"}
           </button>
