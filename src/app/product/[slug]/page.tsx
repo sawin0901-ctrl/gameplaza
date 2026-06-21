@@ -12,6 +12,8 @@ import ProductTabs from "../../../components/ProductTabs"
 import ReviewsTabContent from "../../../components/ReviewsTabContent"
 import ImageGallery from "../../../components/ImageGallery"
 import type { Metadata } from "next"
+import { RecentlyViewedSaver } from "../../../components/RecentlyViewedSaver"
+import { RecentlyViewed } from "../../../components/RecentlyViewed"
 
 export const revalidate = 60
 
@@ -356,6 +358,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </section>
       )}
+      <RecentlyViewedSaver product={{ id: product.id, slug: product.slug, name: product.name, imageUrl: product.imageUrl, price: Number(product.price) }} />
+      <RecentlyViewed currentId={product.id} />
     </div>
   )
 }
