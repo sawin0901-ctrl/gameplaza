@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const settings = await getImportSettings()
