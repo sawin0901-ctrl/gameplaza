@@ -1,62 +1,65 @@
 #!/bin/bash
+# Safe deployment script — backs up current build, restores on failure
 set -e
-cd /var/www/gameplaza
 
-# Проверяем критические переменные окружения
-echo "==> [0/6] Checking environment..."
-if [ ! -f ".env" ] && [ ! -f ".env.local" ]; then
-  echo "ERROR: .env file not found! Aborting deploy."
+DEPLOY_DIR="/var/www/gameplaza"
+NEXT_DIR="$DEPLOY_DIR/.next"
+BACKUP_DIR="$DEPLOY_DIR/.next.bak"
+LOG_FILE="/var/log/gameplaza-deploy.log"
+LOCK_FILE="/tmp/gameplaza-deploy.lock"
+
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+# Prevent concurrent deploys
+if [ -f "$LOCK_FILE" ]; then
+  log "ERROR: Another deploy is already running (lock file exists). Aborting."
   exit 1
 fi
+touch "$LOCK_FILE"
+trap 'rm -f "$LOCK_FILE"' EXIT
 
-set -a
-[ -f ".env.local" ] && source .env.local || source .env
-set +a
+cd "$DEPLOY_DIR"
 
-for VAR in DATABASE_URL NEXTAUTH_SECRET NEXTAUTH_URL; do
-  if [ -z "${!VAR}" ]; then
-    echo "ERROR: Required env var $VAR is not set!"
-    exit 1
-  fi
-done
-echo "Environment OK"
+log "=== Starting deployment ==="
 
-echo "==> [1/6] Syncing code..."
-git fetch origin main
-git reset --hard origin/main
-git clean -fd \
-  --exclude='.env' \
-  --exclude='.env.local' \
-  --exclude='ecosystem.config.js' \
-  --exclude='node_modules' \
-  --exclude='package-lock.json'
+# 1. Pull latest code
+log "Pulling latest code..."
+git pull origin main
 
-echo "==> [2/6] Installing packages..."
-# npm install безопаснее npm ci — не требует точного совпадения package-lock.json
-npm install --legacy-peer-deps
+# 2. Install any new dependencies
+log "Installing dependencies..."
+npm ci --prefer-offline 2>/dev/null || npm install
 
-echo "==> [3/6] Prisma migrations..."
-npx prisma migrate deploy
-
-echo "==> [4/6] Building..."
-rm -rf .next
-npm run build
-
-echo "==> [5/6] Verifying build..."
-if [ ! -f ".next/BUILD_ID" ]; then
-  echo "ERROR: Build failed — .next/BUILD_ID missing"
-  exit 1
+# 3. Back up current working build
+if [ -d "$NEXT_DIR" ]; then
+  log "Backing up current .next to .next.bak..."
+  rm -rf "$BACKUP_DIR"
+  cp -r "$NEXT_DIR" "$BACKUP_DIR"
 fi
-echo "Build OK: $(cat .next/BUILD_ID)"
 
-echo "==> [6/6] Restarting..."
-pm2 restart gameplaza-web --update-env
-
-if pm2 restart gameplaza-worker --update-env 2>/dev/null; then
-  echo "Worker restarted OK"
+# 4. Build
+log "Building..."
+if npm run build; then
+  log "Build succeeded!"
+  # 5. Restart PM2
+  pm2 restart gameplaza-web gameplaza-worker
+  log "PM2 restarted."
+  # 6. Remove backup (build was good)
+  rm -rf "$BACKUP_DIR"
+  log "=== Deployment successful ==="
 else
-  echo "WARNING: gameplaza-worker not found or failed to restart"
+  log "ERROR: Build FAILED!"
+  # Restore backup if it exists
+  if [ -d "$BACKUP_DIR" ]; then
+    log "Restoring previous build from backup..."
+    rm -rf "$NEXT_DIR"
+    mv "$BACKUP_DIR" "$NEXT_DIR"
+    pm2 restart gameplaza-web gameplaza-worker
+    log "Previous build restored. Site is still running on old version."
+  else
+    log "WARNING: No backup available. Site may be broken."
+  fi
+  exit 1
 fi
-
-echo ""
-echo "Done! Site is live at https://gameplaza.site"
