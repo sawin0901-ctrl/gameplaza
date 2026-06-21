@@ -13,7 +13,7 @@ export async function GET() {
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const since7d  = new Date(Date.now() - 7  * 24 * 60 * 60 * 1000)
 
-  const [failedTotal, failedToday, recentFailed, cspViolations, adminUsers] = await Promise.all([
+  const [failedTotal, failedToday, recentFailed, cspLogs, adminUsers] = await Promise.all([
     prisma.loginHistory.count({ where: { success: false, createdAt: { gte: since7d } } }),
     prisma.loginHistory.count({ where: { success: false, createdAt: { gte: since24h } } }),
     prisma.loginHistory.findMany({
@@ -22,9 +22,30 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
-    prisma.systemLog.count({ where: { category: "csp-violation", createdAt: { gte: since7d } } }),
+    prisma.systemLog.findMany({
+      where: { category: "csp-violation", createdAt: { gte: since7d } },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      select: { message: true, createdAt: true, status: true },
+    }),
     prisma.user.findMany({ where: { role: "admin" }, select: { id: true, email: true, name: true } }),
   ])
+
+  const cspViolations = cspLogs.length
+
+  // Group CSP violations by message
+  const cspGroups: Record<string, { count: number; lastSeen: string; hasNew: boolean }> = {}
+  for (const log of cspLogs) {
+    if (!cspGroups[log.message]) {
+      cspGroups[log.message] = { count: 0, lastSeen: log.createdAt.toISOString(), hasNew: false }
+    }
+    cspGroups[log.message].count++
+    if (log.status === "new") cspGroups[log.message].hasNew = true
+  }
+  const cspViolationsList = Object.entries(cspGroups)
+    .sort(([, a], [, b]) => b.count - a.count)
+    .slice(0, 20)
+    .map(([message, data]) => ({ message, ...data }))
 
   // Suspicious IPs: 3+ failed attempts in 7 days
   const ipCounts: Record<string, number> = {}
@@ -53,6 +74,7 @@ export async function GET() {
     failedToday,
     suspiciousIps,
     cspViolations,
+    cspViolationsList,
     recentAdminLogins: recentAdminLogins.map(l => ({
       ...l,
       email: adminUsers.find(u => u.id === l.userId)?.email ?? "?",
@@ -69,4 +91,16 @@ export async function GET() {
       inputValidation: true,
     },
   })
+}
+
+export async function DELETE() {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "admin")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const result = await prisma.systemLog.updateMany({
+    where: { category: "csp-violation", status: "new" },
+    data: { status: "resolved" },
+  })
+  return NextResponse.json({ resolved: result.count })
 }
