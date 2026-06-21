@@ -213,6 +213,18 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     if (price > 0 && (currency === "USD" || (currency !== "RUB" && price < 200))) {
       let rubPrice = 0
 
+      // Method 0: meta description — Plati writes "и это будет стоить N₽" in <head>
+      if (!rubPrice) {
+        const metaDesc = $("meta[name='description']").first().attr("content") ?? ""
+        const ogDesc2  = $("meta[property='og:description']").first().attr("content") ?? ""
+        const descText = metaDesc + " " + ogDesc2
+        const descMatch = descText.match(/(\d[\d\s]{1,6})\s*(?:₽|руб)/i)
+        if (descMatch) {
+          const p = parseFloat(descMatch[1].replace(/\s/g, ""))
+          if (p >= 100 && p < 100000) rubPrice = Math.ceil(p)
+        }
+      }
+
       // Method 1: JSON-LD offers with RUB currency
       try {
         $("script[type='application/ld+json']").each((_: unknown, el: unknown) => {
