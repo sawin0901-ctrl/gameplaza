@@ -3,6 +3,14 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 
 export async function middleware(req: NextRequest) {
+  // 301: redirect www.gameplaza.site → gameplaza.site
+  const host = req.headers.get("host") ?? ""
+  if (host.startsWith("www.")) {
+    const url = req.nextUrl.clone()
+    url.host = host.replace(/^www\./, "")
+    return NextResponse.redirect(url, { status: 301 })
+  }
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
 
@@ -19,5 +27,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/profile/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|uploads/).*)"],
 }
