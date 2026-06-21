@@ -23,7 +23,7 @@ const VALID_SORTS = new Set(["newest", "price_asc", "price_desc", "popular", "di
 export async function generateMetadata({ params, searchParams }: { params: { category: string }; searchParams: Record<string, string> }): Promise<Metadata> {
   const categorySlug = params.category.replace(/[^a-z0-9-]/g, "").slice(0, 50)
   const cat = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } }).catch(() => null)
-  if (!cat) return { title: "Категория не найдена | GamePlaza" }
+  if (!cat) return { title: { absolute: "Категория не найдена | GamePlaza" } }
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "") : ""
   const page = Math.max(1, parseInt(searchParams.page ?? "1") || 1)
   return buildCatalogMetadata({ categoryName: cat.name, categorySlug, sort: sort || undefined, page })
