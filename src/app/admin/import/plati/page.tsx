@@ -393,23 +393,30 @@ function RangeTab() {
       </Card>
       {error && <Card className="p-4 border-red-500/30"><p className="text-red-400 text-sm">❌ {error}</p></Card>}
       {result && (
-        <Card className="p-5 border-emerald-500/20">
-          <p className="font-semibold text-emerald-400 mb-3">✅ Запущен импорт диапазона</p>
+        <Card className={p-5 ${(result.scheduled as number) > 0 ? "border-emerald-500/20" : "border-yellow-500/20"}}>
+          <p className={ont-semibold mb-3 ${(result.scheduled as number) > 0 ? "text-emerald-400" : "text-yellow-400"}}>
+            {(result.scheduled as number) > 0 ? "✅ Запущен импорт диапазона" : "ℹ️ Нечего импортировать"}
+          </p>
+          {(result.message as string) && (
+            <p className="text-sm text-[var(--text-2)] mb-3">{result.message as string}</p>
+          )}
           <div className="grid grid-cols-3 gap-3 text-center">
             {[
-              { label: "В очереди",    v: result.scheduled        as number, c: "text-brand" },
-              { label: "Уже есть",     v: result.skipped          as number, c: "text-yellow-400" },
-              { label: "Всего в диап.", v: result.total           as number, c: "text-[var(--text)]" },
+              { label: "В очереди",     v: result.scheduled as number, c: (result.scheduled as number) > 0 ? "text-brand" : "text-[var(--text-3)]" },
+              { label: "Уже есть",      v: result.skipped   as number, c: "text-yellow-400" },
+              { label: "Всего в диап.", v: result.total     as number, c: "text-[var(--text)]" },
             ].map(s => (
               <div key={s.label} className="bg-white/5 rounded-xl p-3">
-                <div className={`text-2xl font-bold ${s.c}`}>{s.v}</div>
+                <div className={	ext-2xl font-bold ${s.c}}>{s.v}</div>
                 <div className="text-xs text-[var(--text-3)] mt-1">{s.label}</div>
               </div>
             ))}
           </div>
           {(result.estimatedMinutes as number) > 0 && (
-            <p className="text-xs text-[var(--text-3)] mt-3">⏱ ~{result.estimatedMinutes as number} мин</p>
+            <p className="text-xs text-[var(--text-3)] mt-3">⏱ ~{result.estimatedMinutes as number} мин до завершения · следи в «📜 История»</p>
           )}
+        </Card>
+      )}
         </Card>
       )}
     </div>
