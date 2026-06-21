@@ -10,6 +10,7 @@ const NAV = [
     { href: "/admin/analytics/products", label: "Топ товаров", icon: "🔥" },
     { href: "/admin/monitoring",   label: "Мониторинг",       icon: "🔍", badge: true },
     { href: "/admin/products-monitor", label: "Мониторинг товаров", icon: "📊", badge: "products" },
+  { href: "/admin/security", label: "Безопасность", icon: "🔒" },
     { href: "/admin/changelog",    label: "Журнал действий",  icon: "📋" },
     { href: "/admin/health",       label: "Health Check",     icon: "🩺" },
   ]},
