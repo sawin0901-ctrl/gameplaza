@@ -23,7 +23,7 @@ export async function getDigisellerToken(): Promise<string> {
   const { sellerId, apiKey } = getCredentials()
   if (_cachedToken && Date.now() < _tokenExpiry && _tokenSellerId === sellerId) return _cachedToken
 
-  // sign = SHA256(apikey + timestamp) — согласно документации api.digiseller.com
+  // sign = SHA256(apikey + timestamp) — api.digiseller.com docs
   const timestamp = Math.floor(Date.now() / 1000)
   const sign = crypto.createHash("sha256").update(apiKey + String(timestamp)).digest("hex")
 
@@ -47,7 +47,7 @@ export async function getDigisellerToken(): Promise<string> {
 
   if (!res.data || res.data.retval !== 0) {
     const code = res.data?.retval ?? "?"
-    const desc = res.data?.desc ?? "нет описания"
+    const desc = res.data?.desc ?? res.data?.retdesc ?? "нет описания"
     const hint = getHintForCode(code)
     throw new Error(`Ошибка авторизации Digiseller (код ${code}): ${desc}.\n${hint}`)
   }
@@ -79,20 +79,53 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
   const { sellerId } = getCredentials()
   const token = await getDigisellerToken()
   try {
-    const res = await axios.post(`${BASE_URL}/seller-goods`,
-      { seller_id: parseInt(sellerId, 10), token, page, rows: pageSize, order: "date", direction: "desc" },
+    // seller-goods uses id_seller (not seller_id), order_col/order_dir (not order/direction)
+    // token goes in both body and query string per Digiseller docs
+    const res = await axios.post(
+      `${BASE_URL}/seller-goods`,
+      {
+        id_seller: parseInt(sellerId, 10),
+        token,
+        order_col: "name",
+        order_dir: "asc",
+        rows: pageSize,
+        page,
+        currency: "RUR",
+        lang: "ru-RU",
+        show_hidden: 0,
+      },
       { headers: { Accept: "application/json", "Content-Type": "application/json" }, timeout: 20000 },
     )
+
     if (!res.data || typeof res.data !== "object") throw new Error("Digiseller вернул пустой или некорректный ответ")
     if (res.data.retval !== undefined && res.data.retval !== 0) {
-      throw new Error(`Digiseller API ошибка: ${res.data.desc ?? `код ${res.data.retval}`}. ${getHintForCode(res.data.retval)}`)
+      throw new Error(`Digiseller API ошибка: ${res.data.retdesc ?? `код ${res.data.retval}`}`)
     }
     if (!Array.isArray(res.data.rows)) {
-      const rows = res.data.goods ?? res.data.products ?? res.data.items
-      if (Array.isArray(rows)) return { rows, count: rows.length, pages: 1 }
       throw new Error(`Не удалось найти список товаров. Ответ: ${JSON.stringify(res.data).slice(0, 300)}`)
     }
-    return res.data as DigisellerProductList
+
+    // Map API fields to our DigisellerProduct type
+    // API returns price_rur (not price_rub), in_stock (not status), image via graph.digiseller.ru
+    const rows: DigisellerProduct[] = (res.data.rows as Record<string, unknown>[]).map(r => ({
+      id_goods:    Number(r.id_goods),
+      name_goods:  String(r.name_goods ?? ""),
+      info_goods:  String(r.info_goods ?? ""),
+      price_usd:   Number(r.price_usd ?? 0),
+      price_rub:   Number(r.price_rur ?? 0),
+      old_price_rub: (() => {
+        const si = r.sale_info as Record<string, unknown> | null
+        const v = Number(si?.common_price_rur ?? 0)
+        return v > 0 ? v : undefined
+      })(),
+      currency:    "RUR",
+      image_link:  `https://graph.digiseller.ru/img.ashx?id_d=${r.id_goods}&maxlength=400`,
+      cnt_goods:   Number(r.num_in_stock ?? 999),
+      status:      Number(r.in_stock ?? 1),
+      categories:  [],
+    }))
+
+    return { rows, count: res.data.cnt_goods ?? rows.length, pages: res.data.pages ?? 1 }
   } catch (err) {
     if (axios.isAxiosError(err)) {
       if (err.response?.status === 401 || err.response?.status === 403) {
@@ -119,25 +152,30 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
 export async function getDigisellerProduct(productId: number): Promise<DigisellerProduct | null> {
   const { sellerId } = getCredentials()
   try {
-    const res = await axios.get(`${BASE_URL}/goods/${productId}`,
-      { params: { seller_id: sellerId, lang: "ru", currency: "RUB" }, headers: { Accept: "application/json" }, timeout: 12000 })
-    const g = res.data?.goods_info || res.data?.product
-    if (g && (g.name || g.name_goods)) {
+    // GET /api/products/{id}/data — single product details
+    const token = await getDigisellerToken()
+    const res = await axios.get(`${BASE_URL}/products/${productId}/data`, {
+      params: { seller_id: parseInt(sellerId, 10), token, currency: "RUB", lang: "ru-RU" },
+      headers: { Accept: "application/json" },
+      timeout: 12000,
+    })
+    const p = res.data?.product
+    if (p && (p.name || p.name_goods)) {
       return {
-        id_goods: g.id || g.id_goods || productId, name_goods: g.name || g.name_goods,
-        info_goods: g.info || g.info_goods || "", price_usd: g.price_usd || 0,
-        price_rub: g.price_rub || g.price || 0, old_price_rub: g.price_rub_old || g.old_price || undefined,
-        currency: "RUB", image_link: g.images?.[0]?.url || g.image_link || undefined,
-        cnt_goods: g.cnt_in ?? g.cnt_goods ?? 999, status: g.status ?? 1, categories: g.categories || [],
+        id_goods:     p.id || productId,
+        name_goods:   p.name || "",
+        info_goods:   p.info || "",
+        price_usd:    p.prices?.default?.USD ?? 0,
+        price_rub:    p.prices?.default?.RUB ?? p.price ?? 0,
+        old_price_rub: p.sale_info?.common_price_rub && Number(p.sale_info.common_price_rub) > 0
+          ? Number(p.sale_info.common_price_rub) : undefined,
+        currency:     "RUB",
+        image_link:   p.preview_imgs?.[0]?.url ?? `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=400`,
+        cnt_goods:    p.num_in_stock ?? 999,
+        status:       p.is_available ?? 1,
+        categories:   p.category_id ? [p.category_id] : [],
       }
     }
-  } catch {}
-  try {
-    const token = await getDigisellerToken()
-    const res = await axios.post(`${BASE_URL}/products/info`,
-      { product_id: productId, seller_id: parseInt(sellerId, 10), token },
-      { headers: { Accept: "application/json", "Content-Type": "application/json" }, timeout: 10000 })
-    if (res.data?.product) return res.data.product
   } catch {}
   return scrapePlatiMarket(productId)
 }
@@ -157,7 +195,7 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
     const oldPrice = parseFloat(oldPriceStr) || undefined
     const desc = $(".goods-description-main").first().text().trim() || $("[itemprop='description']").first().text().trim()
     const imgSrc = $("img[itemprop='image']").first().attr("src") || $("img.goods-img").first().attr("src")
-    const imageUrl = imgSrc ? (imgSrc.startsWith("http") ? imgSrc : `https://plati.market${imgSrc}`) : undefined
+    const imageUrl = imgSrc ? (imgSrc.startsWith("http") ? imgSrc : `https://plati.market${imgSrc}`) : `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=400`
     return { id_goods: productId, name_goods: name, info_goods: desc, price_usd: 0, price_rub: price,
       old_price_rub: oldPrice && oldPrice > price ? oldPrice : undefined, currency: "RUB",
       image_link: imageUrl, cnt_goods: 999, status: 1, categories: [] }
