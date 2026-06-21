@@ -39,17 +39,17 @@ export default function ProductCard({
 }: Props) {
   const discount = discountPercent ?? (oldPrice && oldPrice > price ? Math.round((1 - price / oldPrice) * 100) : null)
   const imgSrc = imageUrl || (digisellerProductId
-    ? `https://graph.digiseller.ru/img.ashx?id_d=${digisellerProductId}&w=300`
+    ? `https://graph.digiseller.ru/img.ashx?id_d=${digisellerProductId}&maxlength=400`
     : null)
 
   return (
     <div className="group card-hover overflow-hidden flex flex-col">
-      {/* Image area */}
-      <div className="relative aspect-[4/3] bg-[#1a1a26] overflow-hidden flex-shrink-0">
+      {/* Image area — object-contain keeps full image visible for both banners and logos */}
+      <div className="relative aspect-[4/3] bg-[#12121c] overflow-hidden flex-shrink-0">
         <Link href={`/product/${slug}`} className="block absolute inset-0">
           {imgSrc ? (
             <Image src={imgSrc} alt={name} fill unoptimized
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className="object-contain group-hover:scale-105 transition-transform duration-500"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/10 to-purple-950/30">
