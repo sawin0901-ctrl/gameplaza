@@ -1,6 +1,23 @@
-"use client"
-import { useState } from "react"
-import Link from "next/link"
+import type { Metadata } from "next"
+import HelpClient from "./HelpClient"
+
+export const metadata: Metadata = {
+  title: "Помощь и FAQ — ответы на частые вопросы | GamePlaza",
+  description: "Ответы на частые вопросы о покупках, оплате, доставке ключей и поддержке в магазине GamePlaza.",
+  alternates: { canonical: "/help" },
+  openGraph: {
+    title: "Помощь и FAQ | GamePlaza",
+    description: "Ответы на частые вопросы о покупках, оплате, доставке ключей и поддержке.",
+    url: "/help",
+    siteName: "GamePlaza",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Помощь и FAQ | GamePlaza",
+    description: "Ответы на частые вопросы о покупках, оплате, доставке ключей и поддержке.",
+  },
+}
 
 const FAQS = [
   {
@@ -123,86 +140,27 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.flatMap(cat =>
+    cat.items.map(item => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    }))
+  ),
+}
+
 export default function HelpPage() {
-  const [search, setSearch] = useState("")
-
-  const filtered = search.trim().length > 1
-    ? FAQS.map(cat => ({
-        ...cat,
-        items: cat.items.filter(
-          item =>
-            item.q.toLowerCase().includes(search.toLowerCase()) ||
-            item.a.toLowerCase().includes(search.toLowerCase())
-        ),
-      })).filter(cat => cat.items.length > 0)
-    : FAQS
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      {/* Заголовок */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-white mb-3">Центр помощи</h1>
-        <p className="text-gray-400">Ответы на частые вопросы о покупке и активации цифровых товаров</p>
-      </div>
-
-      {/* Поиск по FAQ */}
-      <div className="relative mb-10">
-        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          type="search"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Поиск по вопросам..."
-          className="gp-input pl-10 py-3"
-        />
-      </div>
-
-      {/* FAQ разделы */}
-      {filtered.length > 0 ? (
-        <div className="space-y-6">
-          {filtered.map(cat => (
-            <div key={cat.category} className="card p-5">
-              <h2 className="text-brand font-semibold text-sm uppercase tracking-wider mb-4">{cat.category}</h2>
-              <div>
-                {cat.items.map(item => (
-                  <FaqItem key={item.q} q={item.q} a={item.a} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="card p-10 text-center">
-          <div className="text-4xl mb-3">🔍</div>
-          <p className="text-white font-medium mb-1">Ничего не найдено</p>
-          <p className="text-gray-500 text-sm">Попробуйте другой запрос или напишите нам напрямую</p>
-        </div>
-      )}
-
-      {/* Не нашли ответ */}
-      <div className="mt-10 card p-6 text-center">
-        <div className="text-3xl mb-3">💬</div>
-        <h3 className="text-white font-semibold mb-2">Не нашли ответ?</h3>
-        <p className="text-gray-400 text-sm mb-5">
-          Напишите нам — ответим в течение нескольких часов
-        </p>
-        <a
-          href="mailto:support@gameplaza.site"
-          className="btn-primary px-6 py-3 inline-flex"
-        >
-          ✉ Написать в поддержку
-        </a>
-        <p className="text-gray-600 text-xs mt-3">support@gameplaza.site</p>
-      </div>
-
-      {/* Быстрые ссылки */}
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/catalog" className="btn-outline text-sm px-4 py-2">Каталог товаров</Link>
-        <Link href="/about" className="btn-outline text-sm px-4 py-2">О нас</Link>
-        <Link href="/auth/login" className="btn-outline text-sm px-4 py-2">Войти в аккаунт</Link>
-      </div>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/<\/script>/gi, "<\\/script>") }}
+      />
+      <HelpClient />
+    </>
   )
 }
