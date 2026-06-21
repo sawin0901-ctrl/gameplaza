@@ -6,20 +6,21 @@ import type { Metadata } from "next"
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: "Магазин цифровых игр, программ и подписок",
+  title: { absolute: "GamePlaza — магазин цифровых товаров" },
   description: "Современный магазин цифровых товаров. Игры для Steam, Xbox, PlayStation, подписки, программы, ключи активации и аккаунты по выгодным ценам.",
   keywords: "игры, купить игры, steam, xbox, playstation, цифровые товары, ключи активации, подписки, программы, аккаунты",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Магазин цифровых игр, программ и подписок",
+    title: { absolute: "GamePlaza — магазин цифровых товаров" },
     description: "Современный магазин цифровых товаров. Игры для Steam, Xbox, PlayStation, подписки, программы, ключи активации.",
     type: "website",
     siteName: "GamePlaza",
     url: "/",
+    images: [{ url: "/api/og?title=GamePlaza%20%E2%80%94%20%D1%86%D0%B8%D1%84%D1%80%D0%BE%D0%B2%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Магазин цифровых игр, программ и подписок",
+    title: { absolute: "GamePlaza — магазин цифровых товаров" },
     description: "Игры Steam, Xbox, PlayStation, ключи активации, подписки по выгодным ценам.",
   },
 }
@@ -159,7 +160,7 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {CATEGORIES.map(cat => (
-            <Link key={cat.slug} href={`/catalog?category=${cat.slug}`}
+            <Link key={cat.slug} href={"/catalog/" + cat.slug}
               className={`card ${cat.border} bg-gradient-to-br ${cat.gradient} p-4 flex flex-col items-center gap-2 group text-center transition-all duration-200`}>
               <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{cat.emoji}</span>
               <span className="text-xs font-semibold text-[var(--text)] group-hover:text-brand transition-colors leading-tight">{cat.name}</span>
