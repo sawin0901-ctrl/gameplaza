@@ -29,7 +29,7 @@ async function logMonitor(
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
   const { batchSize = 50, productId, checkType = "all" } = body
