@@ -109,6 +109,31 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
         ...(category && products[0]?.category ? [{ name: products[0].category.name, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/catalog?category=${category}` }] : []),
         ...(query ? [{ name: `"${query}"`, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/catalog?q=${encodeURIComponent(query)}` }] : []),
       ])) }} />
+      {/* ItemList JSON-LD */}
+      {products.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Каталог цифровых товаров GamePlaza",
+          numberOfItems: products.length,
+          itemListElement: products.map((p, i) => ({
+            "@type": "ListItem",
+            position: (page - 1) * PAGE_SIZE + i + 1,
+            item: {
+              "@type": "Product",
+              name: p.name,
+              url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site") + "/product/" + p.slug,
+              ...(p.imageUrl ? { image: p.imageUrl } : {}),
+              offers: {
+                "@type": "Offer",
+                price: p.price,
+                priceCurrency: "RUB",
+                availability: p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              },
+            },
+          })),
+        }).replace(/<\/script>/gi, "<\\/script>") }} />
+      )}
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link href="/" className="hover:text-white transition-colors">Главная</Link>
