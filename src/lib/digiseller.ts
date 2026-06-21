@@ -203,7 +203,7 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
 
 export async function getProductPublicPrice(productId: number): Promise<number> {
   try {
-    const res = await axios.get(${BASE_URL}/products//info, {
+    const res = await axios.get(`${BASE_URL}/products/${productId}/info`, {
       params: { currency: "RUB", lang: "ru-RU" },
       headers: { Accept: "application/json" },
       timeout: 8000,
