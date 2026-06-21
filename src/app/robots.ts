@@ -6,15 +6,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/catalog", "/product/", "/about", "/help"],
+        allow: ["/", "/catalog", "/product/", "/about", "/help", "/llms.txt"],
         disallow: [
           "/admin/", "/api/", "/auth/", "/account/", "/profile/",
           "/cart", "/checkout", "/_next/", "/catalog?*q=",
         ],
       },
-      { userAgent: "GPTBot", disallow: ["/"] },
-      { userAgent: "ChatGPT-User", disallow: ["/"] },
-      { userAgent: "CCBot", disallow: ["/"] },
     ],
     sitemap: `${base}/sitemap.xml`,
     host: base,
