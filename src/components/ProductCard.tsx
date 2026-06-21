@@ -29,6 +29,9 @@ export default function ProductCard({
     ? `https://graph.digiseller.ru/img.ashx?id_d=${digisellerProductId}&maxlength=400`
     : null)
 
+  // Локальные загрузки (/uploads/) оптимизировать нельзя — Next.js их не проксирует
+  const isUnoptimized = imgSrc ? imgSrc.startsWith("/uploads/") : false
+
   return (
     <div className="group card-hover overflow-hidden flex flex-col rounded-xl">
 
@@ -40,7 +43,7 @@ export default function ProductCard({
               src={imgSrc}
               alt={name}
               fill
-              unoptimized={!imgSrc.startsWith("/_next/")}
+              unoptimized={isUnoptimized}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
