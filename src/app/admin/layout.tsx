@@ -3,6 +3,7 @@ import { authOptions } from "../../lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import AdminNav from "../../components/AdminNav"
+import { NotificationBell } from "../../components/admin/NotificationBell"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
@@ -11,11 +12,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 bg-[var(--bg-secondary)] border-r border-[var(--border)] flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b border-[var(--border)]">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-white text-sm">G</div>
-            <span className="font-bold text-sm text-[var(--text)]">Админ панель</span>
+        <div className="p-4 border-b border-[var(--border)] flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center font-bold text-white text-sm shrink-0">G</div>
+            <span className="font-bold text-sm text-[var(--text)] truncate">Админ панель</span>
           </Link>
+          <NotificationBell />
         </div>
         <AdminNav />
         <div className="p-3 border-t border-[var(--border)]">
