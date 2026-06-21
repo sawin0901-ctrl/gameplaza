@@ -4,12 +4,23 @@ import { authOptions } from "../../../../lib/auth"
 
 export const dynamic = "force-dynamic"
 
+function getConnection() {
+  const url = process.env.REDIS_URL ?? ""
+  if (url.startsWith("redis://") || url.startsWith("rediss://")) {
+    return { url }
+  }
+  return {
+    host: process.env.REDIS_HOST ?? "localhost",
+    port: Number(process.env.REDIS_PORT ?? 6379),
+  }
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   try {
     const { Queue } = await import("bullmq")
-    const connection = { host: process.env.REDIS_HOST ?? "localhost", port: Number(process.env.REDIS_PORT ?? 6379) }
+    const connection = getConnection()
     const queue = new Queue("product-import", { connection })
     const [waiting, active, completed, failed, delayed] = await Promise.all([
       queue.getWaitingCount(), queue.getActiveCount(),
@@ -35,7 +46,7 @@ export async function DELETE() {
   if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   try {
     const { Queue } = await import("bullmq")
-    const connection = { host: process.env.REDIS_HOST ?? "localhost", port: Number(process.env.REDIS_PORT ?? 6379) }
+    const connection = getConnection()
     const queue = new Queue("product-import", { connection })
     await queue.clean(0, 1000, "failed")
     await queue.clean(0, 1000, "completed")
