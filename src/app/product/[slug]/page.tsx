@@ -1,6 +1,6 @@
 import { cache } from "react"
 import { prisma } from "../../../lib/prisma"
-import { buildProductMetadata, stripHtml } from "../../../lib/seo"
+import { buildProductMetadata, buildBreadcrumbJsonLd, stripHtml } from "../../../lib/seo"
 import { sanitizeDescription } from "../../../lib/sanitize"
 import { notFound } from "next/navigation"
 import { getServerSession } from "next-auth"
@@ -80,6 +80,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/product/${product.slug}`,
     description: descriptionText,
     image: product.imageUrl ?? undefined,
     aggregateRating: avgRating
@@ -101,6 +102,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }
 
   const jsonLdString = JSON.stringify(jsonLd).replace(/<\/script>/gi, "<\\/script>")
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Главная", url: siteUrl },
+    { name: "Каталог", url: `${siteUrl}/catalog` },
+    ...(product.category ? [{ name: product.category.name, url: `${siteUrl}/catalog?category=${product.category.slug}` }] : []),
+    { name: product.name, url: `${siteUrl}/product/${product.slug}` },
+  ])
+  const breadcrumbJsonLdString = JSON.stringify(breadcrumbJsonLd).replace(/<\/script>/gi, "<\\/script>")
 
   // Галерея: главная картинка + все дополнительные из скрапера
   const galleryImages = [
@@ -133,6 +143,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdString }}
+      />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: breadcrumbJsonLdString }}
       />
 
       {/* Breadcrumb */}
