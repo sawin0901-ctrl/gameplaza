@@ -9,6 +9,7 @@ const NAV = [
     { href: "/admin/analytics",    label: "Аналитика",        icon: "📈" },
     { href: "/admin/analytics/products", label: "Топ товаров", icon: "🔥" },
     { href: "/admin/monitoring",   label: "Мониторинг",       icon: "🔍", badge: true },
+    { href: "/admin/products-monitor", label: "Мониторинг товаров", icon: "📊", badge: "products" },
     { href: "/admin/changelog",    label: "Журнал действий",  icon: "📋" },
     { href: "/admin/health",       label: "Health Check",     icon: "🩺" },
   ]},
@@ -47,18 +48,21 @@ export default function AdminNav() {
   const pathname = usePathname()
   const [errorCount, setErrorCount] = useState(0)
   const [ticketCount, setTicketCount] = useState(0)
+  const [productCount, setProductCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const [logs, tickets] = await Promise.all([
+        const [logs, tickets, productLogs] = await Promise.all([
           fetch("/api/admin/monitoring/logs?status=new&count=true").then(r => r.ok ? r.json() : null).catch(() => null),
           fetch("/api/admin/tickets?status=open").then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch("/api/admin/monitoring/product-check/logs?page=1").then(r => r.ok ? r.json() : null).catch(() => null),
         ])
         if (!cancelled) {
           if (logs) setErrorCount(logs.count ?? 0)
           if (tickets) setTicketCount(tickets.total ?? 0)
+          if (productLogs) setProductCount(productLogs.stats?.pendingNotifs ?? 0)
         }
       } catch {}
     }
@@ -75,7 +79,7 @@ export default function AdminNav() {
           <div className="space-y-0.5">
             {section.items.map(n => {
               const active = n.href === "/admin" ? pathname === "/admin" : pathname.startsWith(n.href)
-              const count = n.badge ? (n.href.includes("ticket") ? ticketCount : errorCount) : 0
+              const count = n.badge ? (n.badge === "products" ? productCount : n.href.includes("ticket") ? ticketCount : errorCount) : 0
               return (
                 <Link key={n.href} href={n.href}
                   className={`relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
