@@ -115,31 +115,6 @@ const FAQS = [
   },
 ]
 
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="border-b border-[#1f2937] last:border-0">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full text-left py-4 flex items-center justify-between gap-4 group"
-      >
-        <span className="text-white text-sm font-medium group-hover:text-brand transition-colors">{q}</span>
-        <svg
-          className={`w-4 h-4 text-gray-500 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="pb-4 text-gray-400 text-sm leading-relaxed">
-          {a}
-        </div>
-      )}
-    </div>
-  )
-}
-
 
 const faqJsonLd = {
   "@context": "https://schema.org",
