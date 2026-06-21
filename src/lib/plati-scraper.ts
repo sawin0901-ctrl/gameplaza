@@ -109,9 +109,9 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     })
   } catch {}
 
-  // Priority 5: itemprop="image"
+  // Priority 5: itemprop="image" — upscale to avoid duplicate low-res entry in seen
   const itemImg = toAbs($("[itemprop='image']").first().attr("content") || $("img[itemprop='image']").first().attr("src"))
-  if (itemImg && itemImg.startsWith("http") && !seen.has(itemImg)) seen.add(itemImg)
+  if (itemImg && itemImg.startsWith("http") && !seen.has(upscale(itemImg))) seen.add(upscale(itemImg))
 
   // Priority 6: og:image from graph.digiseller.ru (fallback — PNG, may be lower quality)
   if (ogImg && ogImg.startsWith("http") && ogImg.includes("graph.digiseller.ru") && !seen.has(ogImg)) {
@@ -151,7 +151,6 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
   }
 
   // Gallery: extract additional images from Plati.Market
-  // Screenshots are stored in JSON-LD or in data-* attributes of gallery elements
   const gallery: string[] = []
 
   // Method 1: JSON-LD Product images array (most reliable — includes all seller screenshots)
@@ -170,8 +169,12 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     })
   } catch {}
 
-  // Method 2: Plati.Market gallery thumbnails — prefer data-full-src / data-src over src (thumbnails)
+  // Method 2: Plati.Market gallery thumbnails — prefer data-src (w=400) over src (w=88 thumbnail)
   const gallerySelectors = [
+    // Plati.Market current design: img.icon--thumbnail[data-idx] holds all gallery images with data-src=w400
+    "img.icon--thumbnail",
+    "img[data-idx][data-src]",
+    // Legacy / other selectors
     ".goods-photo-list [data-full-src]",
     ".goods-photo-list img",
     ".goods-gallery [data-full-src]",
@@ -292,7 +295,6 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       // Method 3: visible price in page text (₽ symbol) — skip variant modifiers (+N ₽)
       if (!rubPrice) {
         const bodyText = $("body").text()
-        // Remove "+N ₽" variant modifiers (e.g. "+1 000 ₽" for options) before scanning
         const cleanText = bodyText.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?)/gi, "")
         const matches = [...cleanText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
         const candidates = matches
