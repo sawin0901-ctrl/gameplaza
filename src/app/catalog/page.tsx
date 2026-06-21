@@ -34,6 +34,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Record<
 
   return buildCatalogMetadata({ categoryName, categorySlug, query: q || undefined, sort: sort || undefined, page })
 }
+
+export default async function CatalogPage({ searchParams }: { searchParams: Record<string, string> }) {
+  const query = (searchParams.q ?? "").trim().slice(0, 100)
   const category = (searchParams.category ?? "").replace(/[^a-z0-9-]/g, "").slice(0, 50)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
 
