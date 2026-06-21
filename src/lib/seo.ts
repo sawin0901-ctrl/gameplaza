@@ -75,7 +75,7 @@ export function buildCatalogMetadata(opts: {
   if (isDiscount) {
     title = `Акции и скидки на цифровые товары | ${SITE_NAME}`
     description = `Товары со скидкой: игры, ключи активации, подписки. Лучшие цены в ${SITE_NAME}.`
-    canonical = `${SITE_URL}/catalog?sort=discount`
+    canonical = `${SITE_URL}/catalog/discount`
   } else if (isSearch) {
     title = `Поиск: ${query} | ${SITE_NAME}`
     description = `Результаты поиска «${query}». Цифровые товары: игры, ключи, подписки по выгодным ценам.`
@@ -83,7 +83,7 @@ export function buildCatalogMetadata(opts: {
   } else if (categoryName && categorySlug) {
     title = `${categoryName} | ${SITE_NAME}`
     description = `Купить товары из категории ${categoryName} по выгодным ценам. Моментальная доставка через Digiseller.`
-    canonical = `${SITE_URL}/catalog?category=${categorySlug}`
+    canonical = `${SITE_URL}/catalog/${categorySlug}`
   } else {
     title = `Каталог цифровых товаров | ${SITE_NAME}`
     description = `Купить игры Steam, Xbox, PlayStation, программы, ключи активации и подписки. Тысячи товаров с мгновенной доставкой.`
