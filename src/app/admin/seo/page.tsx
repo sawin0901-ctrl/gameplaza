@@ -11,6 +11,47 @@ const GLOBAL_FIELDS = [
   { key: "robots", label: "Robots.txt (noindex/nofollow)" },
 ]
 
+function AiSeoWidget() {
+  const [stats, setStats] = useState<{total:number;withSeo:number;withoutSeo:number}|null>(null)
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<{processed:number;updated:number;errors:number}|null>(null)
+  const [batchSize, setBatchSize] = useState(10)
+  const loadStats = () => fetch("/api/admin/seo/generate").then(r => r.ok ? r.json() : null).then(d => d && setStats(d))
+  useEffect(() => { loadStats() }, [])
+  async function run() {
+    setLoading(true); setResult(null)
+    const r = await fetch("/api/admin/seo/generate", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ batchSize }) })
+    const d = await r.json(); setResult(d); setLoading(false); loadStats()
+  }
+  return (
+    <div className="bg-white/5 border border-[var(--border)] rounded-2xl p-5 mb-6">
+      <h2 className="font-semibold text-[var(--text)] mb-1">🤖 AI SEO генератор (Gemini)</h2>
+      <p className="text-xs text-[var(--text-3)] mb-4">Автоматически генерирует title, description, keywords для товаров без SEO</p>
+      {stats && (
+        <div className="flex gap-4 mb-4 text-sm">
+          <span className="text-emerald-400">С SEO: {stats.withSeo}</span>
+          <span className="text-yellow-400">Без SEO: {stats.withoutSeo}</span>
+          <span className="text-[var(--text-3)]">Всего: {stats.total}</span>
+        </div>
+      )}
+      <div className="flex gap-3 items-center flex-wrap">
+        <select value={batchSize} onChange={e => setBatchSize(Number(e.target.value))}
+          className="bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-[var(--text)]">
+          <option value={5}>5 товаров</option>
+          <option value={10}>10 товаров</option>
+          <option value={25}>25 товаров</option>
+          <option value={50}>50 товаров</option>
+        </select>
+        <button onClick={run} disabled={loading}
+          className="px-4 py-2 bg-brand text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-brand/90">
+          {loading ? "⏳ Генерирую..." : "🤖 Сгенерировать SEO"}
+        </button>
+      </div>
+      {result && <p className="mt-3 text-sm text-emerald-400">✅ Обработано: {result.processed} | Обновлено: {result.updated} | Ошибок: {result.errors}</p>}
+    </div>
+  )
+}
+
 export default function SEOPage() {
   const [data, setData] = useState<SEOData | null>(null)
   const [global, setGlobal] = useState<Record<string, string>>({})
@@ -40,6 +81,7 @@ export default function SEOPage() {
 
   return (
     <div className="p-6 max-w-3xl">
+      <AiSeoWidget />
       <h1 className="text-2xl font-bold text-[var(--text)] mb-6">SEO-настройки</h1>
       {msg && <div className="mb-4 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm">{msg}</div>}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 mb-6">
