@@ -55,7 +55,7 @@ function toAbs(src: string | undefined | null): string {
 }
 
 function makeSeo(name: string, desc: string, category: string) {
-  const clean = desc.replace(/\s+/g, " ").trim()
+  const clean = desc.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
   return {
     title: (name + " — купить ключ | GamePlaza").slice(0, 70),
     description: clean.length > 155 ? clean.slice(0, 152) + "..." : (clean || "Купить " + name + " по низкой цене в GamePlaza"),
@@ -151,8 +151,12 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
   }
 
   const allImages = Array.from(seen)
-  const mainImage = allImages[0] ||
-    `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=400`
+  let mainImage = allImages[0] ||
+    `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=800`
+  // Upscale digiseller CDN thumbnail URLs to higher resolution
+  mainImage = mainImage
+    .replace(/([?&])w=400(&|$)/, "$1w=800$2")
+    .replace(/maxlength=400/, "maxlength=800")
 
   // Extra gallery from remaining images
   const extraGallery = allImages.slice(1).concat(gallery).slice(0, 8)
@@ -228,16 +232,17 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
         if (metaRub) rubPrice = Math.ceil(metaRub)
       }
 
-      // Method 3: visible price in page text (₽ symbol)
+      // Method 3: visible price in page text (₽ symbol) — skip variant modifiers (+N ₽)
       if (!rubPrice) {
-        const htmlText = $("body").text()
-        const matches = [...htmlText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
+        const bodyText = $("body").text()
+        // Remove "+N ₽" variant modifiers (e.g. "+1 000 ₽" for options) before scanning
+        const cleanText = bodyText.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?)/gi, "")
+        const matches = [...cleanText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
         const candidates = matches
           .map(m => parseFloat(m[1].replace(/\s/g, "")))
-          .filter(p => p > 50 && p < 50000)
+          .filter(p => p >= 100 && p < 50000)
         if (candidates.length > 0) {
-          // Take the smallest reasonable price (most likely the product price)
-          rubPrice = Math.ceil(Math.min(...candidates))
+          rubPrice = Math.ceil(candidates[0])
         }
       }
 
@@ -253,17 +258,19 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     const oldPriceText = $(".price-old .val, del .val, .price-old, s .price-val").first().text()
     const oldPrice = parseFloat(oldPriceText.replace(/[^\d.,]/g, "").replace(",", ".")) || undefined
 
-    // Description
+    // Description — preserve HTML formatting from source
     const ogDesc = $("meta[property='og:description']").first().attr("content") ?? ""
-    const description = (
-      $(".goods-description-main").first().text().trim() ||
-      $(".description-goods-main").first().text().trim() ||
-      $("[itemprop='description']").first().text().trim() ||
-      $(".goods-description").first().text().trim() ||
-      $(".product-description").first().text().trim() ||
+    const descHtml = (
+      $(".goods-description-main").first().html()?.trim() ||
+      $(".description-goods-main").first().html()?.trim() ||
+      $("[itemprop='description']").first().html()?.trim() ||
+      $(".goods-description").first().html()?.trim() ||
+      $(".product-description").first().html()?.trim() ||
       ogDesc
-    ).replace(/\s+/g, " ").trim()
-    const shortDesc = description.slice(0, 300).trim()
+    ) ?? ""
+    const description = descHtml.trim()
+    const plainText = descHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+    const shortDesc = plainText.slice(0, 300).trim()
 
     // Images
     const { main: imageUrl, gallery: galleryImages } = extractImageFromHtml($, productId)
