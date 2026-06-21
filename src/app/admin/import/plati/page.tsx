@@ -586,6 +586,47 @@ function HistoryTab({ errorsOnly = false }: { errorsOnly?: boolean }) {
   )
 }
 
+// ── Retry Skipped Widget ────────────────────────────────────────────────────
+function RetrySkippedWidget() {
+  const [count, setCount] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState("")
+
+  useEffect(() => {
+    fetch("/api/admin/import/plati/retry-skipped")
+      .then(r => r.json()).then(d => setCount(d.count ?? 0)).catch(() => setCount(0))
+  }, [])
+
+  async function retry() {
+    setLoading(true); setMsg("")
+    try {
+      const res = await fetch("/api/admin/import/plati/retry-skipped", { method: "POST" })
+      const d = await res.json()
+      setMsg(d.message ?? "Готово")
+      setCount(0)
+    } catch { setMsg("Ошибка запроса") }
+    finally { setLoading(false) }
+  }
+
+  if (count === 0 && !msg) return null
+
+  return (
+    <div className="mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/5 flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-[var(--text)]">
+          {msg || `Пропущенных товаров: ${count ?? "..."}`}
+        </p>
+        {!msg && <p className="text-xs text-[var(--text-3)] mt-0.5">Ранее пропущены из-за отсутствия цены или описания</p>}
+      </div>
+      {!msg && (
+        <button onClick={retry} disabled={loading}
+          className="px-4 py-2 rounded-lg bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-50 whitespace-nowrap">
+          {loading ? "..." : "🔄 Повторить импорт"}
+        </button>
+      )}
+    </div>
+  )
+}
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function PlatiImportPage() {
   const [tab, setTab] = useState<Tab>("import")
@@ -606,7 +647,7 @@ export default function PlatiImportPage() {
       {tab === "import"  && <ImportTab />}
       {tab === "range"   && <RangeTab />}
       {tab === "history" && <HistoryTab />}
-      {tab === "errors"  && <HistoryTab errorsOnly />}
+      {tab === "errors"  && <><RetrySkippedWidget /><HistoryTab errorsOnly /></>}
     </div>
   )
 }
