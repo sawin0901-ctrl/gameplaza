@@ -147,16 +147,18 @@ async function processPlatiImport(job: Job) {
     return { skipped: true, reason: "not_found" }
   }
 
-  // Validate required fields — hard fail only for name/description/price
-  // inStock is NOT a hard fail: out-of-stock products are imported but hidden (isActive=false)
-  const missing: string[] = []
-  if (!raw.name || raw.name.length < 3)                missing.push("название")
-  if (!raw.description || raw.description.length < 10) missing.push("описание")
-  if (raw.price <= 0)                                  missing.push("цена")
-
-  if (missing.length > 0) {
-    const error = `Пропущен: ${missing.join(", ")}`
-    console.warn(`[import-worker] Product ${productId} skipped — ${error}`)
+  // Validate required fields — only name/price are hard fails; description falls back to meta
+  const descPlain = raw.description?.replace(/<[^>]+>/g, '').trim() ?? ''
+  const missingDetails: string[] = []
+  if (!raw.name || raw.name.length < 3)
+    missingDetails.push(`название (найдено: ${(raw.name ?? '').length} симв.)`)
+  if (descPlain.length < 3)
+    missingDetails.push(`описание (найдено: ${descPlain.length} симв.)`)
+  if (raw.price <= 0)
+    missingDetails.push(`цена (получено: ${raw.price})`)
+  if (missingDetails.length > 0) {
+    const error = `Пропущен: ${missingDetails.join(', ')}`
+    console.warn(`[import-worker] #${productId} skipped — ${error}`)
     await prisma.platiImportLog.updateMany({
       where: { productId, status: "queued" },
       data: { status: "skipped", error, duration: Date.now() - started },
