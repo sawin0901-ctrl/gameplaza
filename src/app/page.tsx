@@ -116,7 +116,8 @@ export default async function HomePage() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="border-y border-[#1f2937] bg-[#0d0d14]">
+      <section className="border-y border-[#1f2937] bg-[#0d0d14]" aria-label="Статистика магазина">
+        <h2 className="sr-only">Статистика магазина</h2>
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
