@@ -313,20 +313,56 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       }
     }
 
+
+    // Last resort: scan page body for any ₽ price when all meta/attr are empty
+    if (price <= 0) {
+      const bodyText2 = $("body").text()
+      const cleanBody = bodyText2.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?)/gi, "")
+      const bodyMatches = [...cleanBody.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
+      const bodyCandidates = bodyMatches.map(m => parseFloat(m[1].replace(/\s/g, ""))).filter(p => p >= 30 && p < 100000)
+      if (bodyCandidates.length > 0) {
+        price = Math.ceil(bodyCandidates[0])
+        console.log(`[plati-scraper] body-text price ${productId}: ${price}`)
+      }
+    }
+
     // Old price
     const oldPriceText = $(".price-old .val, del .val, .price-old, s .price-val").first().text()
     const oldPrice = parseFloat(oldPriceText.replace(/[^\d.,]/g, "").replace(",", ".")) || undefined
 
-    // Description — preserve HTML formatting from source
+    // Description — try many selectors; Plati regularly changes their HTML structure
     const ogDesc = $("meta[property='og:description']").first().attr("content") ?? ""
-    const descHtml = (
-      $(".goods-description-main").first().html()?.trim() ||
-      $(".description-goods-main").first().html()?.trim() ||
-      $("[itemprop='description']").first().html()?.trim() ||
-      $(".goods-description").first().html()?.trim() ||
-      $(".product-description").first().html()?.trim() ||
-      ogDesc
-    ) ?? ""
+    const metaDesc = $("meta[name='description']").first().attr("content") ?? ""
+    const DESC_SELECTORS = [
+      ".goods-description-main", ".description-goods-main",
+      "[itemprop='description']", ".goods-description",
+      ".product-description", ".goods-description-inner",
+      ".goods-description-content", ".description-inner",
+      ".description-block", ".product-desc", ".item-description",
+      ".goods-text", ".product-text", ".lots-offer__desc",
+      "#goods-description", "#description", ".tab-description",
+      ".goods__description", ".good__description", ".item__description",
+      ".product-body__description", ".goods-card__description",
+    ]
+    let descHtml = ""
+    for (const sel of DESC_SELECTORS) {
+      const html = $(sel).first().html()?.trim() ?? ""
+      if (html.replace(/<[^>]+>/g, "").trim().length > 5) { descHtml = html; break }
+    }
+    if (!descHtml) {
+      let jFound = false
+      $("script[type='application/ld+json']").each((_, el) => {
+        if (jFound) return
+        try {
+          const json = JSON.parse($(el).html() ?? "")
+          const d = json?.description ?? ""
+          if (d && String(d).length > 5) { descHtml = String(d); jFound = true }
+        } catch {}
+      })
+    }
+    if (!descHtml || descHtml.replace(/<[^>]+>/g, "").trim().length < 5) {
+      descHtml = ogDesc || metaDesc
+    }
     const description = descHtml.trim()
     const plainText = descHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
     const shortDesc = plainText.slice(0, 300).trim()
