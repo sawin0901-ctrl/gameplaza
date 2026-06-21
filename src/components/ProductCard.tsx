@@ -30,17 +30,17 @@ export default function ProductCard({
     : null)
 
   return (
-    <div className="group flex flex-col rounded-xl overflow-hidden bg-[#16161f] border border-white/5 card-hover transition-shadow hover:shadow-lg hover:shadow-black/40">
+    <div className="group card-hover overflow-hidden flex flex-col rounded-xl">
 
-      {/* Image — square container like Plati.Market (idp CDN images are square) */}
-      <div className="relative aspect-square overflow-hidden bg-[#0d0d16] flex-shrink-0">
+      {/* Image — square container matching Plati.Market CDN format */}
+      <div className="relative aspect-square overflow-hidden bg-[var(--bg-2,#1a1a26)] flex-shrink-0">
         <Link href={`/product/${slug}`} className="block absolute inset-0">
           {imgSrc ? (
             <Image
               src={imgSrc}
               alt={name}
               fill
-              unoptimized
+              unoptimized={!imgSrc.startsWith("/_next/")}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
@@ -52,9 +52,6 @@ export default function ProductCard({
             </div>
           )}
         </Link>
-
-        {/* Bottom gradient for visual separation */}
-        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#16161f] to-transparent pointer-events-none" />
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex gap-1 pointer-events-none z-10">
@@ -75,33 +72,26 @@ export default function ProductCard({
 
         {/* Title */}
         <Link href={`/product/${slug}`} className="flex-1">
-          <h3 className="text-sm font-medium text-white/90 line-clamp-2 leading-snug group-hover:text-brand transition-colors">
+          <h3 className="text-[var(--text)] text-sm font-medium line-clamp-2 leading-snug group-hover:text-brand transition-colors">
             {name}
           </h3>
         </Link>
 
-        {/* Rating + sold */}
-        {(rating || (soldCount && soldCount > 0)) ? (
-          <div className="flex items-center gap-2 text-xs text-white/40">
-            {rating ? (
-              <span className="text-yellow-400 font-medium">★ {rating.toFixed(1)}</span>
-            ) : null}
-            {soldCount && soldCount > 0 ? (
-              <span className="ml-auto">куплено {soldCount.toLocaleString("ru-RU")}</span>
-            ) : null}
-          </div>
+        {/* Sold count */}
+        {soldCount && soldCount > 0 ? (
+          <span className="text-[var(--text-3)] text-xs">куплено {soldCount.toLocaleString("ru-RU")}</span>
         ) : null}
 
         {/* Price + button */}
         <div className="mt-auto pt-1.5 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {oldPrice && oldPrice > price && (
-              <span className="text-white/30 text-xs line-through">{oldPrice.toLocaleString("ru-RU")} ₽</span>
+              <span className="text-[var(--text-3)] text-xs line-through">{oldPrice.toLocaleString("ru-RU")} ₽</span>
             )}
             {price > 50 ? (
-              <span className="text-white font-bold text-lg leading-none">{price.toLocaleString("ru-RU")} ₽</span>
+              <span className="text-[var(--text)] font-bold text-lg leading-none">{price.toLocaleString("ru-RU")} ₽</span>
             ) : (
-              <span className="text-white/50 text-sm leading-none">Цена уточняется</span>
+              <span className="text-[var(--text-3)] text-sm leading-none">Цена уточняется</span>
             )}
           </div>
           <Link
