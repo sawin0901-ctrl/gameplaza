@@ -178,6 +178,54 @@ function DiagPanel({ productId, autoCheck = false }: { productId: number; autoCh
 }
 
 // ── Queue Widget ─────────────────────────────────────────────────────────────
+// ── Sync Prices Widget ────────────────────────────────────────────────────────
+function SyncPricesWidget() {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function doSync() {
+    setLoading(true); setResult(null); setError(null)
+    try {
+      const res = await fetch("/api/admin/sync-prices", { method: "POST" })
+      const data = await res.json()
+      if (res.ok) setResult(data); else setError(data.error ?? "Ошибка")
+    } catch (e) { setError(e instanceof Error ? e.message : "Ошибка") }
+    setLoading(false)
+  }
+
+  return (
+    <Card className="p-4 mb-6 border-blue-500/20">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="font-semibold text-[var(--text)]">💱 Синхронизация цен с Digiseller</p>
+          <p className="text-xs text-[var(--text-3)] mt-0.5">Обновляет цены всех активных товаров из каталога Digiseller</p>
+        </div>
+        <button onClick={doSync} disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-blue-700">
+          {loading ? "⏳ Синхронизация..." : "🔄 Синхронизировать цены"}
+        </button>
+      </div>
+      {error && <p className="text-red-400 text-sm mt-3">❌ {error}</p>}
+      {result && (
+        <div className="mt-3 grid grid-cols-4 gap-2 text-center text-sm">
+          {[
+            { label: "Обновлено",   v: result.updated as number,           c: "text-emerald-400" },
+            { label: "Пропущено",   v: result.skipped as number,           c: "text-[var(--text-3)]" },
+            { label: "Pub API",     v: result.fromPublicApi as number,     c: "text-blue-400" },
+            { label: "Всего",       v: result.total as number,             c: "text-[var(--text)]" },
+          ].map(s => (
+            <div key={s.label} className="bg-white/5 rounded-xl p-2">
+              <div className={	ext-xl font-bold }>{s.v}</div>
+              <div className="text-xs text-[var(--text-3)]">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 function QueueWidget() {
   const [stats, setStats] = useState<QueueStats | null>(null)
   useEffect(() => {
@@ -547,6 +595,7 @@ export default function PlatiImportPage() {
         <h1 className="text-2xl font-bold text-[var(--text)]">Импорт товаров Plati.Market</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">Скрапинг карточек напрямую со страниц Plati.Market. Авто-обновление каждые 6 часов.</p>
       </div>
+      <SyncPricesWidget />
       <QueueWidget />
       <div className="flex gap-1.5 flex-wrap mb-6">
         <TabBtn active={tab === "import"}  onClick={() => setTab("import")}>⬇️ Импорт</TabBtn>
