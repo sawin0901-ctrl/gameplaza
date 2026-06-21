@@ -273,17 +273,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <div className="block lg:hidden mt-5">
             <DigisellerWidget productId={product.digisellerProductId} />
           </div>
-        </div>
 
-        {/* ═══ Правая колонка: виджет sticky ═══ */}
-        <div className="hidden lg:block" style={{ position: "sticky", top: "96px" }}>
-          <DigisellerWidget productId={product.digisellerProductId} />
-        </div>
-      </div>
-
-      {/* ═══ Вкладки ═══ */}
-      <div className="mt-8">
-        <ProductTabs
+          {/* ═══ Вкладки — сразу под инфо ═══ */}
+          <div className="mt-6">
+            <ProductTabs
           tabs={[
             { id: "description", label: "Описание" },
             { id: "reviews", label: "Отзывы", count: reviews.length },
@@ -328,7 +321,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </table>
             </div>,
           ]}
-        />
+            />
+          </div>
+        </div>
+
+        {/* ═══ Правая колонка: виджет sticky ═══ */}
+        <div className="hidden lg:block" style={{ position: "sticky", top: "96px", alignSelf: "start" }}>
+          <DigisellerWidget productId={product.digisellerProductId} />
+        </div>
       </div>
 
       {/* Похожие товары */}
