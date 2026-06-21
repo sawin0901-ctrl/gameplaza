@@ -4,6 +4,7 @@ import CatalogSidebar from "../../components/CatalogSidebar"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { buildCatalogMetadata, buildBreadcrumbJsonLd } from "../../lib/seo"
+import { redirect } from "next/navigation"
 
 export const revalidate = 60
 
@@ -38,6 +39,15 @@ export async function generateMetadata({ searchParams }: { searchParams: Record<
 export default async function CatalogPage({ searchParams }: { searchParams: Record<string, string> }) {
   const query = (searchParams.q ?? "").trim().slice(0, 100)
   const category = (searchParams.category ?? "").replace(/[^a-z0-9-]/g, "").slice(0, 50)
+  if (category) {
+    const sp = new URLSearchParams()
+    const s = searchParams.sort; if (s && s !== "newest") sp.set("sort", s)
+    const mn = searchParams.minPrice; if (mn) sp.set("minPrice", mn)
+    const mx = searchParams.maxPrice; if (mx) sp.set("maxPrice", mx)
+    const pg = searchParams.page; if (pg && pg !== "1") sp.set("page", pg)
+    const qs = sp.toString()
+    redirect("/catalog/" + category + (qs ? "?" + qs : ""))
+  }
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
 
   // Безопасный парсинг номера страницы — без NaN
