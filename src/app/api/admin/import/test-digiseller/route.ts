@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
         "-7": "Доступ запрещён. Проверьте права API-ключа в кабинете Digiseller.",
         "-10": "API ключ заблокирован. Создайте новый ключ.",
       }
-      const hint = hints[String(code) as keyof typeof hints] ?? "Проверьте API ключ и Seller ID."
+      const hint = (hints as Record<string, string>)[String(code)] ?? "Проверьте API ключ и Seller ID."
 
       checks.push({
         name: "Авторизация Digiseller (POST /api/apilogin)",
