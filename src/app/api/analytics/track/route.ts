@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "../../../../lib/prisma"
+import { rateLimit } from "../../../../lib/rate-limit"
 
 const BOT_RE = /bot|crawl|spider|slurp|googlebot|bingbot|yandexbot|baiduspider|python|curl|wget|postman|http-client|java\/|go-http|axios\/\d|node-fetch|libwww/i
 
@@ -102,8 +103,14 @@ async function geocodeIp(ip: string): Promise<{ country?: string; city?: string 
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 60 events/min per IP to prevent DB flood
+    const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "").split(",")[0].trim() || "unknown"
+    if (!rateLimit(`analytics:${ip}`, 60, 60_000)) {
+      return NextResponse.json({ ok: false }, { status: 429 })
+    }
+
     const body = await req.json()
-    const { sessionId, path, referrer, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, duration, _updateOnly, userId } = body
+    const { sessionId, path, referrer, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, duration, _updateOnly } = body
 
     if (!sessionId || !path) return NextResponse.json({ ok: false }, { status: 400 })
 
@@ -130,7 +137,7 @@ export async function POST(req: NextRequest) {
     const pv = await prisma.pageView.create({
       data: {
         sessionId,
-        userId: userId ?? null,
+        userId: null, // userId resolved server-side only if session is present
         path,
         referrer: referrer ? referrer.slice(0, 500) : null,
         referrerType,
@@ -168,8 +175,13 @@ export async function POST(req: NextRequest) {
 // Track custom events (product_view, add_to_cart, purchase, etc.)
 export async function PUT(req: NextRequest) {
   try {
+    const ip2 = (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "").split(",")[0].trim() || "unknown"
+    if (!rateLimit(`analytics-ev:${ip2}`, 30, 60_000)) {
+      return NextResponse.json({ ok: false }, { status: 429 })
+    }
+
     const body = await req.json()
-    const { sessionId, event, path, productId, orderId, value, meta, userId } = body
+    const { sessionId, event, path, productId, orderId, value, meta } = body
 
     if (!sessionId || !event) return NextResponse.json({ ok: false }, { status: 400 })
 
@@ -179,7 +191,7 @@ export async function PUT(req: NextRequest) {
     await prisma.analyticsEvent.create({
       data: {
         sessionId,
-        userId: userId ?? null,
+        userId: null,
         event,
         path: path?.slice(0, 500) ?? null,
         productId: productId ?? null,
