@@ -200,27 +200,52 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     const currency = $("[itemprop='priceCurrency']").first().attr("content") ??
       $("meta[property='product:price:currency']").first().attr("content") ?? "RUB"
 
-    // If price is in USD (small number) — fetch RUB price from Digiseller XML API
+    // If price is in USD — find RUB price from page
     if (price > 0 && (currency === "USD" || (currency !== "RUB" && price < 200))) {
+      let rubPrice = 0
+
+      // Method 1: JSON-LD offers with RUB currency
       try {
-        const xmlResp = await axios.get(
-          `https://shop.digiseller.ru/xml/goods.asp?id_d=${productId}`,
-          { headers: BROWSER_HEADERS, timeout: 8000, responseType: "text" }
-        )
-        const xml = String(xmlResp.data)
-        const rubMatch =
-          xml.match(/<price_rur[^>]*>([\d.]+)<\/price_rur>/i) ||
-          xml.match(/<price_rub[^>]*>([\d.]+)<\/price_rub>/i) ||
-          xml.match(/currency="RUB"[^>]*>([\d.]+)</i)
-        if (rubMatch) {
-          const rubPrice = Math.ceil(parseFloat(rubMatch[1]))
-          if (rubPrice > 0) {
-            console.log(`[plati-scraper] RUB price from Digiseller XML: ${rubPrice} (was ${price} ${currency})`)
-            price = rubPrice
+        $("script[type='application/ld+json']").each((_: unknown, el: unknown) => {
+          const txt = $(el as cheerio.Element).html() ?? ""
+          const json = JSON.parse(txt)
+          const offers = Array.isArray(json?.offers) ? json.offers : [json?.offers].filter(Boolean)
+          for (const offer of offers) {
+            if (offer?.priceCurrency === "RUB" && offer?.price) {
+              rubPrice = Math.ceil(parseFloat(String(offer.price)))
+              return false
+            }
           }
+        })
+      } catch {}
+
+      // Method 2: meta tags for RUB price
+      if (!rubPrice) {
+        const metaRub = $("meta[property='product:price:amount'][content]")
+          .toArray()
+          .map(el => parseFloat($(el).attr("content") ?? "0"))
+          .find(p => p > 200)
+        if (metaRub) rubPrice = Math.ceil(metaRub)
+      }
+
+      // Method 3: visible price in page text (₽ symbol)
+      if (!rubPrice) {
+        const htmlText = $("body").text()
+        const matches = [...htmlText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
+        const candidates = matches
+          .map(m => parseFloat(m[1].replace(/\s/g, "")))
+          .filter(p => p > 50 && p < 50000)
+        if (candidates.length > 0) {
+          // Take the smallest reasonable price (most likely the product price)
+          rubPrice = Math.ceil(Math.min(...candidates))
         }
-      } catch (xmlErr) {
-        console.warn(`[plati-scraper] Digiseller XML fallback failed for ${productId}:`, xmlErr instanceof Error ? xmlErr.message : String(xmlErr))
+      }
+
+      if (rubPrice > 0) {
+        console.log(`[plati-scraper] RUB price found: ${rubPrice} (was ${price} ${currency})`)
+        price = rubPrice
+      } else {
+        console.warn(`[plati-scraper] Could not determine RUB price for ${productId}, USD price: ${price}`)
       }
     }
 
