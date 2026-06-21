@@ -2,11 +2,11 @@ import Link from "next/link"
 
 const CATALOG_LINKS = [
   { name: "Все товары",      href: "/catalog" },
-  { name: "Игры Steam",      href: "/catalog?category=steam" },
-  { name: "Xbox",            href: "/catalog?category=xbox" },
-  { name: "PlayStation",     href: "/catalog?category=playstation" },
-  { name: "Подписки",        href: "/catalog?category=subscriptions" },
-  { name: "🔥 Акции",        href: "/catalog?sort=discount" },
+  { name: "Игры Steam",      href: "/catalog/steam" },
+  { name: "Xbox",            href: "/catalog/xbox" },
+  { name: "PlayStation",     href: "/catalog/playstation" },
+  { name: "Подписки",        href: "/catalog/subscriptions" },
+  { name: "🔥 Акции",        href: "/catalog/discount" },
 ]
 
 const INFO_LINKS = [
@@ -15,6 +15,9 @@ const INFO_LINKS = [
   { name: "Условия покупки",    href: "/help#returns" },
   { name: "Активация ключей",   href: "/help#activation" },
   { name: "Контакты",           href: "/about#contacts" },
+  { name: "Политика конфиденциальности", href: "/privacy" },
+  { name: "Политика возврата",         href: "/refund" },
+  { name: "Отзывы покупателей",        href: "/reviews" },
 ]
 
 export default function Footer() {
@@ -103,8 +106,10 @@ export default function Footer() {
         <div className="border-t border-[#1f2937] mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-[var(--text-3)] text-sm">© {year} GamePlaza. Все права защищены.</p>
           <div className="flex items-center gap-4">
-            <Link href="/about" className="text-[var(--text-3)] hover:text-[var(--text-2)] text-xs transition-colors">О нас</Link>
+            <Link href="/about"    className="text-[var(--text-3)] hover:text-[var(--text-2)] text-xs transition-colors">О нас</Link>
             <Link href="/help"  className="text-[var(--text-3)] hover:text-[var(--text-2)] text-xs transition-colors">Помощь</Link>
+            <Link href="/privacy" className="text-[var(--text-3)] hover:text-[var(--text-2)] text-xs transition-colors">Конфиденциальность</Link>
+            <Link href="/refund"  className="text-[var(--text-3)] hover:text-[var(--text-2)] text-xs transition-colors">Возврат</Link>
             <span className="text-[var(--text-4)] text-xs">gameplaza.site</span>
           </div>
         </div>
