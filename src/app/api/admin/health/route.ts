@@ -15,10 +15,13 @@ async function checkDB() {
 async function checkRedis() {
   const t = Date.now()
   try {
-    const { createClient } = await import("redis")
+    // ioredis is bundled with bullmq
+    const { default: Redis } = await import("ioredis")
     const url = process.env.REDIS_URL ?? "redis://localhost:6379"
-    const c = createClient({ url })
-    await c.connect(); await c.ping(); await c.disconnect()
+    const client = new Redis(url, { lazyConnect: true, connectTimeout: 5000, maxRetriesPerRequest: 1 })
+    await client.connect()
+    await client.ping()
+    client.disconnect()
     return { ok: true, ms: Date.now() - t }
   } catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
 }
@@ -35,11 +38,12 @@ async function checkMail() {
   const t = Date.now()
   try {
     const nodemailer = (await import("nodemailer")).default
-    const t2 = nodemailer.createTransport({
-      host: process.env.SMTP_HOST ?? "", port: Number(process.env.SMTP_PORT ?? 587),
+    const transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST ?? "",
+      port: Number(process.env.SMTP_PORT ?? 587),
       auth: { user: process.env.SMTP_USER ?? "", pass: process.env.SMTP_PASS ?? "" },
     })
-    await t2.verify()
+    await transport.verify()
     return { ok: true, ms: Date.now() - t }
   } catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
 }
