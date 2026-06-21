@@ -82,10 +82,9 @@ export async function getDigisellerProducts(page = 1, pageSize = 20): Promise<Di
     // seller-goods uses id_seller (not seller_id), order_col/order_dir (not order/direction)
     // token goes in both body and query string per Digiseller docs
     const res = await axios.post(
-      `${BASE_URL}/seller-goods`,
+      `${BASE_URL}/seller-goods?token=${encodeURIComponent(token)}`,
       {
         id_seller: parseInt(sellerId, 10),
-        token,
         order_col: "name",
         order_dir: "asc",
         rows: pageSize,
