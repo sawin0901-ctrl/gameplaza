@@ -42,10 +42,17 @@ export async function POST(req: NextRequest) {
   const toProcess = ids.slice(0, MAX)
   const truncated = ids.length > MAX ? ids.length - MAX : 0
 
-  const existing = await prisma.product.findMany({
-    where: { digisellerProductId: { in: toProcess } },
-    select: { digisellerProductId: true, name: true, isActive: true },
-  })
+  let existing: Array<{ digisellerProductId: number; name: string | null; isActive: boolean }> = []
+  try {
+    existing = await prisma.product.findMany({
+      where: { digisellerProductId: { in: toProcess } },
+      select: { digisellerProductId: true, name: true, isActive: true },
+    })
+  } catch (err) {
+    console.error("[import/plati] DB error:", err)
+    return NextResponse.json({ error: "Ошибка базы данных" }, { status: 500 })
+  }
+
   const existingMap = new Map(existing.map(e => [e.digisellerProductId, e]))
   const newIds = toProcess.filter(id => !existingMap.has(id))
   const duplicates = toProcess.filter(id => existingMap.has(id))
@@ -57,7 +64,12 @@ export async function POST(req: NextRequest) {
       data: { productId: id, source: "manual" },
       opts: { jobId: `plati-${id}`, delay: i * 3000 },
     }))
-    await importQueue.addBulk(jobs)
+    try {
+      await importQueue.addBulk(jobs)
+    } catch (err) {
+      console.error("[import/plati] Queue error:", err)
+      return NextResponse.json({ error: "Ошибка очереди — Redis недоступен" }, { status: 500 })
+    }
   }
 
   // Log
@@ -71,7 +83,7 @@ export async function POST(req: NextRequest) {
         source: "manual",
       })),
       skipDuplicates: true,
-    })
+    }).catch(err => console.error("[import/plati] Log error:", err))
   }
 
   return NextResponse.json({
