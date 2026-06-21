@@ -28,9 +28,17 @@ const nextConfig = {
       "font-src 'self' data: https://shop.digiseller.com https://api.digiseller.com https://digiseller.com",
       "frame-src https://digiseller.ru https://www.digiseller.ru https://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
       "object-src 'none'",
+      "report-uri /api/csp-report",
     ].join("; ")
 
     return [
+      {
+        source: "/api/(.*)",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [
