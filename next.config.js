@@ -25,7 +25,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline' https://shop.digiseller.com http://shop.digiseller.com https://api.digiseller.com",
       "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://digiseller.mycdn.ink https://plati.market https://www.plati.market https://shop.digiseller.com https://digiseller.com https://api.digiseller.com",
       "connect-src 'self' https://digiseller.com https://shop.digiseller.com https://api.digiseller.com https://o0.ingest.sentry.io",
-      "font-src 'self' data: https://shop.digiseller.com https://api.digiseller.com https://digiseller.com",
+      "font-src 'self' data: https://shop.digiseller.com https://api.digiseller.com https://digiseller.com https://www.digiseller.com",
       "frame-src https://digiseller.ru https://www.digiseller.ru https://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
       "object-src 'none'",
       "report-uri /api/csp-report",
