@@ -216,13 +216,13 @@ function SyncPricesWidget() {
             { label: "Всего",       v: result.total as number,             c: "text-[var(--text)]" },
           ].map(s => (
             <div key={s.label} className="bg-white/5 rounded-xl p-2">
-              <div className={	ext-xl font-bold }>{s.v}</div>
+              <div className={`text-xl font-bold ${s.c}`}>{s.v}</div>
               <div className="text-xs text-[var(--text-3)]">{s.label}</div>
             </div>
           ))}
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
