@@ -74,9 +74,13 @@ const BROWSER_HEADERS = {
 function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: number): { main: string; gallery: string[] } {
   const seen = new Set<string>()
 
-  // Priority 1: Open Graph image (most reliable, always present)
+  // Priority 0: Digiseller original image API — full resolution, no CDN compression or size cap
+  // graph.digiseller.ru serves the seller's original uploaded image
+  seen.add(`https://graph.digiseller.ru/img.ashx?id_d=${productId}`)
+
+  // Priority 1: Open Graph image (CDN-compressed, but reliable fallback)
   const ogImg = toAbs($("meta[property='og:image']").first().attr("content"))
-  if (ogImg && ogImg.startsWith("http")) seen.add(ogImg)
+  if (ogImg && ogImg.startsWith("http") && !seen.has(ogImg)) seen.add(ogImg)
 
   // Priority 2: Twitter card image
   const twImg = toAbs($("meta[name='twitter:image']").first().attr("content"))
