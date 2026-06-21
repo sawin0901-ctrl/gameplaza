@@ -204,8 +204,7 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
   }
 
   const allImages = Array.from(seen)
-  const mainImage = allImages[0] ||
-    `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=800`
+  const mainImage = allImages[0] || ""
 
   const extraGallery = allImages.slice(1).concat(gallery).slice(0, 8)
 
