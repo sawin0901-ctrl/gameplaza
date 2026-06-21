@@ -7,118 +7,107 @@ import crypto from "crypto"
 
 export const dynamic = "force-dynamic"
 
-interface Check {
-  name: string
-  ok: boolean
-  message: string
-  detail?: string
-  duration?: number
-  raw?: unknown
-}
+interface Check { name: string; ok: boolean; message: string; detail?: string; duration?: number; raw?: unknown }
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const checks: Check[] = []
   const sellerIdRaw = process.env.DIGISELLER_SELLER_ID ?? ""
   const apiKeyRaw   = process.env.DIGISELLER_API_KEY   ?? ""
   const sellerId    = sellerIdRaw.trim()
   const apiKey      = apiKeyRaw.trim()
+  const sellerIdInt = parseInt(sellerId, 10)
 
-  // ── 1. Env vars ──────────────────────────────────────────────────────────────
-  const envOk = !!(
-    sellerId && sellerId !== "your-seller-id" &&
-    apiKey   && apiKey   !== "your-api-key"
-  )
+  // ── 1. Env vars ───────────────────────────────────────────────────────────
+  const envOk = !!(sellerId && !isNaN(sellerIdInt) && apiKey && apiKey.length >= 8)
+  const hasWhitespace = sellerIdRaw !== sellerId || apiKeyRaw !== apiKey
   checks.push({
     name: "Переменные окружения (.env)",
     ok: envOk,
     message: envOk
-      ? `SELLER_ID задан (${sellerId}) · API_KEY задан (длина: ${apiKey.length}, начинается: ${apiKey.slice(0, 4)}****)`
+      ? `SELLER_ID: ${sellerId} · API_KEY длина: ${apiKey.length} символов · начало: ${apiKey.slice(0, 6)}...`
       : [
-          !sellerId || sellerId === "your-seller-id" ? "❌ DIGISELLER_SELLER_ID не задан" : "",
-          !apiKey   || apiKey   === "your-api-key"   ? "❌ DIGISELLER_API_KEY не задан"   : "",
+          !sellerId ? "❌ DIGISELLER_SELLER_ID не задан" : "",
+          isNaN(sellerIdInt) ? "❌ DIGISELLER_SELLER_ID не является числом" : "",
+          !apiKey ? "❌ DIGISELLER_API_KEY не задан" : "",
+          apiKey.length < 8 ? "❌ DIGISELLER_API_KEY слишком короткий" : "",
         ].filter(Boolean).join("\n"),
-    detail: sellerIdRaw !== sellerId
-      ? `⚠️ SELLER_ID содержал пробелы (удалены)`
-      : apiKeyRaw !== apiKey
-      ? `⚠️ API_KEY содержал пробелы/переносы строк (${apiKeyRaw.length - apiKey.length} лишних символов)`
-      : undefined,
+    detail: hasWhitespace
+      ? `⚠️ Обнаружены лишние пробелы/переносы строк в .env! Удалено ${(sellerIdRaw + apiKeyRaw).length - (sellerId + apiKey).length} символов`
+      : `Формат ключа: ${apiKey.includes("-") ? "GUID (xxxx-xxxx-xxxx)" : "строка"} · Seller ID: ${sellerIdInt}`,
   })
 
   if (!envOk) return NextResponse.json({ ok: false, checks })
 
-  // ── 2. Sign test (показываем что будет отправлено) ───────────────────────────
-  const timestamp = Math.floor(Date.now() / 1000)
-  const sign = crypto.createHash("md5").update(apiKey + timestamp).digest("hex")
-
+  // ── 2. Server time ────────────────────────────────────────────────────────
+  const nowTs = Math.floor(Date.now() / 1000)
   checks.push({
-    name: "Формирование подписи (MD5)",
+    name: "Время сервера (UTC)",
     ok: true,
-    message: "Подпись сформирована",
-    detail: `timestamp: ${timestamp} · sign: ${sign.slice(0, 8)}...${sign.slice(-4)} · sellerId: ${sellerId}`,
+    message: `timestamp: ${nowTs} · ${new Date().toISOString()}`,
+    detail: "Digiseller отклоняет запросы с расхождением >300 сек от их серверного времени",
   })
 
-  // ── 3. Direct auth call (raw axios, full response) ───────────────────────────
+  // ── 3. Sign formation ─────────────────────────────────────────────────────
+  const timestamp = Math.floor(Date.now() / 1000)
+  const signInput = apiKey + String(timestamp)
+  const sign = crypto.createHash("md5").update(signInput).digest("hex")
+  checks.push({
+    name: "MD5 подпись",
+    ok: true,
+    message: `sign: ${sign.slice(0, 8)}...${sign.slice(-4)}`,
+    detail: `Входные данные: apikey(${apiKey.length} chars) + timestamp(${timestamp}) → MD5 → ${sign}`,
+  })
+
+  // ── 4. Auth request ───────────────────────────────────────────────────────
   clearTokenCache()
   const authStart = Date.now()
   let token: string | null = null
 
   try {
-    const body = {
-      seller_id: parseInt(sellerId, 10),
-      apikey: apiKey,
-      sign,
-      timestamp,
-      lang: "ru-RU",
-    }
-
+    const body = { seller_id: sellerIdInt, apikey: apiKey, sign, timestamp, lang: "ru-RU" }
     const res = await axios.post(
       "https://api.digiseller.ru/api/apilogin",
       body,
-      {
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        timeout: 15000,
-        validateStatus: () => true, // don't throw on non-2xx
-      },
+      { headers: { Accept: "application/json", "Content-Type": "application/json" }, timeout: 15000, validateStatus: () => true },
     )
-
     const duration = Date.now() - authStart
     const data = res.data
 
     if (data?.retval === 0 && data?.token) {
       token = data.token
       checks.push({
-        name: "Авторизация Digiseller (POST /api/apilogin)",
+        name: "Авторизация Digiseller (/api/apilogin)",
         ok: true,
         message: "✅ Токен получен успешно",
-        detail: `HTTP ${res.status} · token: ${String(token).slice(0, 8)}... · время: ${duration}ms`,
+        detail: `HTTP ${res.status} · token: ${String(token).slice(0, 10)}... · ${duration}ms`,
         duration,
         raw: { retval: data.retval, retdesc: data.retdesc },
       })
     } else {
       const code = data?.retval ?? "?"
-      const desc = data?.retdesc ?? "нет описания"
-      const hints: Record<number, string> = {
-        "-2": "Неверные параметры. Проверьте DIGISELLER_SELLER_ID (должен быть числом).",
+      const desc = data?.retdesc ?? ""
+      const hints: Record<string, string> = {
+        "-1": "API ключ не соответствует Seller ID, либо ключ не активирован в кабинете Digiseller.\n" +
+              "→ my.digiseller.com → Настройки → API → скопируйте ключ заново\n" +
+              "→ Проверьте: cat /var/www/gameplaza/.env | grep DIGISELLER",
+        "-2": "Неверный формат параметров. seller_id должен быть целым числом.",
         "-3": "Продавец не найден. Проверьте DIGISELLER_SELLER_ID.",
-        "-4": "Неверная подпись. Скопируйте DIGISELLER_API_KEY заново — он может содержать невидимые символы.",
-        "-5": "Дублирующийся запрос. Попробуйте ещё раз.",
-        "-7": "Доступ запрещён. Проверьте права API-ключа в кабинете Digiseller.",
-        "-10": "API ключ заблокирован. Создайте новый ключ.",
+        "-4": "Неверная подпись. Скопируйте API_KEY заново — скорее всего невидимые символы.",
+        "-5": "Дублирующийся timestamp. Попробуйте ещё раз через секунду.",
+        "-7": "Доступ запрещён. Проверьте права API-ключа.",
+        "-10": "Ключ заблокирован. Создайте новый в кабинете Digiseller.",
       }
-      const hint = (hints as Record<string, string>)[String(code)] ?? "Проверьте API ключ и Seller ID."
-
+      const hint = hints[String(code)] ?? `Неизвестный код. Полный ответ: ${JSON.stringify(data)}`
       checks.push({
-        name: "Авторизация Digiseller (POST /api/apilogin)",
+        name: "Авторизация Digiseller (/api/apilogin)",
         ok: false,
-        message: `❌ Код ${code}: ${desc}\n💡 ${hint}`,
-        detail: `HTTP ${res.status} · время: ${duration}ms · Endpoint: /api/apilogin`,
+        message: `❌ Код ${code}${desc ? `: ${desc}` : ""}\n💡 ${hint}`,
+        detail: `HTTP ${res.status} · ${duration}ms · seller_id: ${sellerIdInt} · key_len: ${apiKey.length}`,
         duration,
-        raw: { retval: code, retdesc: desc, http: res.status },
+        raw: data,
       })
       return NextResponse.json({ ok: false, checks })
     }
@@ -127,40 +116,35 @@ export async function GET(req: NextRequest) {
     const msg = axios.isAxiosError(err)
       ? err.code === "ECONNABORTED" ? "Таймаут (>15с)"
       : err.code === "ENOTFOUND"   ? "DNS не разрешается — проверьте интернет на сервере"
-      : `HTTP ${err.response?.status ?? "нет ответа"}: ${JSON.stringify(err.response?.data ?? {}).slice(0, 200)}`
+      : `HTTP ${err.response?.status ?? "нет ответа"}`
       : String(err)
-
     checks.push({ name: "Авторизация Digiseller", ok: false, message: msg, duration })
     return NextResponse.json({ ok: false, checks })
   }
 
-  // ── 4. Catalog check ─────────────────────────────────────────────────────────
+  // ── 5. Catalog check ──────────────────────────────────────────────────────
   const catStart = Date.now()
   try {
     const res = await axios.post(
       "https://api.digiseller.ru/api/seller-goods",
-      { seller_id: parseInt(sellerId, 10), token, page: 1, rows: 5, order: "date", direction: "desc" },
+      { seller_id: sellerIdInt, token, page: 1, rows: 5, order: "date", direction: "desc" },
       { headers: { Accept: "application/json", "Content-Type": "application/json" }, timeout: 20000, validateStatus: () => true },
     )
     const duration = Date.now() - catStart
     const data = res.data
-
     if (Array.isArray(data?.rows)) {
       checks.push({
-        name: "Каталог товаров (POST /api/seller-goods)",
+        name: "Каталог товаров (/api/seller-goods)",
         ok: true,
-        message: `✅ Загружено ${data.rows.length} товаров · Всего: ${data.count ?? "?"} · Страниц: ${data.pages ?? "?"}`,
-        detail: data.rows.slice(0, 3).map((r: { id_goods: number; name_goods: string }) =>
-          `[${r.id_goods}] ${String(r.name_goods).slice(0, 50)}`
-        ).join("\n"),
+        message: `✅ ${data.rows.length} товаров · Всего: ${data.count ?? "?"} · Страниц: ${data.pages ?? "?"}`,
+        detail: data.rows.slice(0, 3).map((r: { id_goods: number; name_goods: string }) => `[${r.id_goods}] ${String(r.name_goods).slice(0, 50)}`).join("\n"),
         duration,
       })
     } else {
-      const code = data?.retval
       checks.push({
-        name: "Каталог товаров (POST /api/seller-goods)",
+        name: "Каталог товаров (/api/seller-goods)",
         ok: false,
-        message: `❌ Код ${code ?? "?"}: ${data?.retdesc ?? "Неожиданный ответ"}`,
+        message: `❌ Код ${data?.retval ?? "?"}: ${data?.retdesc ?? "Неожиданный ответ"}`,
         detail: JSON.stringify(data).slice(0, 300),
         duration,
         raw: data,
@@ -168,17 +152,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, checks })
     }
   } catch (err) {
-    const msg = axios.isAxiosError(err) ? err.message : String(err)
-    checks.push({ name: "Каталог товаров", ok: false, message: msg, duration: Date.now() - catStart })
+    checks.push({ name: "Каталог товаров", ok: false, message: String(err), duration: Date.now() - catStart })
     return NextResponse.json({ ok: false, checks })
   }
 
-  // ── 5. Summary ───────────────────────────────────────────────────────────────
-  checks.push({
-    name: "Итог",
-    ok: true,
-    message: "✅ Все проверки пройдены. Digiseller настроен корректно.",
-  })
-
+  checks.push({ name: "Итог", ok: true, message: "✅ Все проверки пройдены. Можно запускать импорт." })
   return NextResponse.json({ ok: true, checks })
 }
