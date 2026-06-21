@@ -204,7 +204,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </h1>
 
               {/* Цена из БД (авт. обновление каждые 6ч из Plati.Market) */}
-              {product.price > 0 && (
+              {product.price > 50 && (
                 <div className="flex items-baseline gap-2 mb-3">
                   <span className="text-2xl font-bold text-white">
                     {product.price.toLocaleString("ru-RU")} ₽
