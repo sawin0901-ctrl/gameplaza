@@ -195,7 +195,7 @@ function SyncPricesWidget() {
   }
 
   return (
-    <Card className="p-4 mb-6 border-blue-500/20">
+    <div className="p-4 mb-6 border border-blue-500/20 bg-white/5 rounded-2xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <p className="font-semibold text-[var(--text)]">💱 Синхронизация цен с Digiseller</p>
