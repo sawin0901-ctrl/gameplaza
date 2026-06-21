@@ -11,6 +11,23 @@ interface Props {
   images: GalleryImage[]
 }
 
+function GalleryImg({ src, alt, fill, sizes, className, priority }: {
+  src: string; alt: string; fill?: boolean; sizes?: string; className?: string; priority?: boolean
+}) {
+  const unoptimized = !src.startsWith("/uploads/")
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill={fill}
+      sizes={sizes}
+      className={className}
+      priority={priority}
+      unoptimized={unoptimized}
+    />
+  )
+}
+
 export default function ImageGallery({ images }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
 
@@ -50,7 +67,6 @@ export default function ImageGallery({ images }: Props) {
 
   return (
     <>
-      {/* Сетка изображений */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {images.map((img, i) => (
           <button
@@ -58,7 +74,7 @@ export default function ImageGallery({ images }: Props) {
             onClick={() => setLightbox(i)}
             className="group relative aspect-square rounded-xl overflow-hidden bg-[#1a1a26] hover:ring-2 hover:ring-brand transition-all"
           >
-            <Image
+            <GalleryImg
               src={img.url}
               alt={img.alt}
               fill
@@ -74,13 +90,11 @@ export default function ImageGallery({ images }: Props) {
         ))}
       </div>
 
-      {/* Lightbox */}
       {lightbox !== null && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={close}
         >
-          {/* Кнопка закрытия */}
           <button
             onClick={close}
             className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl z-10"
@@ -89,19 +103,17 @@ export default function ImageGallery({ images }: Props) {
             ×
           </button>
 
-          {/* Счётчик */}
           {images.length > 1 && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
               {lightbox + 1} / {images.length}
             </div>
           )}
 
-          {/* Изображение */}
           <div
             className="relative w-full max-w-3xl max-h-[80vh] aspect-square"
             onClick={e => e.stopPropagation()}
           >
-            <Image
+            <GalleryImg
               src={images[lightbox].url}
               alt={images[lightbox].alt}
               fill
@@ -111,7 +123,6 @@ export default function ImageGallery({ images }: Props) {
             />
           </div>
 
-          {/* Навигация */}
           {images.length > 1 && (
             <>
               <button
@@ -131,7 +142,6 @@ export default function ImageGallery({ images }: Props) {
             </>
           )}
 
-          {/* Превью ряд */}
           {images.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto">
               {images.map((img, i) => (
@@ -142,7 +152,7 @@ export default function ImageGallery({ images }: Props) {
                     i === lightbox ? "ring-2 ring-brand" : "opacity-50 hover:opacity-80"
                   }`}
                 >
-                  <Image src={img.url} alt={img.alt} fill sizes="48px" className="object-contain" />
+                  <GalleryImg src={img.url} alt={img.alt} fill sizes="48px" className="object-contain" />
                 </button>
               ))}
             </div>
