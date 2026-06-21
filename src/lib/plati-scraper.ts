@@ -194,15 +194,39 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       $("[data-price]").first().attr("data-price") ?? "",
     ]
     const rawPrice = priceAttr ?? ogPrice ?? priceTexts.find(t => t.trim()) ?? ""
-    const price = parseFloat(rawPrice.replace(/[^\d.,]/g, "").replace(",", ".")) || 0
-
-    // Old price
-    const oldPriceText = $(".price-old .val, del .val, .price-old, s .price-val").first().text()
-    const oldPrice = parseFloat(oldPriceText.replace(/[^\d.,]/g, "").replace(",", ".")) || undefined
+    let price = parseFloat(rawPrice.replace(/[^\d.,]/g, "").replace(",", ".")) || 0
 
     // Currency
     const currency = $("[itemprop='priceCurrency']").first().attr("content") ??
       $("meta[property='product:price:currency']").first().attr("content") ?? "RUB"
+
+    // If price is in USD (small number) — fetch RUB price from Digiseller XML API
+    if (price > 0 && (currency === "USD" || (currency !== "RUB" && price < 200))) {
+      try {
+        const xmlResp = await axios.get(
+          `https://shop.digiseller.ru/xml/goods.asp?id_d=${productId}`,
+          { headers: BROWSER_HEADERS, timeout: 8000, responseType: "text" }
+        )
+        const xml = String(xmlResp.data)
+        const rubMatch =
+          xml.match(/<price_rur[^>]*>([\d.]+)<\/price_rur>/i) ||
+          xml.match(/<price_rub[^>]*>([\d.]+)<\/price_rub>/i) ||
+          xml.match(/currency="RUB"[^>]*>([\d.]+)</i)
+        if (rubMatch) {
+          const rubPrice = Math.ceil(parseFloat(rubMatch[1]))
+          if (rubPrice > 0) {
+            console.log(`[plati-scraper] RUB price from Digiseller XML: ${rubPrice} (was ${price} ${currency})`)
+            price = rubPrice
+          }
+        }
+      } catch (xmlErr) {
+        console.warn(`[plati-scraper] Digiseller XML fallback failed for ${productId}:`, xmlErr instanceof Error ? xmlErr.message : String(xmlErr))
+      }
+    }
+
+    // Old price
+    const oldPriceText = $(".price-old .val, del .val, .price-old, s .price-val").first().text()
+    const oldPrice = parseFloat(oldPriceText.replace(/[^\d.,]/g, "").replace(",", ".")) || undefined
 
     // Description
     const ogDesc = $("meta[property='og:description']").first().attr("content") ?? ""
