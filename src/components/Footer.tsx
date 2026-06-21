@@ -42,7 +42,7 @@ export default function Footer() {
 
           {/* Catalog */}
           <div>
-            <h4 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Каталог</h4>
+            <h3 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Каталог</h3>
             <ul className="space-y-2.5">
               {CATALOG_LINKS.map(l => (
                 <li key={l.href}>
@@ -56,7 +56,7 @@ export default function Footer() {
 
           {/* Info */}
           <div>
-            <h4 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Информация</h4>
+            <h3 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Информация</h3>
             <ul className="space-y-2.5">
               {INFO_LINKS.map(l => (
                 <li key={l.href}>
@@ -70,7 +70,7 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Поддержка</h4>
+            <h3 className="text-[var(--text)] font-semibold mb-4 text-sm uppercase tracking-wider">Поддержка</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2.5">
                 <svg className="w-4 h-4 text-brand mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
