@@ -44,11 +44,14 @@ function detectCategory(name: string, desc: string): { category: string; platfor
   return { category: "keys" }
 }
 
-function toAbs(src: string | undefined): string {
+function toAbs(src: string | undefined | null): string {
   if (!src) return ""
-  if (src.startsWith("http")) return src
-  if (src.startsWith("//")) return "https:" + src
-  return "https://plati.market" + (src.startsWith("/") ? "" : "/") + src
+  const s = src.trim()
+  if (!s || s.startsWith("data:")) return ""
+  if (s.startsWith("http")) return s
+  if (s.startsWith("//")) return "https:" + s
+  if (s.startsWith("/")) return "https://plati.market" + s
+  return "https://plati.market/" + s
 }
 
 function makeSeo(name: string, desc: string, category: string) {
@@ -65,6 +68,96 @@ const BROWSER_HEADERS = {
   "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
   "Referer": "https://plati.market/",
+  "Cache-Control": "no-cache",
+}
+
+function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: number): { main: string; gallery: string[] } {
+  const seen = new Set<string>()
+
+  // Priority 1: Open Graph image (most reliable, always present)
+  const ogImg = toAbs($("meta[property='og:image']").first().attr("content"))
+  if (ogImg && ogImg.startsWith("http")) seen.add(ogImg)
+
+  // Priority 2: Twitter card image
+  const twImg = toAbs($("meta[name='twitter:image']").first().attr("content"))
+  if (twImg && twImg.startsWith("http") && !seen.has(twImg)) seen.add(twImg)
+
+  // Priority 3: JSON-LD structured data
+  try {
+    $("script[type='application/ld+json']").each((_, el) => {
+      const txt = $(el).html() ?? ""
+      const json = JSON.parse(txt)
+      const imgUrl = json?.image ?? json?.image?.[0] ?? json?.thumbnail ?? ""
+      if (imgUrl) {
+        const abs = toAbs(String(imgUrl))
+        if (abs && abs.startsWith("http") && !seen.has(abs)) seen.add(abs)
+      }
+    })
+  } catch {}
+
+  // Priority 4: itemprop="image"
+  const itemImg = toAbs($("[itemprop='image']").first().attr("content") || $("img[itemprop='image']").first().attr("src"))
+  if (itemImg && itemImg.startsWith("http") && !seen.has(itemImg)) seen.add(itemImg)
+
+  // Priority 5: Common plati.market selectors
+  const htmlSelectors = [
+    ".goods-img-large img",
+    ".goods-photo img",
+    ".goods-photo-main img",
+    ".product-image img",
+    ".product-img img",
+    "img.goods-img",
+    ".good-img img",
+    ".item-img img",
+    ".card-img img",
+  ]
+  for (const sel of htmlSelectors) {
+    const src = toAbs($(sel).first().attr("src") ?? $(sel).first().attr("data-src") ?? "")
+    if (src && src.startsWith("http") && !seen.has(src)) { seen.add(src); break }
+  }
+
+  // Priority 6: Any img with a meaningful src (not 1x1 pixel, not icon)
+  if (seen.size === 0) {
+    $("img").each((_, el) => {
+      if (seen.size >= 1) return false
+      const src = toAbs($(el).attr("src") ?? $(el).attr("data-src") ?? "")
+      const w = parseInt($(el).attr("width") ?? "0")
+      const h = parseInt($(el).attr("height") ?? "0")
+      if (src && src.startsWith("http") && !src.includes("logo") && !src.includes("icon") &&
+          !src.includes("sprite") && (w === 0 || w >= 50) && (h === 0 || h >= 50)) {
+        seen.add(src)
+      }
+    })
+  }
+
+  // Gallery: additional images
+  const gallery: string[] = []
+  const gallerySelectors = [
+    ".product-images img",
+    ".goods-gallery img",
+    ".goods-photo-list img",
+    ".gallery-thumb img",
+    ".product-gallery img",
+    "[data-gallery] img",
+  ]
+  for (const sel of gallerySelectors) {
+    $(sel).each((_, el) => {
+      const src = toAbs($(el).attr("src") ?? $(el).attr("data-src") ?? "")
+      if (src && src.startsWith("http") && !seen.has(src)) {
+        seen.add(src)
+        gallery.push(src)
+      }
+    })
+  }
+
+  const allImages = Array.from(seen)
+  const mainImage = allImages[0] ||
+    `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=400`
+
+  // Extra gallery from remaining images
+  const extraGallery = allImages.slice(1).concat(gallery).slice(0, 8)
+
+  return { main: mainImage, gallery: extraGallery }
 }
 
 export async function scrapePlatiProduct(productId: number): Promise<PlatiProduct | null> {
@@ -73,65 +166,84 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     const { data } = await axios.get(url, { headers: BROWSER_HEADERS, timeout: 30000 })
     const $ = cheerio.load(data)
 
+    // Check for 404 / deleted product
+    const title = $("title").first().text().toLowerCase()
+    if (title.includes("404") || title.includes("не найден") || title.includes("not found")) return null
+
+    // Name
+    const ogTitle = $("meta[property='og:title']").first().attr("content") ?? ""
     const name = (
       $("h1[itemprop='name']").first().text().trim() ||
       $("h1.page-title").first().text().trim() ||
       $(".goods-title h1").first().text().trim() ||
-      $("h1").first().text().trim()
-    )
-    if (!name) return null
+      $(".product-title h1, .product-title").first().text().trim() ||
+      $("h1").first().text().trim() ||
+      ogTitle
+    ).replace(/\s+/g, " ").trim()
 
-    const priceAttr = $("[itemprop='price']").first().attr("content")
-    const priceText = $(".price-buy .val, .buy-btn .price, .price-value").first().text().replace(/[^\d.,]/g, "").replace(",", ".")
-    const price = parseFloat(priceAttr ?? priceText) || 0
+    if (!name || name.length < 3) return null
 
-    const oldPriceText = $(".price-old .val, del .val, .price-old").first().text().replace(/[^\d.,]/g, "").replace(",", ".")
-    const oldPrice = parseFloat(oldPriceText) || undefined
+    // Price — try multiple approaches
+    const priceAttr  = $("[itemprop='price']").first().attr("content")
+    const ogPrice    = $("meta[property='product:price:amount']").first().attr("content")
+    const priceTexts = [
+      $(".price-buy .val").first().text(),
+      $(".price .val").first().text(),
+      $(".price-value").first().text(),
+      $(".buy-price").first().text(),
+      $("[data-price]").first().attr("data-price") ?? "",
+    ]
+    const rawPrice = priceAttr ?? ogPrice ?? priceTexts.find(t => t.trim()) ?? ""
+    const price = parseFloat(rawPrice.replace(/[^\d.,]/g, "").replace(",", ".")) || 0
 
-    const currency = $("[itemprop='priceCurrency']").first().attr("content") ?? "RUB"
+    // Old price
+    const oldPriceText = $(".price-old .val, del .val, .price-old, s .price-val").first().text()
+    const oldPrice = parseFloat(oldPriceText.replace(/[^\d.,]/g, "").replace(",", ".")) || undefined
 
+    // Currency
+    const currency = $("[itemprop='priceCurrency']").first().attr("content") ??
+      $("meta[property='product:price:currency']").first().attr("content") ?? "RUB"
+
+    // Description
+    const ogDesc = $("meta[property='og:description']").first().attr("content") ?? ""
     const description = (
       $(".goods-description-main").first().text().trim() ||
+      $(".description-goods-main").first().text().trim() ||
       $("[itemprop='description']").first().text().trim() ||
-      $(".goods-description").first().text().trim()
-    )
-    const shortDesc = description.replace(/\s+/g, " ").slice(0, 300).trim()
+      $(".goods-description").first().text().trim() ||
+      $(".product-description").first().text().trim() ||
+      ogDesc
+    ).replace(/\s+/g, " ").trim()
+    const shortDesc = description.slice(0, 300).trim()
 
-    const mainImgSrc = (
-      $("img[itemprop='image']").first().attr("src") ||
-      $(".goods-img-large img").first().attr("src") ||
-      $(".product-image img").first().attr("src") ||
-      $("img.goods-img").first().attr("src")
-    )
-    const imageUrl = mainImgSrc
-      ? toAbs(mainImgSrc)
-      : `https://graph.digiseller.ru/img.ashx?id_d=${productId}&maxlength=400`
+    // Images
+    const { main: imageUrl, gallery: galleryImages } = extractImageFromHtml($, productId)
 
-    const seen = new Set<string>([imageUrl])
-    const galleryImages: string[] = []
-    $(".product-images img, .goods-gallery img, .gallery-thumb img").each((_, el) => {
-      const src = toAbs($(el).attr("src") ?? $(el).attr("data-src") ?? "")
-      if (src && src.startsWith("http") && !seen.has(src)) { seen.add(src); galleryImages.push(src) }
-    })
-
+    // Video
     const videoSrc = $("iframe[src*='youtube'], iframe[src*='youtu.be']").first().attr("src")
     const videoUrl = videoSrc ?? undefined
 
+    // Stock
     const availHref = $("[itemprop='availability']").first().attr("href") ?? ""
-    const stockText = $(".goods-status, .stock-status").first().text().toLowerCase()
+    const stockText = $(".goods-status, .stock-status, .availability").first().text().toLowerCase()
     const inStock = availHref.includes("InStock") ||
-      (!stockText.includes("нет") && !stockText.includes("отсутств"))
+      $("[itemscope] [itemprop='availability'][href*='InStock']").length > 0 ||
+      (!stockText.includes("нет") && !stockText.includes("отсутств") && !stockText.includes("unavailable"))
 
-    const ratingVal = $("[itemprop='ratingValue']").first().attr("content") ?? ""
+    // Rating
+    const ratingVal = $("[itemprop='ratingValue']").first().attr("content") ?? $("[itemprop='ratingValue']").first().text()
     const rating = parseFloat(ratingVal) || undefined
-    const reviewsVal = $("[itemprop='reviewCount']").first().attr("content") ?? ""
+    const reviewsVal = $("[itemprop='reviewCount']").first().attr("content") ?? $("[itemprop='reviewCount']").first().text()
     const reviewCount = parseInt(reviewsVal) || undefined
 
+    // Category
     const { category, platform } = detectCategory(name, description)
+
+    // Subcategory from breadcrumbs
     const crumbs: string[] = []
-    $(".breadcrumbs li a, nav[aria-label='breadcrumb'] a").each((_, el) => {
+    $(".breadcrumbs li a, nav[aria-label='breadcrumb'] a, [itemtype*='BreadcrumbList'] a").each((_, el) => {
       const t = $(el).text().trim()
-      if (t && t !== "Главная" && t !== "Plati.market") crumbs.push(t)
+      if (t && t !== "Главная" && t !== "Plati.market" && t !== "Plati.Market") crumbs.push(t)
     })
     const subcategory = crumbs.length > 0 ? crumbs[crumbs.length - 1] : undefined
 
