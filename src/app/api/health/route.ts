@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = "force-dynamic"
+import { prisma } from "../../../lib/prisma"
 
 export async function GET() {
-  return NextResponse.json({ ok: true, ts: Date.now() })
-}
-
-export async function HEAD() {
-  return new NextResponse(null, { status: 200 })
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    return NextResponse.json({ ok: true, db: "connected", ts: new Date().toISOString() })
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 503 })
+  }
 }
