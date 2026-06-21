@@ -38,7 +38,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
   ])
   if (!product) notFound()
 
-  // Отзывы + проверка, оставлял ли текущий пользователь отзыв
   const [reviews, userReview] = await Promise.all([
     prisma.review.findMany({
       where: { productId: product.id },
@@ -59,7 +58,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
       : null,
   ])
 
-  // Похожие товары — дедупликация по id
   const categoryProducts = product.categoryId
     ? await prisma.product.findMany({
         where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
@@ -71,7 +69,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const uniqueCategory = categoryProducts.filter(p => !seenIds.has(p.id))
   const related = [...product.relatedProducts, ...uniqueCategory].slice(0, 4)
 
-  // JSON-LD
   const avgRating =
     reviews.length
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
@@ -103,15 +100,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
     },
   }
 
-  // Экранируем </script> внутри JSON-LD, чтобы предотвратить XSS
   const jsonLdString = JSON.stringify(jsonLd).replace(/<\/script>/gi, "<\\/script>")
 
-  // Галерея
-  const galleryImages = product.imageUrl
-    ? [{ url: product.imageUrl, alt: product.name }]
-    : []
+  // Галерея: главная картинка + все дополнительные из скрапера
+  const galleryImages = [
+    ...(product.imageUrl ? [{ url: product.imageUrl, alt: product.name }] : []),
+    ...product.galleryImages.map(url => ({ url, alt: product.name })),
+  ]
 
-  // Характеристики
   const specs = [
     { label: "Артикул", value: String(product.digisellerProductId) },
     product.category ? { label: "Категория", value: product.category.name } : null,
@@ -127,7 +123,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
     { label: "Гарантия", value: "Предоставляется" },
   ].filter(Boolean) as { label: string; value: string }[]
 
-  // Сериализуем даты для клиентских компонентов
   const serializedReviews = reviews.map(r => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
@@ -203,7 +198,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 {product.name}
               </h1>
 
-              {/* Цена из БД (авт. обновление каждые 6ч из Plati.Market) */}
               {product.price > 50 && (
                 <div className="flex items-baseline gap-2 mb-3">
                   <span className="text-2xl font-bold text-white">
@@ -217,7 +211,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </div>
               )}
 
-              {/* Рейтинг из отзывов */}
               {reviews.length > 0 && avgRating && (
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex text-yellow-400 text-sm leading-none">
@@ -261,15 +254,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
           </div>
 
-          {/* Описание — в левой колонке рядом с виджетом */}
-          {product.description && (
-            <div
-              className="mt-5 text-sm text-gray-400 leading-relaxed max-h-64 overflow-hidden relative"
-              style={{ maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)" }}
-              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
-            />
-          )}
-
           {/* Виджет на мобильных */}
           <div className="block lg:hidden mt-5">
             <DigisellerWidget productId={product.digisellerProductId} />
@@ -283,14 +267,22 @@ export default async function ProductPage({ params }: { params: { slug: string }
       </div>
 
       {/* ═══ Вкладки ═══ */}
-      <div className="mt-4">
+      <div className="mt-8">
         <ProductTabs
           tabs={[
+            { id: "description", label: "Описание" },
             { id: "reviews", label: "Отзывы", count: reviews.length },
             { id: "images", label: "Изображения", count: galleryImages.length },
             { id: "specs", label: "Характеристики" },
           ]}
           panels={[
+            /* ── Описание ── */
+            <div
+              key="description"
+              className="prose prose-invert prose-sm max-w-none text-gray-300 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
+            />,
+
             /* ── Отзывы ── */
             <ReviewsTabContent
               key="reviews"
