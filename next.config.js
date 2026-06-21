@@ -7,20 +7,19 @@ const nextConfig = {
   compress: true,
 
   images: {
-    // WebP/AVIF-конвертация для всех внешних изображений
     formats: ["image/avif", "image/webp"],
+    quality: 90,
     remotePatterns: [
       { protocol: "https", hostname: "digiseller.ru" },
       { protocol: "https", hostname: "cdn.digiseller.ru" },
       { protocol: "https", hostname: "graph.digiseller.ru" },
+      { protocol: "https", hostname: "digiseller.mycdn.ink" },
       { protocol: "https", hostname: "plati.market" },
       { protocol: "https", hostname: "www.plati.market" },
     ],
-    // Кэширование оптимизированных изображений на 30 дней
     minimumCacheTTL: 2592000,
-    // Ограничение числа одновременных оптимизаций
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 800],
   },
 
   async headers() {
