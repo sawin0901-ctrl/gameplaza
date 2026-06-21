@@ -7,6 +7,7 @@ import Providers from "../components/Providers"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { Suspense } from "react"
 import AnalyticsTracker from "../components/AnalyticsTracker"
+import { CurrencyTicker } from "../components/CurrencyTicker"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 
@@ -70,7 +71,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AnalyticsTracker />
             </Suspense>
             <DigisellerScript />
-            <Header />
+            <CurrencyTicker />
+        <Header />
             <main id="main-content" className="min-h-screen">
               {children}
             </main>
