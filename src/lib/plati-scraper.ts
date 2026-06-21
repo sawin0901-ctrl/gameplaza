@@ -150,26 +150,54 @@ function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: num
     })
   }
 
-  // Gallery: additional images (Plati.Market thumbnails use data-src for full res)
+  // Gallery: extract additional images from Plati.Market
+  // Screenshots are stored in JSON-LD or in data-* attributes of gallery elements
   const gallery: string[] = []
+
+  // Method 1: JSON-LD Product images array (most reliable — includes all seller screenshots)
+  try {
+    $("script[type='application/ld+json']").each((_, el) => {
+      const txt = $(el).html() ?? ""
+      const json = JSON.parse(txt)
+      const imgs: string[] = Array.isArray(json?.image) ? json.image : (json?.image ? [json.image] : [])
+      for (const imgUrl of imgs) {
+        const abs = toAbs(String(imgUrl))
+        if (abs && abs.startsWith("http") && !seen.has(abs)) {
+          seen.add(abs)
+          gallery.push(abs)
+        }
+      }
+    })
+  } catch {}
+
+  // Method 2: Plati.Market gallery thumbnails — prefer data-full-src / data-src over src (thumbnails)
   const gallerySelectors = [
-    ".product-images img",
-    ".goods-gallery img",
+    ".goods-photo-list [data-full-src]",
     ".goods-photo-list img",
+    ".goods-gallery [data-full-src]",
+    ".goods-gallery img",
+    ".product-images [data-full-src]",
+    ".product-images img",
+    ".gallery-thumb [data-full-src]",
     ".gallery-thumb img",
-    "img.icon--thumbnail",
-    ".product-gallery img",
     "[data-gallery] img",
+    ".product-gallery img",
   ]
   for (const sel of gallerySelectors) {
     $(sel).each((_, el) => {
-      const src = toAbs($(el).attr("data-src") ?? $(el).attr("src") ?? "")
+      const fullSrc = $(el).attr("data-full-src") ?? $(el).attr("data-src") ?? $(el).attr("src") ?? ""
+      const src = toAbs(fullSrc)
       const hq = upscale(src)
       if (hq && hq.startsWith("http") && !seen.has(hq)) {
+        // Skip obvious icon/logo sizes (< 100px)
+        const w = parseInt($(el).attr("width") ?? "0")
+        const h = parseInt($(el).attr("height") ?? "0")
+        if ((w > 0 && w < 100) || (h > 0 && h < 100)) return
         seen.add(hq)
         gallery.push(hq)
       }
     })
+    if (gallery.length >= 8) break
   }
 
   const allImages = Array.from(seen)
