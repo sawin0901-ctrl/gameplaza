@@ -27,14 +27,18 @@ export function buildProductMetadata(product: {
   imageUrl?: string | null
   price: number
 }): Metadata {
-  const title = `${product.name} — купить | ${SITE_NAME}`
-  const description = (stripHtml(product.description) || `Купить ${product.name} в GamePlaza`).slice(0, 160)
+  const title = `${product.name} — купить дешево | ${SITE_NAME}`
+  const description = (
+    stripHtml(product.description) ||
+    `Купить ${product.name}. Моментальная доставка, безопасная оплата и поддержка покупателей.`
+  ).slice(0, 160)
   const url = `${SITE_URL}/product/${product.slug}`
   const images = product.imageUrl ? [{ url: product.imageUrl }] : []
 
   return {
     title,
     description,
+    keywords: `${product.name}, купить, ключ активации, аккаунт, подписка, игра`,
     openGraph: {
       title,
       description,
@@ -53,14 +57,61 @@ export function buildProductMetadata(product: {
   }
 }
 
-export function buildCatalogMetadata(category?: string): Metadata {
-  const title = category
-    ? `${category} — каталог | ${SITE_NAME}`
-    : `Каталог цифровых товаров | ${SITE_NAME}`
+export function buildCatalogMetadata(opts: {
+  categoryName?: string | null
+  categorySlug?: string
+  query?: string
+  sort?: string
+  page?: number
+}): Metadata {
+  const { categoryName, categorySlug, query, sort, page = 1 } = opts
+  const isDiscount = sort === "discount"
+  const isSearch = !!query
+
+  let title: string
+  let description: string
+  let canonical: string
+
+  if (isDiscount) {
+    title = `Акции и скидки на цифровые товары | ${SITE_NAME}`
+    description = `Товары со скидкой: игры, ключи активации, подписки. Лучшие цены в ${SITE_NAME}.`
+    canonical = `${SITE_URL}/catalog?sort=discount`
+  } else if (isSearch) {
+    title = `Поиск: ${query} | ${SITE_NAME}`
+    description = `Результаты поиска «${query}». Цифровые товары: игры, ключи, подписки по выгодным ценам.`
+    canonical = `${SITE_URL}/catalog?q=${encodeURIComponent(query)}`
+  } else if (categoryName && categorySlug) {
+    title = `${categoryName} | ${SITE_NAME}`
+    description = `Купить товары из категории ${categoryName} по выгодным ценам. Моментальная доставка через Digiseller.`
+    canonical = `${SITE_URL}/catalog?category=${categorySlug}`
+  } else {
+    title = `Каталог цифровых товаров | ${SITE_NAME}`
+    description = `Купить игры Steam, Xbox, PlayStation, программы, ключи активации и подписки. Тысячи товаров с мгновенной доставкой.`
+    canonical = `${SITE_URL}/catalog`
+  }
+
+  if (page > 1) canonical += `${canonical.includes("?") ? "&" : "?"}page=${page}`
+
   return {
     title,
-    description: `Купить цифровые товары онлайн. Игры, ПО, ключи активации — ${SITE_NAME}`,
-    openGraph: { title, siteName: SITE_NAME, type: "website" },
+    description,
+    robots: { index: !isSearch, follow: true },
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, siteName: SITE_NAME, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  }
+}
+
+export function buildBreadcrumbJsonLd(items: Array<{ name: string; url: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
   }
 }
 
