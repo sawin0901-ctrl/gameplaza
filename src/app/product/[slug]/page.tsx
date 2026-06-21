@@ -90,6 +90,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
           reviewCount: reviews.length,
         }
       : undefined,
+    review: reviews.length > 0 ? reviews.slice(0, 10).map(r => ({
+      "@type": "Review",
+      author: { "@type": "Person", name: r.user.name ?? "Пользователь" },
+      reviewRating: { "@type": "Rating", ratingValue: r.rating },
+      ...(r.text ? { reviewBody: r.text } : {}),
+      datePublished: r.createdAt.toISOString(),
+    })) : undefined,
     offers: {
       "@type": "Offer",
       price: product.price,
