@@ -37,11 +37,11 @@ export function buildProductMetadata(product: {
   const images = [{ url: ogImage, width: 1200, height: 630 }, ...(product.imageUrl ? [{ url: product.imageUrl }] : [])]
 
   return {
-    title,
+    title: { absolute: title },
     description,
     keywords: `${product.name}, купить, ключ активации, аккаунт, подписка, игра`,
     openGraph: {
-      title,
+      title: { absolute: title },
       description,
       url,
       siteName: SITE_NAME,
@@ -50,7 +50,7 @@ export function buildProductMetadata(product: {
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: { absolute: title },
       description,
       images: product.imageUrl ? [product.imageUrl] : [],
     },
@@ -94,7 +94,7 @@ export function buildCatalogMetadata(opts: {
   if (page > 1) canonical += `${canonical.includes("?") ? "&" : "?"}page=${page}`
 
   return {
-    title,
+    title: { absolute: title },
     description,
     robots: { index: !isSearch, follow: true },
     alternates: { canonical },
