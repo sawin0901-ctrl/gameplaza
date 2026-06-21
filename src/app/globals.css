@@ -506,11 +506,30 @@ body {
    PRODUCT DESCRIPTION
    ============================================================ */
 .product-desc {
-  color: #d1d5db;
+  color: var(--text, #1f2937);
   font-size: 0.925rem;
   line-height: 1.65;
   max-width: 72ch;
 }
+/* Force all child elements to use theme color — overrides inline colors from Plati */
+.product-desc span,
+.product-desc p,
+.product-desc div,
+.product-desc li,
+.product-desc td,
+.product-desc th,
+.product-desc h2,
+.product-desc h3,
+.product-desc h4,
+.product-desc b,
+.product-desc strong,
+.product-desc em,
+.product-desc i {
+  color: inherit !important;
+  background-color: transparent !important;
+}
+[data-theme="dark"]  .product-desc { color: #d1d5db; }
+[data-theme="light"] .product-desc { color: #1f2937; }
 .product-desc p {
   margin-top: 0;
   margin-bottom: 0.45rem;
