@@ -9,7 +9,7 @@ export const revalidate = 60
 const PAGE_SIZE = 24
 
 export const metadata: Metadata = {
-  title: "Акции и скидки на цифровые товары | GamePlaza",
+  title: { absolute: "Акции и скидки на цифровые товары | GamePlaza" },
   description: "Лучшие скидки на игры, ключи и программы. Сэкономьте на покупке цифровых товаров в GamePlaza.",
   alternates: { canonical: "https://gameplaza.site/catalog/discount" },
 }
