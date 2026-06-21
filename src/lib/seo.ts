@@ -33,7 +33,8 @@ export function buildProductMetadata(product: {
     `Купить ${product.name}. Моментальная доставка, безопасная оплата и поддержка покупателей.`
   ).slice(0, 160)
   const url = `${SITE_URL}/product/${product.slug}`
-  const images = product.imageUrl ? [{ url: product.imageUrl }] : []
+  const ogImage = SITE_URL + "/api/og?title=" + encodeURIComponent(product.name) + "&price=" + product.price + (product.imageUrl ? "&img=" + encodeURIComponent(product.imageUrl) : "")
+  const images = [{ url: ogImage, width: 1200, height: 630 }, ...(product.imageUrl ? [{ url: product.imageUrl }] : [])]
 
   return {
     title,
