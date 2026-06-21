@@ -6,8 +6,8 @@ import { importQueue } from "../../../../../../lib/queue"
 import { z } from "zod"
 
 const Schema = z.object({
-  from: z.number().int().min(1000).max(99999999),
-  to: z.number().int().min(1000).max(99999999),
+  from: z.number().int().min(1).max(99999999),
+  to: z.number().int().min(1).max(99999999),
 })
 
 const MAX_RANGE = 500
