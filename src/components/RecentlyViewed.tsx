@@ -1,54 +1,54 @@
 "use client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 
-interface RecentItem {
+interface Product {
+  id: string
   slug: string
   name: string
-  price: number
   imageUrl: string | null
+  price: number
 }
 
-const KEY = "gp_recently_viewed"
-const MAX = 10
+const KEY = "gp-recent"
 
-export function addToRecentlyViewed(item: RecentItem) {
-  if (typeof window === "undefined") return
-  try {
-    const raw = localStorage.getItem(KEY)
-    const items: RecentItem[] = raw ? JSON.parse(raw) : []
-    const filtered = items.filter(i => i.slug !== item.slug)
-    const updated = [item, ...filtered].slice(0, MAX)
-    localStorage.setItem(KEY, JSON.stringify(updated))
-  } catch {}
-}
-
-export default function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
-  const [items, setItems] = useState<RecentItem[]>([])
+export function RecentlyViewed({ currentId }: { currentId: string }) {
+  const [items, setItems] = useState<Product[]>([])
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY)
-      const all: RecentItem[] = raw ? JSON.parse(raw) : []
-      setItems(all.filter(i => i.slug !== currentSlug).slice(0, 6))
+      const list: Product[] = raw ? JSON.parse(raw) : []
+      setItems(list.filter(p => p.id !== currentId).slice(0, 5))
     } catch {}
-  }, [currentSlug])
+  }, [currentId])
 
   if (items.length === 0) return null
 
   return (
-    <section className="mt-12">
-      <h2 className="text-lg font-semibold text-white mb-4">Вы смотрели</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        {items.map(item => (
-          <Link key={item.slug} href={`/product/${item.slug}`}
-            className="card p-3 hover:border-brand/40 transition-colors group">
-            {item.imageUrl && (
-              <img src={item.imageUrl} alt={item.name}
-                className="w-full aspect-square object-cover rounded-lg mb-2 opacity-80 group-hover:opacity-100 transition-opacity" />
-            )}
-            <div className="text-white text-xs font-medium line-clamp-2 mb-1">{item.name}</div>
-            <div className="text-brand text-xs font-semibold">{item.price.toLocaleString("ru-RU")} ₽</div>
+    <section className="mt-10">
+      <h2 className="text-xl font-bold text-white mb-5">Недавно просмотренные</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {items.map(p => (
+          <Link
+            key={p.id}
+            href={`/product/${p.slug}`}
+            className="card p-3 hover:border-brand/50 transition-colors group block"
+          >
+            <div className="aspect-square relative rounded overflow-hidden mb-2 bg-gray-800">
+              {p.imageUrl && (
+                <Image
+                  src={p.imageUrl}
+                  alt={p.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                />
+              )}
+            </div>
+            <p className="text-xs text-gray-300 line-clamp-2 mb-1 leading-snug">{p.name}</p>
+            <p className="text-sm font-bold text-brand">{p.price.toLocaleString("ru-RU")} &#8381;</p>
           </Link>
         ))}
       </div>
