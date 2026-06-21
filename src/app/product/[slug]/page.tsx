@@ -261,11 +261,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
           </div>
 
-          {/* Краткое описание — заполняет пустоту рядом с виджетом на десктопе */}
-          {product.shortDesc && (
-            <p className="mt-5 text-sm text-gray-400 leading-relaxed">
-              {product.shortDesc}
-            </p>
+          {/* Описание — в левой колонке рядом с виджетом */}
+          {product.description && (
+            <div
+              className="mt-5 text-sm text-gray-400 leading-relaxed max-h-64 overflow-hidden relative"
+              style={{ maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)" }}
+              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
+            />
           )}
 
           {/* Виджет на мобильных */}
@@ -284,19 +286,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
       <div className="mt-4">
         <ProductTabs
           tabs={[
-            { id: "desc", label: "Описание" },
             { id: "reviews", label: "Отзывы", count: reviews.length },
             { id: "images", label: "Изображения", count: galleryImages.length },
             { id: "specs", label: "Характеристики" },
           ]}
           panels={[
-            /* ── Описание (в DOM для SEO) ── */
-            <div
-              key="desc"
-              className="card p-5 text-gray-300 text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
-            />,
-
             /* ── Отзывы ── */
             <ReviewsTabContent
               key="reviews"
