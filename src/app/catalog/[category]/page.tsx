@@ -5,6 +5,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { buildCatalogMetadata, buildBreadcrumbJsonLd } from "../../../lib/seo"
+import { getCategoryFaq } from "../../../lib/category-faq"
 
 export const revalidate = 60
 
@@ -24,6 +25,7 @@ export async function generateMetadata({ params, searchParams }: { params: { cat
   const categorySlug = params.category.replace(/[^a-z0-9-]/g, "").slice(0, 50)
   const cat = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } }).catch(() => null)
   if (!cat) return { title: { absolute: "Категория не найдена | GamePlaza" } }
+  const faq = getCategoryFaq(category)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "") : ""
   const page = Math.max(1, parseInt(searchParams.page ?? "1") || 1)
   return buildCatalogMetadata({ categoryName: cat.name, categorySlug, sort: sort || undefined, page })
@@ -35,6 +37,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const categoryRow = await prisma.category.findUnique({ where: { slug: category }, select: { name: true } }).catch(() => null)
   if (!categoryRow) notFound()
 
+  const faq = getCategoryFaq(category)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
   const rawPage = parseInt(searchParams.page ?? "1", 10)
   const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1
@@ -170,6 +173,36 @@ export default async function CategoryPage({ params, searchParams }: { params: {
           )}
         </div>
       </div>
-    </div>
+
+      {faq.length > 0 && (
+        <section className="mt-10 max-w-7xl mx-auto px-4">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: faq.map(f => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }),
+            }}
+          />
+          <h2 className="text-xl font-bold text-white mb-5">Часто задаваемые вопросы</h2>
+          <div className="space-y-3">
+            {faq.map((item, i) => (
+              <details key={i} className="card p-4 group">
+                <summary className="flex items-center justify-between cursor-pointer list-none gap-4">
+                  <span className="font-medium text-white">{item.q}</span>
+                  <svg className="w-5 h-5 text-gray-500 shrink-0 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <p className="mt-3 text-gray-400 text-sm leading-relaxed">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}    </div>
   )
 }
