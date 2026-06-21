@@ -161,11 +161,31 @@ async function processPlatiImport(job: Job) {
   const localImageUrl = await downloadImage(raw.imageUrl)
   const localGallery  = raw.galleryImages.length > 0 ? await downloadImages(raw.galleryImages.slice(0, 5)) : []
 
-  // Find or create category
+  // Auto-create category from Plati.Market scraper data
+  const CATEGORY_NAMES: Record<string, string> = {
+    "steam":         "Steam",
+    "xbox":          "Xbox",
+    "playstation":   "PlayStation",
+    "nintendo":      "Nintendo",
+    "origin":        "EA / Origin",
+    "ubisoft":       "Ubisoft",
+    "subscriptions": "Подписки",
+    "gift-cards":    "Подарочные карты",
+    "keys":          "Ключи и активации",
+  }
   let categoryId: string | undefined
   const catSlug = raw.category.toLowerCase().replace(/\s+/g, "-")
-  const cat = await prisma.category.findUnique({ where: { slug: catSlug } })
-  if (cat) categoryId = cat.id
+  const catName = CATEGORY_NAMES[catSlug] ?? raw.category
+  try {
+    const cat = await prisma.category.upsert({
+      where: { slug: catSlug },
+      update: {},
+      create: { slug: catSlug, name: catName },
+    })
+    categoryId = cat.id
+  } catch (err) {
+    console.warn(`[import-worker] Category upsert failed for "${catSlug}":`, err)
+  }
 
   const settings = await getImportSettings()
   const finalPrice = raw.price > 0 ? applyMarkup(raw.price, settings) : 0
