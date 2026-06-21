@@ -116,7 +116,7 @@ export default function Header() {
               {catOpen && (
                 <div className="absolute top-full left-0 mt-2 w-64 card shadow-2xl p-1.5 grid gap-0.5 animate-fade-in">
                   {CATS.map(c => (
-                    <Link key={c.slug} href={`/catalog?category=${c.slug}`} onClick={() => setCatOpen(false)}
+                    <Link key={c.slug} href={`/catalog/${c.slug}`} onClick={() => setCatOpen(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors btn-ghost">
                       <span>{c.emoji}</span><span>{c.name}</span>
                     </Link>
@@ -124,7 +124,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-            <Link href="/catalog?sort=discount" className="btn-ghost text-sm">🔥 {t.nav.deals}</Link>
+            <Link href="/catalog/discount" className="btn-ghost text-sm">🔥 {t.nav.deals}</Link>
           </nav>
 
           {/* Поиск */}
@@ -244,7 +244,7 @@ export default function Header() {
             )}
             <div className="grid grid-cols-2 gap-1">
               {CATS.map(c => (
-                <Link key={c.slug} href={`/catalog?category=${c.slug}`} onClick={() => setMob(false)}
+                <Link key={c.slug} href={`/catalog/${c.slug}`} onClick={() => setMob(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm btn-ghost">
                   <span>{c.emoji}</span><span className="truncate">{c.name}</span>
                 </Link>
