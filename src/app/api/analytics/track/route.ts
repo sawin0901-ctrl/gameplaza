@@ -130,9 +130,6 @@ export async function POST(req: NextRequest) {
     const { device, browser, os } = parseUA(ua)
     const { referrerType, referrerSource, keyword } = parseReferrer(referrer, utmSource)
 
-    // Get IP
-    const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "").split(",")[0].trim()
-
     // Save page view immediately
     const pv = await prisma.pageView.create({
       data: {
