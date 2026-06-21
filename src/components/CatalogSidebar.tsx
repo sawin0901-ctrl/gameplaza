@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useState, useTransition } from "react"
 
 const CATEGORIES = [
@@ -27,32 +27,39 @@ interface Props {
 
 export default function CatalogSidebar({ currentCategory, currentMinPrice, currentMaxPrice }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [minPrice, setMinPrice] = useState(currentMinPrice ?? "")
   const [maxPrice, setMaxPrice] = useState(currentMaxPrice ?? "")
 
-  function navigate(updates: Record<string, string>) {
-    const params = new URLSearchParams(searchParams.toString())
-    Object.entries(updates).forEach(([k, v]) => {
-      if (v) params.set(k, v)
-      else params.delete(k)
-    })
-    params.delete("page")
-    startTransition(() => router.push(`/catalog?${params.toString()}`))
+  function goToCategory(slug: string) {
+    const params = new URLSearchParams()
+    const sort = searchParams.get("sort")
+    if (sort) params.set("sort", sort)
+    const base = slug ? "/catalog/" + slug : "/catalog"
+    const qs = params.toString()
+    startTransition(() => router.push(base + (qs ? "?" + qs : "")))
   }
 
   function applyPrice() {
-    navigate({ minPrice, maxPrice })
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("category")
+    params.delete("page")
+    if (minPrice) params.set("minPrice", minPrice); else params.delete("minPrice")
+    if (maxPrice) params.set("maxPrice", maxPrice); else params.delete("maxPrice")
+    const qs = params.toString()
+    startTransition(() => router.push(pathname + (qs ? "?" + qs : "")))
   }
 
   function resetFilters() {
     setMinPrice("")
     setMaxPrice("")
-    startTransition(() => router.push("/catalog"))
+    const base = currentCategory ? "/catalog/" + currentCategory : "/catalog"
+    startTransition(() => router.push(base))
   }
 
-  const hasFilters = currentCategory || currentMinPrice || currentMaxPrice
+  const hasFilters = currentMinPrice || currentMaxPrice
 
   return (
     <aside className="w-full lg:w-56 xl:w-64 flex-shrink-0">
@@ -66,12 +73,8 @@ export default function CatalogSidebar({ currentCategory, currentMinPrice, curre
               return (
                 <li key={cat.slug}>
                   <button
-                    onClick={() => navigate({ category: cat.slug })}
-                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                      active
-                        ? "bg-brand text-white font-medium"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}>
+                    onClick={() => goToCategory(cat.slug)}
+                    className={"w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors " + (active ? "bg-brand text-white font-medium" : "text-gray-400 hover:text-white hover:bg-white/5")}>
                     {cat.name}
                   </button>
                 </li>
@@ -82,7 +85,7 @@ export default function CatalogSidebar({ currentCategory, currentMinPrice, curre
 
         {/* Price */}
         <div className="card p-4">
-          <h3 className="text-[var(--text)] font-semibold text-sm mb-3">Цена, ₽</h3>
+          <h3 className="text-[var(--text)] font-semibold text-sm mb-3">Цена, руб.</h3>
           <div className="flex gap-2 mb-3">
             <input type="number" placeholder="От" value={minPrice}
               onChange={e => setMinPrice(e.target.value)}
