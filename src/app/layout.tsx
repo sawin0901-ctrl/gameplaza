@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   openGraph: { siteName: "GamePlaza", locale: "ru_RU", type: "website" },
   twitter: { card: "summary_large_image" },
-  other: { "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION ?? "" },
+  other: {
+    "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
+    ...(process.env.YANDEX_VERIFICATION ? { "yandex-verification": process.env.YANDEX_VERIFICATION } : {}),
+  },
 }
 
 const themeScript = `(function(){try{var s=localStorage.getItem('gp-theme');var p=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=s||p;document.documentElement.setAttribute('data-theme',t);if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`
