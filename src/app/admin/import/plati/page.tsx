@@ -393,8 +393,8 @@ function RangeTab() {
       </Card>
       {error && <Card className="p-4 border-red-500/30"><p className="text-red-400 text-sm">❌ {error}</p></Card>}
       {result && (
-        <Card className={p-5 ${(result.scheduled as number) > 0 ? "border-emerald-500/20" : "border-yellow-500/20"}}>
-          <p className={ont-semibold mb-3 ${(result.scheduled as number) > 0 ? "text-emerald-400" : "text-yellow-400"}}>
+        <Card className={`p-5 ${(result.scheduled as number) > 0 ? "border-emerald-500/20" : "border-yellow-500/20"}`}>
+          <p className={`font-semibold mb-3 ${(result.scheduled as number) > 0 ? "text-emerald-400" : "text-yellow-400"}`}>
             {(result.scheduled as number) > 0 ? "✅ Запущен импорт диапазона" : "ℹ️ Нечего импортировать"}
           </p>
           {(result.message as string) && (
@@ -407,7 +407,7 @@ function RangeTab() {
               { label: "Всего в диап.", v: result.total     as number, c: "text-[var(--text)]" },
             ].map(s => (
               <div key={s.label} className="bg-white/5 rounded-xl p-3">
-                <div className={	ext-2xl font-bold ${s.c}}>{s.v}</div>
+                <div className={`text-2xl font-bold ${s.c}`}>{s.v}</div>
                 <div className="text-xs text-[var(--text-3)] mt-1">{s.label}</div>
               </div>
             ))}
@@ -415,8 +415,6 @@ function RangeTab() {
           {(result.estimatedMinutes as number) > 0 && (
             <p className="text-xs text-[var(--text-3)] mt-3">⏱ ~{result.estimatedMinutes as number} мин до завершения · следи в «📜 История»</p>
           )}
-        </Card>
-      )}
         </Card>
       )}
     </div>
