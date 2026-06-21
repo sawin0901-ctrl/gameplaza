@@ -91,13 +91,18 @@ export async function getDigisellerToken(): Promise<string> {
 
 function getHintForCode(code: number | string): string {
   switch (Number(code)) {
-    case -2: return "Неверные параметры запроса. Проверьте формат DIGISELLER_SELLER_ID."
-    case -3: return "Продавец не найден. Проверьте DIGISELLER_SELLER_ID."
-    case -4: return "Неверная подпись (sign). Проверьте DIGISELLER_API_KEY — скопируйте его заново без пробелов."
-    case -5: return "Дублирующийся запрос (тот же timestamp). Подождите секунду и повторите."
-    case -7: return "Доступ запрещён. Проверьте права API-ключа в личном кабинете Digiseller."
-    case -10: return "API ключ заблокирован или отозван. Создайте новый ключ в личном кабинете."
-    default:  return "Проверьте DIGISELLER_API_KEY и DIGISELLER_SELLER_ID в .env файле."
+    case -1:  return "API ключ не совпадает с Seller ID, или ключ не активирован.\n" +
+                     "1. Войдите на my.digiseller.com → Настройки → API\n" +
+                     "2. Скопируйте API-ключ заново (полностью, без пробелов)\n" +
+                     "3. Убедитесь что DIGISELLER_SELLER_ID = ваш числовой ID продавца\n" +
+                     "4. Проверьте: cat /var/www/gameplaza/.env | grep DIGISELLER"
+    case -2:  return "Неверный формат параметров. DIGISELLER_SELLER_ID должен быть числом."
+    case -3:  return "Продавец не найден. Проверьте DIGISELLER_SELLER_ID — это числовой ID из URL вашего магазина."
+    case -4:  return "Неверная подпись (MD5). Скопируйте DIGISELLER_API_KEY заново — вероятно невидимые символы."
+    case -5:  return "Дублирующийся timestamp. Подождите секунду и повторите."
+    case -7:  return "Доступ запрещён. Проверьте права API-ключа в кабинете Digiseller."
+    case -10: return "API ключ заблокирован. Создайте новый ключ в кабинете Digiseller."
+    default:  return "Неизвестная ошибка. Проверьте DIGISELLER_API_KEY и DIGISELLER_SELLER_ID в .env файле."
   }
 }
 
