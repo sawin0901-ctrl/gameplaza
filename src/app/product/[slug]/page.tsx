@@ -287,7 +287,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             /* ── Описание ── */
             <div
               key="description"
-              className="prose prose-invert prose-sm max-w-none text-gray-300 leading-relaxed"
+              className="product-desc"
               dangerouslySetInnerHTML={{ __html: sanitizeDescription(product.description) }}
             />,
 
