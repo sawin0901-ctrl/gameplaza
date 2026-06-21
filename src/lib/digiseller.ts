@@ -165,7 +165,7 @@ export async function getDigisellerProduct(productId: number): Promise<Digiselle
         name_goods:   p.name || "",
         info_goods:   p.info || "",
         price_usd:    p.prices?.default?.USD ?? 0,
-        price_rub:    p.prices?.default?.RUB ?? p.price ?? 0,
+        price_rub:    p.prices?.default?.RUB ?? p.price_rub ?? p.price_rur ?? p.price ?? 0,
         old_price_rub: p.sale_info?.common_price_rub && Number(p.sale_info.common_price_rub) > 0
           ? Number(p.sale_info.common_price_rub) : undefined,
         currency:     "RUB",
@@ -199,6 +199,19 @@ async function scrapePlatiMarket(productId: number): Promise<DigisellerProduct |
       old_price_rub: oldPrice && oldPrice > price ? oldPrice : undefined, currency: "RUB",
       image_link: imageUrl, cnt_goods: 999, status: 1, categories: [] }
   } catch { return null }
+}
+
+export async function getProductPublicPrice(productId: number): Promise<number> {
+  try {
+    const res = await axios.get(${BASE_URL}/products//info, {
+      params: { currency: "RUB", lang: "ru-RU" },
+      headers: { Accept: "application/json" },
+      timeout: 8000,
+    })
+    const d = res.data
+    const price = d?.prices?.price ?? d?.price?.price ?? d?.price ?? d?.product?.price ?? 0
+    return Number(price) || 0
+  } catch { return 0 }
 }
 
 export async function checkProductAvailability(productId: number): Promise<boolean> {
