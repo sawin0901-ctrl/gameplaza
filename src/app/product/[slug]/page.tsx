@@ -199,9 +199,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
               {product.category && (
                 <p className="text-brand text-sm font-medium mb-1">{product.category.name}</p>
               )}
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-3 break-words">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-2 break-words">
                 {product.name}
               </h1>
+
+              {/* Цена из БД (авт. обновление каждые 6ч из Plati.Market) */}
+              {product.price > 0 && (
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="text-2xl font-bold text-white">
+                    {product.price.toLocaleString("ru-RU")} ₽
+                  </span>
+                  {product.oldPrice && product.oldPrice > product.price && (
+                    <span className="text-sm text-gray-500 line-through">
+                      {product.oldPrice.toLocaleString("ru-RU")} ₽
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Рейтинг из отзывов */}
               {reviews.length > 0 && avgRating && (
@@ -247,6 +261,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
           </div>
 
+          {/* Краткое описание — заполняет пустоту рядом с виджетом на десктопе */}
+          {product.shortDesc && (
+            <p className="mt-5 text-sm text-gray-400 leading-relaxed">
+              {product.shortDesc}
+            </p>
+          )}
+
           {/* Виджет на мобильных */}
           <div className="block lg:hidden mt-5">
             <DigisellerWidget productId={product.digisellerProductId} />
@@ -260,7 +281,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       </div>
 
       {/* ═══ Вкладки ═══ */}
-      <div className="mt-8">
+      <div className="mt-4">
         <ProductTabs
           tabs={[
             { id: "desc", label: "Описание" },
