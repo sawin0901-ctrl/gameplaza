@@ -3,6 +3,7 @@ import ProductCard from "../../components/ProductCard"
 import CatalogSidebar from "../../components/CatalogSidebar"
 import Link from "next/link"
 import type { Metadata } from "next"
+import { buildCatalogMetadata, buildBreadcrumbJsonLd } from "../../lib/seo"
 
 export const revalidate = 60
 
@@ -19,23 +20,20 @@ const SORT_OPTS = [
 const VALID_SORTS = new Set(["newest", "price_asc", "price_desc", "popular", "discount"])
 
 export async function generateMetadata({ searchParams }: { searchParams: Record<string, string> }): Promise<Metadata> {
-  // Обрезаем и санитизируем q, чтобы не вставлять пользовательский ввод напрямую в title
   const rawQ = searchParams.q ?? ""
-  const q = rawQ.replace(/[<>"'&]/g, "").trim().slice(0, 60)
+  const q = rawQ.replace(/[<>"&]/g, "").trim().slice(0, 60)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "") : ""
+  const categorySlug = (searchParams.category ?? "").replace(/[^a-z0-9-]/g, "").slice(0, 50)
+  const page = Math.max(1, parseInt(searchParams.page ?? "1") || 1)
 
-  const title = sort === "discount"
-    ? "Акции и скидки — GamePlaza"
-    : q ? `Поиск: ${q} — GamePlaza` : "Каталог цифровых товаров — GamePlaza"
-  return {
-    title,
-    description: "Игры, программы, ключи активации. Мгновенная доставка через Digiseller.",
-    robots: { index: !q, follow: true },
+  let categoryName: string | null = null
+  if (categorySlug) {
+    const cat = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } }).catch(() => null)
+    categoryName = cat?.name ?? null
   }
-}
 
-export default async function CatalogPage({ searchParams }: { searchParams: Record<string, string> }) {
-  const query = (searchParams.q ?? "").trim().slice(0, 100)
+  return buildCatalogMetadata({ categoryName, categorySlug, query: q || undefined, sort: sort || undefined, page })
+}
   const category = (searchParams.category ?? "").replace(/[^a-z0-9-]/g, "").slice(0, 50)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
 
@@ -101,11 +99,19 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* BreadcrumbList JSON-LD */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbJsonLd([
+        { name: "Главная", url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site") },
+        { name: "Каталог", url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/catalog` },
+        ...(category && products[0]?.category ? [{ name: products[0].category.name, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/catalog?category=${category}` }] : []),
+        ...(query ? [{ name: `"${query}"`, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/catalog?q=${encodeURIComponent(query)}` }] : []),
+      ])) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link href="/" className="hover:text-white transition-colors">Главная</Link>
         <span>/</span>
-        <span className="text-gray-300">Каталог</span>
+        <Link href="/catalog" className="hover:text-white transition-colors">Каталог</Link>
+        {category && products[0]?.category && <><span>/</span><span className="text-gray-300">{products[0].category.name}</span></>}
         {query && <><span>/</span><span className="text-gray-300">«{query}»</span></>}
         {sort === "discount" && <><span>/</span><span className="text-gray-300">Акции</span></>}
       </nav>
