@@ -74,13 +74,14 @@ const BROWSER_HEADERS = {
 function extractImageFromHtml($: ReturnType<typeof cheerio.load>, productId: number): { main: string; gallery: string[] } {
   const seen = new Set<string>()
 
-  // Priority 0: Digiseller original image API — full resolution, no CDN compression or size cap
-  // graph.digiseller.ru serves the seller's original uploaded image
-  seen.add(`https://graph.digiseller.ru/img.ashx?id_d=${productId}`)
-
-  // Priority 1: Open Graph image (CDN-compressed, but reliable fallback)
+  // Priority 1: Open Graph image — seller's uploaded marketing image from Plati.Market (best for cards)
   const ogImg = toAbs($("meta[property='og:image']").first().attr("content"))
-  if (ogImg && ogImg.startsWith("http") && !seen.has(ogImg)) seen.add(ogImg)
+  // Upscale CDN URLs from w=400 to w=800 for better resolution
+  const ogImgHq = ogImg
+    ? ogImg.replace(/([?&])w=400(&|$)/, "$1w=800$2").replace(/maxlength=400/, "maxlength=800")
+    : ""
+  if (ogImgHq && ogImgHq.startsWith("http")) seen.add(ogImgHq)
+  else if (ogImg && ogImg.startsWith("http")) seen.add(ogImg)
 
   // Priority 2: Twitter card image
   const twImg = toAbs($("meta[name='twitter:image']").first().attr("content"))
