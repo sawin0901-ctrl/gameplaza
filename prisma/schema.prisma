@@ -35,11 +35,19 @@ model Product {
   name                String
   slug                String       @unique
   description         String       @db.Text
+  shortDesc           String?      @db.Text
   price               Float
   oldPrice            Float?
   discountPercent     Int?
   currency            String       @default("RUB")
   imageUrl            String?
+  galleryImages       String[]
+  videoUrl            String?
+  importSource        String?
+  platiUrl            String?
+  metaTitle           String?
+  metaDescription     String?
+  metaKeywords        String?
   categoryId          String?
   category            Category?    @relation(fields: [categoryId], references: [id])
   isActive            Boolean      @default(false)
@@ -48,8 +56,6 @@ model Product {
   rating              Float?
   reviewCount         Int?
   soldCount           Int          @default(0)
-  metaTitle           String?
-  metaDescription     String?
   relatedProducts     Product[]    @relation("RelatedProducts")
   relatedTo           Product[]    @relation("RelatedProducts")
   importedAt          DateTime     @default(now())
@@ -63,6 +69,22 @@ model Product {
   keys                ProductKey[]
   flashSales          FlashSale[]
   bundleItems         BundleItem[]
+}
+
+model PlatiImportLog {
+  id          String   @id @default(cuid())
+  url         String
+  productId   Int?
+  productName String?
+  status      String
+  error       String?
+  duration    Int?
+  source      String   @default("manual")
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([source])
 }
 
 model Category {
