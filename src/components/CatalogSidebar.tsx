@@ -17,6 +17,7 @@ const CATEGORIES = [
   { name: "Office", slug: "office" },
   { name: "VPN & Безопасность", slug: "vpn" },
   { name: "Подарочные карты", slug: "gift-cards" },
+  { name: "Акции и скидки", slug: "discount" },
 ]
 
 interface Props {
@@ -37,7 +38,7 @@ export default function CatalogSidebar({ currentCategory, currentMinPrice, curre
     const params = new URLSearchParams()
     const sort = searchParams.get("sort")
     if (sort) params.set("sort", sort)
-    const base = slug ? "/catalog/" + slug : "/catalog"
+    const base = !slug ? "/catalog" : slug === "discount" ? "/catalog/discount" : "/catalog/" + slug
     const qs = params.toString()
     startTransition(() => router.push(base + (qs ? "?" + qs : "")))
   }
