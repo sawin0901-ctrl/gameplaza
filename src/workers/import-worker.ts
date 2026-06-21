@@ -9,6 +9,8 @@ import { processDescription } from "../lib/link-processor"
 import { generateSlug } from "../lib/seo"
 import { getImportSettings, applyMarkup } from "../lib/import-settings"
 import { generateSeoForProduct } from "../lib/seo-generator"
+import sharp from "sharp"
+import * as path from "path"
 
 async function updateImportLog(field: "imported" | "errors" | "updated") {
   const today = new Date()
@@ -166,11 +168,66 @@ async function processPlatiImport(job: Job) {
     return { skipped: true, reason: error }
   }
 
+  // Check for Plati service/advertising pages
+  const PLATI_JUNK_NAME = /(?:plati\.?market|плати[\s.]маркет|магазин цифровых товаров)/i
+  if (PLATI_JUNK_NAME.test(raw.name)) {
+    const error = "Пропущен: служебная страница Plati"
+    console.warn("[import-worker] #" + productId + " — " + error)
+    await prisma.platiImportLog.updateMany({
+      where: { productId, status: "queued" },
+      data: { status: "skipped", error, duration: Date.now() - started },
+    })
+    return { skipped: true, reason: error }
+  }
+  const PLATI_MARKETING = /(?:более миллиона лотов|маркетплейс цифровых товаров|игры,\s*ключи,\s*аккаунты,\s*подписки)/i
+  if (PLATI_MARKETING.test((raw.description ?? "").replace(/<[^>]+>/g, " "))) {
+    const error = "Пропущен: рекламная страница Plati"
+    console.warn("[import-worker] #" + productId + " — " + error)
+    await prisma.platiImportLog.updateMany({
+      where: { productId, status: "queued" },
+      data: { status: "skipped", error, duration: Date.now() - started },
+    })
+    return { skipped: true, reason: error }
+  }
+  if (!raw.imageUrl) {
+    const error = "Пропущен: отсутствует изображение"
+    console.warn("[import-worker] #" + productId + " — " + error)
+    await prisma.platiImportLog.updateMany({
+      where: { productId, status: "queued" },
+      data: { status: "skipped", error, duration: Date.now() - started },
+    })
+    return { skipped: true, reason: error }
+  }
+
   // Check if exists
   const existing = await prisma.product.findUnique({ where: { digisellerProductId: productId } })
 
   // Download images locally
   const localImageUrl = await downloadImage(raw.imageUrl)
+  if (!localImageUrl || !localImageUrl.startsWith("/uploads/")) {
+    const error = "Пропущен: не удалось скачать изображение"
+    console.warn("[import-worker] #" + productId + " — " + error)
+    await prisma.platiImportLog.updateMany({
+      where: { productId, status: "queued" },
+      data: { status: "skipped", error, duration: Date.now() - started },
+    })
+    return { skipped: true, reason: error }
+  }
+  try {
+    const imgPath = path.join(process.cwd(), "public", localImageUrl)
+    const meta = await sharp(imgPath).metadata()
+    if ((meta.width ?? 0) < 300 || (meta.height ?? 0) < 300) {
+      const error = "Пропущен: низкое качество изображения (" + (meta.width ?? 0) + "x" + (meta.height ?? 0) + ", мин. 300x300)"
+      console.warn("[import-worker] #" + productId + " — " + error)
+      await prisma.platiImportLog.updateMany({
+        where: { productId, status: "queued" },
+        data: { status: "skipped", error, duration: Date.now() - started },
+      })
+      return { skipped: true, reason: error }
+    }
+  } catch (imgErr) {
+    console.warn("[import-worker] #" + productId + " image check failed:", imgErr instanceof Error ? imgErr.message : String(imgErr))
+  }
   const localGallery  = raw.galleryImages.length > 0 ? await downloadImages(raw.galleryImages.slice(0, 5)) : []
 
   // Auto-create category from Plati.Market scraper data
