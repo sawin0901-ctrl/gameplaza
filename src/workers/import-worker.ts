@@ -8,6 +8,7 @@ import { checkProductQuality } from "../lib/quality-check"
 import { processDescription } from "../lib/link-processor"
 import { generateSlug } from "../lib/seo"
 import { getImportSettings, applyMarkup } from "../lib/import-settings"
+import { generateSeoForProduct } from "../lib/seo-generator"
 
 async function updateImportLog(field: "imported" | "errors" | "updated") {
   const today = new Date()
@@ -119,6 +120,15 @@ async function processDigisellerImport(job: Job) {
     data: { status: "done", processedAt: new Date() },
   })
   await updateImportLog("imported")
+  // Background SEO generation (non-blocking, only if SEO fields empty)
+  if (!product.metaTitle) {
+    generateSeoForProduct({ name: raw.name_goods, description, price: finalPrice }).then(seo => {
+      if (seo) prisma.product.update({ where: { id: product.id }, data: {
+        metaTitle: seo.metaTitle, metaDescription: seo.metaDescription,
+        metaKeywords: seo.metaKeywords, shortDesc: seo.shortDesc || undefined,
+      }}).catch(() => {})
+    }).catch(() => {})
+  }
   return { productId: product.id, slug: product.slug }
 }
 
@@ -225,6 +235,15 @@ async function processPlatiImport(job: Job) {
     },
   })
 
+  // Background SEO generation (non-blocking, only for new products without SEO)
+  if (!product.metaTitle) {
+    generateSeoForProduct({ name: raw.name, description: raw.description, price: finalPrice, category: catName }).then(seo => {
+      if (seo) prisma.product.update({ where: { id: product.id }, data: {
+        metaTitle: seo.metaTitle, metaDescription: seo.metaDescription,
+        metaKeywords: seo.metaKeywords, shortDesc: seo.shortDesc || product.shortDesc || undefined,
+      }}).catch(() => {})
+    }).catch(() => {})
+  }
   const duration = Date.now() - started
   const logStatus = existing ? "updated" : "success"
 
