@@ -27,6 +27,7 @@ const NAV = [
     { href: "/admin/faq",          label: "FAQ",              icon: "❓" },
     { href: "/admin/reviews",      label: "Отзывы",           icon: "⭐" },
     { href: "/admin/seo",          label: "SEO",              icon: "🔎" },
+    { href: "/admin/sitemap",      label: "Sitemap",          icon: "🗺️" },
   ]},
   { group: "Пользователи", items: [
     { href: "/admin/users",        label: "Пользователи",     icon: "👥" },
