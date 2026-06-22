@@ -69,6 +69,12 @@ model Product {
   keys                ProductKey[]
   flashSales          FlashSale[]
   bundleItems         BundleItem[]
+
+  @@index([isActive])
+  @@index([importSource])
+  @@index([lastCheckedAt])
+  @@index([importSource, lastCheckedAt])
+  @@index([isActive, importedAt])
 }
 
 model PlatiImportLog {
@@ -182,7 +188,7 @@ model ImportQueue {
 
 model ImportLog {
   id       String   @id @default(cuid())
-  date     DateTime @default(now())
+  date     DateTime @default(now()) @unique
   imported Int      @default(0)
   updated  Int      @default(0)
   hidden   Int      @default(0)
