@@ -150,8 +150,10 @@ async function checkDisk(): Promise<CheckResult> {
   } catch {
     // Fallback for older Node
     try {
-      const { execSync } = await import("child_process")
-      const out = execSync("df -BG / | tail -1", { timeout: 3000 }).toString()
+      const { exec } = await import("child_process")
+      const { promisify } = await import("util")
+      const execAsync = promisify(exec)
+      const { stdout: out } = await execAsync("df -BG / | tail -1", { timeout: 3000 })
       const parts = out.trim().split(/\s+/)
       return {
         name: "Место на диске",
