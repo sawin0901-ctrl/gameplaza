@@ -25,7 +25,6 @@ export async function generateMetadata({ params, searchParams }: { params: { cat
   const categorySlug = params.category.replace(/[^a-z0-9-]/g, "").slice(0, 50)
   const cat = await prisma.category.findUnique({ where: { slug: categorySlug }, select: { name: true } }).catch(() => null)
   if (!cat) return { title: { absolute: "Категория не найдена | GamePlaza" } }
-  const faq = getCategoryFaq(category)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "") : ""
   const page = Math.max(1, parseInt(searchParams.page ?? "1") || 1)
   return buildCatalogMetadata({ categoryName: cat.name, categorySlug, sort: sort || undefined, page })
@@ -37,7 +36,6 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const categoryRow = await prisma.category.findUnique({ where: { slug: category }, select: { name: true } }).catch(() => null)
   if (!categoryRow) notFound()
 
-  const faq = getCategoryFaq(category)
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
   const rawPage = parseInt(searchParams.page ?? "1", 10)
   const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1
