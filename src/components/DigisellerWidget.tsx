@@ -17,10 +17,12 @@ function hasWidgetContent(wrapper: HTMLDivElement): boolean {
 
 export default function DigisellerWidget({ productId }: Props) {
   const [ready, setReady] = useState(false)
+  const [timedOut, setTimedOut] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setReady(false)
+    setTimedOut(false)
     const wrapper = wrapperRef.current
     if (!wrapper) return
 
@@ -36,8 +38,14 @@ export default function DigisellerWidget({ productId }: Props) {
     // Polling every 250ms as backup (covers cases MutationObserver misses)
     const poll = setInterval(() => { if (hasWidgetContent(wrapper)) markReady() }, 250)
 
-    // Hard fallback at 12s
-    const timer = setTimeout(markReady, 12_000)
+    // Hard fallback at 12s — if widget still empty, show refresh hint
+    const timer = setTimeout(() => {
+      if (!done) {
+        done = true
+        setReady(true)
+        if (wrapper && !hasWidgetContent(wrapper)) setTimedOut(true)
+      }
+    }, 12_000)
 
     return () => { obs.disconnect(); clearInterval(poll); clearTimeout(timer) }
   }, [productId])
@@ -58,6 +66,20 @@ export default function DigisellerWidget({ productId }: Props) {
             ))}
           </div>
           <div className="mt-4 h-11 rounded-xl bg-violet-500/20" />
+        </div>
+      )}
+      {timedOut && (
+        <div className="mt-3 p-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-center text-sm text-yellow-300 space-y-2">
+          <p>Сайт в разработке. Если кнопка «Купить» не появилась —</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 font-medium transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Обновить страницу
+          </button>
         </div>
       )}
       <div
