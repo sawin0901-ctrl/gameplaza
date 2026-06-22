@@ -8,6 +8,7 @@ import { ThemeProvider } from "../components/ThemeProvider"
 import { Suspense } from "react"
 import AnalyticsTracker from "../components/AnalyticsTracker"
 import { CurrencyTicker } from "../components/CurrencyTicker"
+import ScrollToTop from "../components/ScrollToTop"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </main>
             <Footer />
+            <ScrollToTop />
           </Providers>
         </ThemeProvider>
       </body>
