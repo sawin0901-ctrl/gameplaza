@@ -491,6 +491,18 @@ body {
 /* ============================================================
    DIGISELLER WIDGET
    ============================================================ */
+.digiseller-buy-standalone {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+.digiseller-buy-standalone table,
+.digiseller-buy-standalone iframe,
+.digiseller-buy-standalone img {
+  max-width: 100% !important;
+  width: 100% !important;
+}
 .digiseller-buy-standalone a,
 .digiseller-buy-standalone button {
   border-radius: 12px !important;
