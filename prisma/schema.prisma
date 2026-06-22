@@ -217,13 +217,15 @@ model Wishlist {
 model Review {
   id         String   @id @default(cuid())
   productId  String
-  userId     String
+  userId     String?
   rating     Int
   text       String   @db.Text
   isApproved Boolean  @default(true)
+  source     String   @default("site")
+  authorName String?
   createdAt  DateTime @default(now())
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([productId, userId])
 }
