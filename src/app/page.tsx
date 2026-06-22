@@ -153,7 +153,7 @@ export default async function HomePage() {
             <h2 className="section-title">Категории</h2>
             <p className="section-sub">Выбирайте из широкого каталога цифровых товаров</p>
           </div>
-          <Link href="/catalog" className="text-brand hover:text-brand-400 text-sm font-medium hidden sm:flex items-center gap-1 transition-colors">
+          <Link href="/catalog" className="text-brand hover:text-brand-400 text-sm font-medium flex items-center gap-1 transition-colors">
             Все категории
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </Link>
@@ -177,7 +177,7 @@ export default async function HomePage() {
               <h2 className="section-title">🆕 Новые поступления</h2>
               <p className="section-sub">Свежие товары — добавлены сегодня</p>
             </div>
-            <Link href="/catalog" className="text-brand hover:text-brand-400 text-sm font-medium hidden sm:flex items-center gap-1 transition-colors">
+            <Link href="/catalog" className="text-brand hover:text-brand-400 text-sm font-medium flex items-center gap-1 transition-colors">
               Смотреть все
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </Link>
@@ -205,7 +205,7 @@ export default async function HomePage() {
               <h2 className="section-title">🔥 Популярные товары</h2>
               <p className="section-sub">Самые покупаемые в этом месяце</p>
             </div>
-            <Link href="/catalog?sort=popular" className="text-brand hover:text-brand-400 text-sm font-medium hidden sm:flex items-center gap-1 transition-colors">
+            <Link href="/catalog?sort=popular" className="text-brand hover:text-brand-400 text-sm font-medium flex items-center gap-1 transition-colors">
               Смотреть все
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </Link>
