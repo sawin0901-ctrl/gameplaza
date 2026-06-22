@@ -22,14 +22,13 @@ export async function POST(req: NextRequest) {
     where: { code, isActive: true },
   })
 
-  if (!promo) return NextResponse.json({ error: "Промокод не найден или недействителен" }, { status: 404 })
+  if (!promo) return NextResponse.json({ error: "Промокод недействителен или не существует" }, { status: 400 })
 
-  if (promo.expiresAt && promo.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Срок действия промокода истёк" }, { status: 400 })
-  }
-
-  if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) {
-    return NextResponse.json({ error: "Промокод исчерпан — лимит использований" }, { status: 400 })
+  if (
+    (promo.expiresAt && promo.expiresAt < new Date()) ||
+    (promo.maxUses !== null && promo.usedCount >= promo.maxUses)
+  ) {
+    return NextResponse.json({ error: "Промокод недействителен или не существует" }, { status: 400 })
   }
 
   if (promo.minOrderAmount && subtotal < promo.minOrderAmount) {
