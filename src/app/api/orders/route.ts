@@ -49,6 +49,7 @@ const createSchema = z.object({
 // POST — create order
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   let body: unknown
   try { body = await req.json() } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) }
