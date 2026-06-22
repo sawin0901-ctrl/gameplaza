@@ -2,6 +2,7 @@ import { prisma } from "../../../lib/prisma"
 import ProductCard from "../../../components/ProductCard"
 import CatalogSidebar from "../../../components/CatalogSidebar"
 import Link from "next/link"
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { buildCatalogMetadata, buildBreadcrumbJsonLd } from "../../../lib/seo"
@@ -100,7 +101,9 @@ export default async function CategoryPage({ params, searchParams }: { params: {
       </nav>
 
       <div className="flex gap-6 items-start">
-        <CatalogSidebar currentCategory={category} currentMinPrice={searchParams.minPrice} currentMaxPrice={searchParams.maxPrice} />
+        <Suspense fallback={<div className="w-full lg:w-56 xl:w-64 flex-shrink-0 h-48 rounded-xl bg-white/5 animate-pulse" />}>
+          <CatalogSidebar currentCategory={category} currentMinPrice={searchParams.minPrice} currentMaxPrice={searchParams.maxPrice} />
+        </Suspense>
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
             <div className="flex-1">
