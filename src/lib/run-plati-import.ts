@@ -186,6 +186,27 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
       },
     })
 
+    // Import reviews from Plati.market (fire-and-forget, only for new products)
+    if (!product.metaTitle) {
+      scrapePlatiReviews(platiId, 8).then(async platiReviews => {
+        if (platiReviews.length === 0) return
+        const existing = await prisma.review.count({ where: { productId: product.id, source: "plati" } })
+        if (existing > 0) return
+        await prisma.review.createMany({
+          data: platiReviews.map((rv, i) => ({
+            productId: product.id,
+            rating: rv.rating,
+            text: rv.text,
+            source: "plati",
+            authorName: "Покупатель",
+            isApproved: true,
+            createdAt: rv.date ?? new Date(Date.now() - i * 86_400_000),
+          })),
+          skipDuplicates: true,
+        })
+      }).catch(() => {})
+    }
+
     if (!product.metaTitle) {
       generateSeoForProduct({ name: raw.name, description: raw.description, price, category: catName })
         .then(seo => {
