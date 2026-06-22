@@ -431,3 +431,46 @@ model AdminLog {
   @@index([adminId])
   @@index([action])
 }
+model AutoImportSession {
+  id         String          @id @default(cuid())
+  status     String          @default("idle")
+  mode       String          @default("list")
+  startId    Int             @default(0)
+  endId      Int             @default(0)
+  currentId  Int             @default(0)
+  totalCount Int             @default(0)
+  doneCount  Int             @default(0)
+  errorCount Int             @default(0)
+  skipCount  Int             @default(0)
+  dupCount   Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  items      AutoImportItem[]
+  logs       AutoImportLog[]
+}
+
+model AutoImportItem {
+  id          String            @id @default(cuid())
+  sessionId   String
+  platiId     Int
+  status      String            @default("pending")
+  processedAt DateTime?
+  session     AutoImportSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, platiId])
+  @@index([sessionId, status])
+}
+
+model AutoImportLog {
+  id          String            @id @default(cuid())
+  sessionId   String
+  platiId     Int
+  status      String
+  productName String?
+  errorMsg    String?
+  duration    Int?
+  createdAt   DateTime          @default(now())
+  session     AutoImportSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt(sort: Desc)])
+}
