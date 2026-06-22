@@ -38,6 +38,7 @@ const NAV = [
   { group: "Система", items: [
     { href: "/admin/import",       label: "Импорт Digiseller", icon: "⬇️" },
     { href: "/admin/import/plati", label: "Plati.Market",     icon: "🛒" },
+    { href: "/admin/auto-import",  label: "Авто-импорт",      icon: "🤖" },
     { href: "/admin/features",     label: "Feature Flags",    icon: "🚩" },
     { href: "/admin/cache",        label: "Кэш",              icon: "🗑️" },
     { href: "/admin/queue",        label: "Очередь задач",    icon: "⚙️" },
