@@ -51,13 +51,24 @@ export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { id, price, isActive, name } = await req.json()
-  if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 })
+  const body = await req.json()
+  const { id } = body
+  if (!id || typeof id !== "string") return NextResponse.json({ error: "ID required" }, { status: 400 })
 
   const data: Record<string, unknown> = {}
-  if (price !== undefined) data.price = price
-  if (isActive !== undefined) { data.isActive = isActive }
-  if (name !== undefined) data.name = name
+  if (body.price !== undefined) {
+    const price = Number(body.price)
+    if (!isFinite(price) || price <= 0 || price > 1_000_000) return NextResponse.json({ error: "Invalid price" }, { status: 422 })
+    data.price = price
+  }
+  if (body.isActive !== undefined) {
+    if (typeof body.isActive !== "boolean") return NextResponse.json({ error: "isActive must be boolean" }, { status: 422 })
+    data.isActive = body.isActive
+  }
+  if (body.name !== undefined) {
+    if (typeof body.name !== "string" || body.name.trim().length === 0 || body.name.length > 500) return NextResponse.json({ error: "Invalid name" }, { status: 422 })
+    data.name = body.name.trim()
+  }
 
   const product = await prisma.product.update({ where: { id }, data })
   return NextResponse.json(product)
