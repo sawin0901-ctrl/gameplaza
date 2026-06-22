@@ -101,7 +101,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     })) : undefined,
     offers: {
       "@type": "Offer",
-      price: product.price,
+      price: Number(product.price),
       priceCurrency: "RUB",
       availability: product.inStock
         ? "https://schema.org/InStock"
@@ -116,7 +116,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Главная", url: siteUrl },
     { name: "Каталог", url: `${siteUrl}/catalog` },
-    ...(product.category ? [{ name: product.category.name, url: `${siteUrl}/catalog?category=${product.category.slug}` }] : []),
+    ...(product.category ? [{ name: product.category.name, url: `${siteUrl}/catalog/${product.category.slug}` }] : []),
     { name: product.name, url: `${siteUrl}/product/${product.slug}` },
   ])
   const breadcrumbJsonLdString = JSON.stringify(breadcrumbJsonLd).replace(/<\/script>/gi, "<\\/script>")
@@ -168,7 +168,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <>
             <span>/</span>
             <a
-              href={`/catalog?category=${product.category.slug}`}
+              href={`/catalog/${product.category.slug}`}
               className="hover:text-white transition-colors"
             >
               {product.category.name}
