@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   const reviews = await prisma.review.findMany({
-    where: { productId },
+    where: { productId, isApproved: true },
     select: {
       id: true,
       rating: true,
