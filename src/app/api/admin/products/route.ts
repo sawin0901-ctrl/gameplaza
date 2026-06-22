@@ -46,3 +46,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 })
   }
 }
+
+export async function PATCH(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { id, price, isActive, name } = await req.json()
+  if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 })
+
+  const data: Record<string, unknown> = {}
+  if (price !== undefined) data.price = price
+  if (isActive !== undefined) { data.isActive = isActive }
+  if (name !== undefined) data.name = name
+
+  const product = await prisma.product.update({ where: { id }, data })
+  return NextResponse.json(product)
+}
