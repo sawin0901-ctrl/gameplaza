@@ -27,6 +27,7 @@ export const authOptions: NextAuthOptions = {
           await bcrypt.hash(credentials.password, 1)
           return null
         }
+        if (user.isBlocked) return null
 
         const ok = await bcrypt.compare(credentials.password, user.password)
 
