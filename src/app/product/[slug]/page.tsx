@@ -40,9 +40,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
   ])
   if (!product) notFound()
 
-  const [reviews, userReview] = await Promise.all([
+  const [reviews, userReview, categoryProducts] = await Promise.all([
     prisma.review.findMany({
-      where: { productId: product.id },
+      where: { productId: product.id, isApproved: true },
       select: {
         id: true,
         rating: true,
@@ -58,15 +58,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           select: { id: true },
         })
       : null,
+    product.categoryId
+      ? prisma.product.findMany({
+          where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
+          take: 4,
+          orderBy: { importedAt: "desc" },
+        })
+      : Promise.resolve([]),
   ])
-
-  const categoryProducts = product.categoryId
-    ? await prisma.product.findMany({
-        where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
-        take: 4,
-        orderBy: { importedAt: "desc" },
-      })
-    : []
   const seenIds = new Set(product.relatedProducts.map(p => p.id))
   const uniqueCategory = categoryProducts.filter(p => !seenIds.has(p.id))
   const related = [...product.relatedProducts, ...uniqueCategory].slice(0, 4)
