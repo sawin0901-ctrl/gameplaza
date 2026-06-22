@@ -140,7 +140,7 @@ export default function AdminProductsClient({ initialProducts, initialTotal, ini
                   <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded" />
                 </td>
                 <td className="px-4 py-3">
-                  <Link href={"/product/" + p.id} target="_blank" className="text-[var(--text)] hover:text-brand transition-colors line-clamp-1">
+                  <Link href={"/product/" + p.slug} target="_blank" className="text-[var(--text)] hover:text-brand transition-colors line-clamp-1">
                     {p.name}
                   </Link>
                 </td>
