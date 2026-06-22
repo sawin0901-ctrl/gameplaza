@@ -47,6 +47,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         id: true,
         rating: true,
         text: true,
+        authorName: true,
         createdAt: true,
         user: { select: { name: true } },
       },
@@ -93,7 +94,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       : undefined,
     review: reviews.length > 0 ? reviews.slice(0, 10).map(r => ({
       "@type": "Review",
-      author: { "@type": "Person", name: r.user.name ?? "Пользователь" },
+      author: { "@type": "Person", name: r.authorName ?? r.user?.name ?? "Покупатель" },
       reviewRating: { "@type": "Rating", ratingValue: r.rating },
       ...(r.text ? { reviewBody: r.text } : {}),
       datePublished: r.createdAt.toISOString(),
@@ -143,6 +144,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   const serializedReviews = reviews.map(r => ({
     ...r,
+    authorName: r.authorName ?? null,
+    user: r.user ?? null,
     createdAt: r.createdAt.toISOString(),
   }))
 
