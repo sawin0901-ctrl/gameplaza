@@ -178,7 +178,11 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { sessionId, event, path, productId, orderId, value, meta } = body
+    const { sessionId: rawSession, event: rawEvent, path: rawPath, productId, orderId, value, meta: rawMeta } = body
+    const sessionId = String(rawSession ?? "").slice(0, 128)
+    const event = String(rawEvent ?? "").slice(0, 64)
+    const path = String(rawPath ?? "").slice(0, 512)
+    const meta = rawMeta && typeof rawMeta === "object" && JSON.stringify(rawMeta).length <= 2048 ? rawMeta : null
 
     if (!sessionId || !event) return NextResponse.json({ ok: false }, { status: 400 })
 
