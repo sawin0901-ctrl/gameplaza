@@ -5,7 +5,8 @@ export interface ReviewData {
   id: string
   rating: number
   text: string
-  user: { name: string | null }
+  authorName?: string | null
+  user: { name: string | null } | null
   createdAt: string
 }
 
@@ -46,6 +47,7 @@ function StarRating({
 }
 
 function ReviewCard({ review }: { review: ReviewData }) {
+  const displayName = review.authorName ?? review.user?.name ?? "Покупатель"
   const date = new Date(review.createdAt).toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
@@ -56,10 +58,10 @@ function ReviewCard({ review }: { review: ReviewData }) {
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-brand/20 flex items-center justify-center text-brand font-semibold text-sm shrink-0">
-            {(review.user.name ?? "А")[0].toUpperCase()}
+            {(displayName)[0].toUpperCase()}
           </div>
           <div>
-            <p className="text-[var(--text)] text-sm font-medium">{review.user.name ?? "Аноним"}</p>
+            <p className="text-[var(--text)] text-sm font-medium">{displayName}</p>
             <p className="text-gray-600 text-xs">{date}</p>
           </div>
         </div>
