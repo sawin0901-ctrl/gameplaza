@@ -35,7 +35,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const category = params.category.replace(/[^a-z0-9-]/g, "").slice(0, 50)
 
   const categoryRow = await prisma.category.findUnique({ where: { slug: category }, select: { name: true } }).catch(() => null)
-  if (!categoryRow) notFound()
+  const categoryName = categoryRow?.name ?? (category.charAt(0).toUpperCase() + category.slice(1))
 
   const sort = VALID_SORTS.has(searchParams.sort ?? "") ? (searchParams.sort ?? "newest") : "newest"
   const rawPage = parseInt(searchParams.page ?? "1", 10)
@@ -90,14 +90,14 @@ export default async function CategoryPage({ params, searchParams }: { params: {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbJsonLd([
         { name: "Главная", url: SITE },
         { name: "Каталог", url: SITE + "/catalog" },
-        { name: categoryRow!.name, url: SITE + "/catalog/" + category },
+        { name: categoryName, url: SITE + "/catalog/" + category },
       ])) }} />
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link href="/" className="hover:text-white transition-colors">Главная</Link>
         <span>/</span>
         <Link href="/catalog" className="hover:text-white transition-colors">Каталог</Link>
         <span>/</span>
-        <span className="text-gray-300">{categoryRow!.name}</span>
+        <span className="text-gray-300">{categoryName}</span>
       </nav>
 
       <div className="flex gap-6 items-start">
@@ -107,7 +107,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-white">{categoryRow!.name}</h1>
+              <h1 className="text-xl font-bold text-white">{categoryName}</h1>
               <p className="text-gray-500 text-sm mt-0.5">{total > 0 ? "Найдено " + total.toLocaleString("ru-RU") + " товаров" : "Товары не найдены"}</p>
             </div>
             <div className="flex items-center gap-2">
