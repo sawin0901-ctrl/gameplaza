@@ -5,30 +5,45 @@ const AFFILIATE_ID = "1459731"
 
 interface Props { productId: number }
 
+function hasWidgetContent(wrapper: HTMLDivElement): boolean {
+  const digi = wrapper.querySelector(".digiseller-buy-standalone")
+  if (digi && digi.children.length > 0) return true
+  if (digi && digi.textContent && digi.textContent.trim().length > 10) return true
+  if (wrapper.querySelector("iframe")) return true
+  if (wrapper.querySelector("table")) return true
+  if (wrapper.querySelector("form")) return true
+  return false
+}
+
 export default function DigisellerWidget({ productId }: Props) {
   const [ready, setReady] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setReady(false)
-    const el = ref.current
-    if (!el) return
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
 
-    // Already rendered (e.g. fast cache hit)
-    if (el.innerHTML.trim().length > 0) { setReady(true); return }
+    if (hasWidgetContent(wrapper)) { setReady(true); return }
 
-    const obs = new MutationObserver(() => {
-      if (el.innerHTML.trim().length > 0) { setReady(true); obs.disconnect() }
-    })
-    obs.observe(el, { childList: true, subtree: true })
+    let done = false
+    const markReady = () => { if (!done) { done = true; setReady(true) } }
 
-    // Safety fallback — show widget div regardless after 10s
-    const timer = setTimeout(() => setReady(true), 10_000)
-    return () => { obs.disconnect(); clearTimeout(timer) }
+    // MutationObserver on WRAPPER (catches Digiseller replacing/adding children)
+    const obs = new MutationObserver(() => { if (hasWidgetContent(wrapper)) markReady() })
+    obs.observe(wrapper, { childList: true, subtree: true, attributes: true })
+
+    // Polling every 250ms as backup (covers cases MutationObserver misses)
+    const poll = setInterval(() => { if (hasWidgetContent(wrapper)) markReady() }, 250)
+
+    // Hard fallback at 12s
+    const timer = setTimeout(markReady, 12_000)
+
+    return () => { obs.disconnect(); clearInterval(poll); clearTimeout(timer) }
   }, [productId])
 
   return (
-    <div className="relative" style={{ minHeight: "300px" }}>
+    <div ref={wrapperRef} className="relative" style={{ minHeight: "300px" }}>
       {!ready && (
         <div
           aria-hidden="true"
@@ -46,7 +61,6 @@ export default function DigisellerWidget({ productId }: Props) {
         </div>
       )}
       <div
-        ref={ref}
         className="digiseller-buy-standalone"
         data-id={String(productId)}
         data-ai={AFFILIATE_ID}
