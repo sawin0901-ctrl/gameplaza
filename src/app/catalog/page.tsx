@@ -155,7 +155,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Reco
         {sort === "discount" && <><span>/</span><span className="text-gray-300">Акции</span></>}
       </nav>
 
-      <div className="flex gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Sidebar */}
         <CatalogSidebar
           currentCategory={category}
