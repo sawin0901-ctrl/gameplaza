@@ -100,7 +100,7 @@ export default async function CategoryPage({ params, searchParams }: { params: {
         <span className="text-gray-300">{categoryName}</span>
       </nav>
 
-      <div className="flex gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
         <Suspense fallback={<div className="w-full lg:w-56 xl:w-64 flex-shrink-0 h-48 rounded-xl bg-white/5 animate-pulse" />}>
           <CatalogSidebar currentCategory={category} currentMinPrice={searchParams.minPrice} currentMaxPrice={searchParams.maxPrice} />
         </Suspense>
