@@ -92,7 +92,7 @@ async function geocodeIp(ip: string): Promise<{ country?: string; city?: string 
     return { country: "Localhost" }
   }
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city`, {
+    const res = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,city`, {
       signal: AbortSignal.timeout(3000),
     })
     const d = await res.json()
