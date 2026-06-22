@@ -11,8 +11,9 @@ const DELAY_MS = 1200
 const RECHECK_HOURS = 24
 
 export async function GET(req: Request) {
+  if (!process.env.CRON_SECRET) return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 })
   const secret = req.headers.get("x-cron-secret")
-  if (secret !== process.env.CRON_SECRET) {
+  if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -42,8 +43,20 @@ export async function GET(req: Request) {
     try {
       const raw = await scrapePlatiProduct(product.digisellerProductId).catch(() => null)
 
-      const newInStock = raw?.inStock ?? false
-      const newPrice = (raw?.price && raw.price >= 30) ? applyMarkup(raw.price, settings) : null
+      // If scraper failed (network error, 429, 503) — skip status update, only touch lastCheckedAt
+      // to avoid falsely deactivating products that are actually in stock
+      if (raw === null) {
+        results.errors++
+        await prisma.product.update({
+          where: { id: product.id },
+          data: { lastCheckedAt: new Date() },
+        }).catch(() => {})
+        await new Promise<void>(resolve => setTimeout(resolve, DELAY_MS))
+        continue
+      }
+
+      const newInStock = raw.inStock
+      const newPrice = (raw.price && raw.price >= 30) ? applyMarkup(raw.price, settings) : null
       const isActive = newInStock && newPrice !== null && newPrice > 50
 
       await prisma.product.update({
@@ -51,7 +64,7 @@ export async function GET(req: Request) {
         data: {
           inStock: newInStock,
           ...(newPrice !== null ? { price: newPrice } : {}),
-          ...(raw?.oldPrice && raw.oldPrice > 0 ? { oldPrice: applyMarkup(raw.oldPrice, settings) } : {}),
+          ...(raw.oldPrice && raw.oldPrice > 0 ? { oldPrice: applyMarkup(raw.oldPrice, settings) } : {}),
           isActive,
           lastCheckedAt: new Date(),
         },
