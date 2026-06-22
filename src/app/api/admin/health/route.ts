@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 async function checkDB() {
   const t = Date.now()
   try { await prisma.$queryRaw`SELECT 1`; return { ok: true, ms: Date.now() - t } }
-  catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
+  catch (e) { return { ok: false, ms: Date.now() - t, error: (e instanceof Error ? e.message.replace(/pass\S*/gi, "***").replace(/(\w+):\/\/[^@]*@/g, "$1://***@").slice(0, 200) : "Error") } }
 }
 
 async function checkRedis() {
@@ -23,7 +23,7 @@ async function checkRedis() {
     await client.ping()
     client.disconnect()
     return { ok: true, ms: Date.now() - t }
-  } catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
+  } catch (e) { return { ok: false, ms: Date.now() - t, error: (e instanceof Error ? e.message.replace(/pass\S*/gi, "***").replace(/(\w+):\/\/[^@]*@/g, "$1://***@").slice(0, 200) : "Error") } }
 }
 
 async function checkDigiseller() {
@@ -31,7 +31,7 @@ async function checkDigiseller() {
   try {
     const res = await axios.get("https://api.digiseller.ru/api/", { timeout: 8000, validateStatus: () => true })
     return { ok: res.status < 500, ms: Date.now() - t, status: res.status }
-  } catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
+  } catch (e) { return { ok: false, ms: Date.now() - t, error: (e instanceof Error ? e.message.replace(/pass\S*/gi, "***").replace(/(\w+):\/\/[^@]*@/g, "$1://***@").slice(0, 200) : "Error") } }
 }
 
 async function checkMail() {
@@ -45,7 +45,7 @@ async function checkMail() {
     })
     await transport.verify()
     return { ok: true, ms: Date.now() - t }
-  } catch (e) { return { ok: false, ms: Date.now() - t, error: String(e) } }
+  } catch (e) { return { ok: false, ms: Date.now() - t, error: (e instanceof Error ? e.message.replace(/pass\S*/gi, "***").replace(/(\w+):\/\/[^@]*@/g, "$1://***@").slice(0, 200) : "Error") } }
 }
 
 export async function GET() {
