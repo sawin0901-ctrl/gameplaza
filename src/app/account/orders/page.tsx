@@ -1,5 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 interface OrderItem { name: string; price: number; digiId: number; imageUrl: string | null }
@@ -21,16 +23,21 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export default function AccountOrdersPage() {
+  const { status } = useSession()
+  const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
+    if (status === "unauthenticated") { router.replace("/auth/login"); return }
+    if (status !== "authenticated") return
     fetch("/api/orders")
+      .then(r => { if (r.status === 401) { router.replace("/auth/login"); return r } return r })
       .then(r => r.json())
       .then(d => setOrders(d.orders ?? []))
       .finally(() => setLoading(false))
-  }, [])
+  }, [status, router])
 
   const fmt = (n: number) => n.toLocaleString("ru-RU") + " ₽"
 
