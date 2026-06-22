@@ -439,3 +439,102 @@ export function extractPlatiId(input: string): number | null {
   }
   return null
 }
+
+
+export interface PlatiReview {
+  text: string
+  rating: number
+  date?: Date
+}
+
+export async function scrapePlatiReviews(productId: number, limit = 8): Promise<PlatiReview[]> {
+  const url = `https://plati.market/itm/${productId}`
+  try {
+    const { data } = await axios.get(url, { headers: BROWSER_HEADERS, timeout: 20000 })
+    const $ = cheerio.load(data)
+    const reviews: PlatiReview[] = []
+
+    // Plati.market review selectors (they change layout periodically)
+    const containerSelectors = [
+      ".lot-review-item",
+      ".review-item",
+      ".reviews-item",
+      "[itemprop='review']",
+      ".goods-review",
+      ".item-review",
+      ".feedback-item",
+      ".review",
+    ]
+
+    for (const sel of containerSelectors) {
+      const items = $(sel)
+      if (items.length === 0) continue
+
+      items.each((_, el) => {
+        if (reviews.length >= limit) return false
+
+        // Text — try several inner selectors
+        const text = (
+          $(el).find(".review-text, .review__text, .feedback-text, .comment, [itemprop='reviewBody'], .lot-review-item__text").first().text().trim() ||
+          $(el).find("p").first().text().trim()
+        ).replace(/\s+/g, " ").trim()
+
+        if (!text || text.length < 5) return
+
+        // Rating: thumbs up (👍) = positive = 5 stars; thumbs down (👎) = negative = 2 stars
+        const isNeg =
+          $(el).find(".icon--thumb-down, .thumb-down, .dislike, [class*='negative'], [class*='thumbs-down']").length > 0 ||
+          $(el).hasClass("negative") || $(el).hasClass("review--negative") || $(el).hasClass("bad")
+        const rating = isNeg ? 2 : 5
+
+        // Date: try datetime attr first, then text in DD.MM.YYYY or YYYY-MM-DD
+        const timeEl = $(el).find("time, .date, .review-date, .feedback-date, [class*='date']").first()
+        const dateAttr = timeEl.attr("datetime") ?? timeEl.attr("data-date") ?? ""
+        const dateText = dateAttr || timeEl.text().trim()
+        let date: Date | undefined
+
+        if (dateText) {
+          const iso = new Date(dateText)
+          if (!isNaN(iso.getTime())) {
+            date = iso
+          } else {
+            const m = dateText.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+            if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
+          }
+        }
+
+        reviews.push({ text, rating, date })
+      })
+
+      if (reviews.length > 0) break
+    }
+
+    // Fallback: try JSON-LD Review entries
+    if (reviews.length === 0) {
+      $("script[type='application/ld+json']").each((_, el) => {
+        if (reviews.length >= limit) return false
+        try {
+          const json = JSON.parse($(el).html() ?? "")
+          const items: unknown[] = Array.isArray(json?.review) ? json.review : (json?.review ? [json.review] : [])
+          for (const item of items) {
+            if (reviews.length >= limit) break
+            if (typeof item !== "object" || item === null) continue
+            const r = item as Record<string, unknown>
+            const text = String(r.reviewBody ?? r.description ?? "").trim()
+            if (!text || text.length < 5) continue
+            const ratingVal = (r.reviewRating as Record<string, unknown>)?.ratingValue
+            const rating = ratingVal ? Math.round(Number(ratingVal)) : 5
+            const dateStr = String(r.datePublished ?? "")
+            const date = dateStr ? new Date(dateStr) : undefined
+            reviews.push({ text, rating: Math.min(5, Math.max(1, rating)), date: date && !isNaN(date.getTime()) ? date : undefined })
+          }
+        } catch {}
+      })
+    }
+
+    return reviews.slice(0, limit)
+  } catch (err) {
+    console.error(`[plati-scraper] reviews ${productId}:`, err instanceof Error ? err.message : String(err))
+    return []
+  }
+}
