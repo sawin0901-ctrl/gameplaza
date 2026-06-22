@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../../../lib/auth"
 import Image from "next/image"
 import DigisellerWidget from "../../../components/DigisellerWidget"
+import PlatiMarketWidget from "../../../components/PlatiMarketWidget"
 import ProductCard from "../../../components/ProductCard"
 import ProductTabs from "../../../components/ProductTabs"
 import ReviewsTabContent from "../../../components/ReviewsTabContent"
@@ -280,7 +281,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
           {/* Виджет на мобильных */}
           <div className="block lg:hidden mt-5">
-            <DigisellerWidget productId={product.digisellerProductId} />
+            {product.importSource === "plati" && product.platiUrl ? (
+              <PlatiMarketWidget price={Number(product.price)} oldPrice={product.oldPrice ? Number(product.oldPrice) : null} inStock={product.inStock} platiUrl={product.platiUrl} />
+            ) : (
+              <DigisellerWidget productId={product.digisellerProductId} />
+            )}
           </div>
 
           {/* ═══ Вкладки — сразу под инфо ═══ */}
@@ -336,7 +341,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
         {/* ═══ Правая колонка: виджет sticky ═══ */}
         <div className="hidden lg:block" style={{ position: "sticky", top: "96px", alignSelf: "start" }}>
-          <DigisellerWidget productId={product.digisellerProductId} />
+          {product.importSource === "plati" && product.platiUrl ? (
+            <PlatiMarketWidget price={Number(product.price)} oldPrice={product.oldPrice ? Number(product.oldPrice) : null} inStock={product.inStock} platiUrl={product.platiUrl} />
+          ) : (
+            <DigisellerWidget productId={product.digisellerProductId} />
+          )}
         </div>
       </div>
 
