@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "../../../../lib/auth"
+import { getServerSession } from "next-auth"
+import { authOptions } from "../../../../lib/auth"
 import { prisma } from "../../../../lib/prisma"
 
 export const dynamic = "force-dynamic"
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAdmin(req)
-  if (authError) return authError
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
-  const session = await prisma.autoImportSession.findFirst({
-    orderBy: { updatedAt: "desc" },
-  })
-
-  const logs = session
+  const s = await prisma.autoImportSession.findFirst({ orderBy: { updatedAt: "desc" } })
+  const logs = s
     ? await prisma.autoImportLog.findMany({
-        where: { sessionId: session.id },
+        where: { sessionId: s.id },
         orderBy: { createdAt: "desc" },
         take: 50,
       })
     : []
-
-  return NextResponse.json({ session, logs })
+  return NextResponse.json({ session: s, logs })
 }
