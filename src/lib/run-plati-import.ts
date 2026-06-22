@@ -5,6 +5,7 @@ import { generateSlug } from "./seo"
 import { generateSeoForProduct } from "./seo-generator"
 import { prisma } from "./prisma"
 import sharp from "sharp"
+import fs from "fs"
 import path from "path"
 
 export type PlatiImportResult = {
@@ -31,12 +32,40 @@ const CATEGORY_MAP: Record<string, string> = {
   keys: "Ключи и активации",
 }
 
+// Only import products from these gaming categories
+const ALLOWED_CATEGORIES = new Set([
+  "steam", "xbox", "playstation", "game-pass", "nintendo",
+  "origin", "ubisoft", "keys", "gift-cards", "subscriptions",
+  "antivirus", "windows", "software",
+])
+
 const JUNK_RE = [
   /plati\.?market/i,
   /маркетплейс цифровых/i,
   /цифровых товаров/i,
   /продавайте на нашем/i,
+  /интернет.витрин/i,
+  /интернет.магазин/i,
+  /веб.сайт/i,
+  /сетевая игра тысяч/i,
+  /\bexplorer\b/i,
+  /\bqstring/i,
+  /мобильное приложение/i,
+  /создание сайт/i,
+  /landing page/i,
+  /лендинг/i,
+  /онлайн.курс/i,
+  /обучающий курс/i,
+  /курс по /i,
+  /заработ/i,
+  /инвестиц/i,
+  /криптовалют/i,
+  /ставки на спорт/i,
+  /казино/i,
 ]
+
+const MIN_PRICE_RUB = 30
+const MIN_IMAGE_BYTES = 15_000
 
 export async function runPlatiImport(platiId: number): Promise<PlatiImportResult> {
   const t0 = Date.now()
@@ -60,13 +89,31 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
     if (!raw.name || raw.name.length < 3) return { status: "skipped", reason: "Слишком короткое название", duration: dur() }
     if (desc.length < 3) return { status: "skipped", reason: "Нет описания", duration: dur() }
     if (raw.price <= 0) return { status: "skipped", reason: "Нет цены", duration: dur() }
+    if (raw.price < MIN_PRICE_RUB) return { status: "skipped", reason: `Цена слишком низкая (${raw.price} ₽)`, duration: dur() }
     if (!raw.imageUrl) return { status: "skipped", reason: "Нет изображения", duration: dur() }
+
     for (const re of JUNK_RE) {
-      if (re.test(raw.name)) return { status: "skipped", reason: "Служебная страница Plati", duration: dur() }
+      if (re.test(raw.name)) return { status: "skipped", reason: "Мусорный товар (название)", duration: dur() }
+    }
+
+    // Category check — only accept known gaming categories
+    const catSlug = raw.category?.toLowerCase().replace(/\s+/g, "-") ?? "keys"
+    if (!ALLOWED_CATEGORIES.has(catSlug)) {
+      return { status: "skipped", reason: `Неизвестная категория: ${catSlug}`, duration: dur() }
     }
 
     const localImg = await downloadImage(raw.imageUrl).catch(() => null)
     if (!localImg) return { status: "skipped", reason: "Не удалось скачать изображение", duration: dur() }
+
+    // Reject placeholder/tiny images by file size
+    try {
+      const absPath = path.join(process.cwd(), "public", localImg)
+      const stat = fs.statSync(absPath)
+      if (stat.size < MIN_IMAGE_BYTES) {
+        fs.unlinkSync(absPath)
+        return { status: "skipped", reason: `Изображение слишком мало (${stat.size} байт — заглушка)`, duration: dur() }
+      }
+    } catch { /* ignore */ }
 
     try {
       const meta = await sharp(path.join(process.cwd(), "public", localImg)).metadata()
@@ -79,7 +126,6 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
       ? await downloadImages(raw.galleryImages.slice(0, 5)).catch(() => [])
       : []
 
-    const catSlug = raw.category?.toLowerCase().replace(/\s+/g, "-") ?? "keys"
     const catName = CATEGORY_MAP[catSlug] ?? raw.category ?? "Ключи и активации"
     let categoryId: string | undefined
     try {
@@ -111,7 +157,7 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
         videoUrl: raw.videoUrl ?? null,
         inStock: raw.inStock,
         quantity: raw.quantity,
-        isActive: raw.inStock && price > 0,
+        isActive: raw.inStock && price > 50,
         platiUrl: raw.url,
         importSource: "plati",
         categoryId: categoryId ?? undefined,
@@ -132,7 +178,7 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
         videoUrl: raw.videoUrl ?? null,
         inStock: raw.inStock,
         quantity: raw.quantity,
-        isActive: raw.inStock && price > 0,
+        isActive: raw.inStock && price > 50,
         platiUrl: raw.url,
         importSource: "plati",
         categoryId: categoryId ?? undefined,
