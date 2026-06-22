@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const { stdout, stderr } = await execAsync(`bash ${scriptPath}`, { timeout: 120_000 })
-    const output = [stdout, stderr].filter(Boolean).join("\n").trim()
+    const rawOut = [stdout, stderr].filter(Boolean).join("\n").trim()
+    const output = rawOut.split("\n").filter(l => !/password|secret|token|key|dsn|url.*:\/\//i.test(l)).join("\n")
     return NextResponse.json({ ok: true, output })
   } catch (err) {
     const e = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number }
