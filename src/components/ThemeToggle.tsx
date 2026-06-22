@@ -11,7 +11,7 @@ export function ThemeToggle() {
       aria-label={isDark ? "Переключить на светлую тему" : "Переключить на тёмную тему"}
       title={isDark ? "Светлая тема" : "Тёмная тема"}
       className={`
-        relative w-9 h-9 rounded-xl flex items-center justify-center
+        relative w-10 h-10 rounded-xl flex items-center justify-center
         transition-all duration-200
         ${isDark
           ? "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-yellow-400"
