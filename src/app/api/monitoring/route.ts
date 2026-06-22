@@ -7,11 +7,7 @@ import { importQueue } from "../../../lib/queue"
 export async function GET(req: NextRequest) {
   // Доступ только администраторам или по секретному ключу (для мониторинг-систем)
   const session = await getServerSession(authOptions)
-  const isAdmin = session?.user?.role === "admin"
-  const secret = process.env.ADMIN_SECRET
-  const hasSecret = secret && req.headers.get("x-admin-secret") === secret
-
-  if (!isAdmin && !hasSecret) {
+  if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
