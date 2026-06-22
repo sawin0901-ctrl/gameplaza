@@ -9,12 +9,7 @@ const MAX_PER_DAY = 200
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  const isAdmin = session && session.user.role === "admin"
-  const hasSecret =
-    process.env.ADMIN_SECRET &&
-    req.headers.get("x-admin-secret") === process.env.ADMIN_SECRET
-
-  if (!isAdmin && !hasSecret) {
+  if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
