@@ -74,28 +74,34 @@ export default async function HomePage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden bg-[#07070f]">
-        {/* Background: dark space + glowing orbs + dot grid + SVG geometry */}
+      <section className="relative overflow-hidden">
+        {/* Hero background: light purple gradient for light mode, dark for dark mode */}
         <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0018] via-[#080812] to-[#07070f]" />
-          <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-purple-600/20 blur-[140px]" />
-          <div className="absolute -top-10 -left-32 w-[500px] h-[400px] rounded-full bg-indigo-800/15 blur-[100px]" />
-          <div className="absolute -top-10 -right-32 w-[500px] h-[400px] rounded-full bg-violet-900/15 blur-[100px]" />
+          {/* Base gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-50/70 via-white to-purple-50/50 dark:from-[#0a0018] dark:via-[#080812] dark:to-[#07070f]" />
+          {/* Center glow */}
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-purple-200/50 blur-[130px] dark:bg-purple-600/20" />
+          {/* Left accent */}
+          <div className="absolute -top-10 -left-32 w-[500px] h-[400px] rounded-full bg-violet-100/60 blur-[100px] dark:bg-indigo-800/15" />
+          {/* Right accent */}
+          <div className="absolute -top-10 -right-32 w-[500px] h-[400px] rounded-full bg-indigo-100/50 blur-[100px] dark:bg-violet-900/15" />
+          {/* Dot grid */}
           <div className="absolute inset-0"
-            style={{backgroundImage: "radial-gradient(circle, rgba(167,139,250,0.18) 1px, transparent 1px)", backgroundSize: "32px 32px"}} />
+            style={{backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.12) 1px, transparent 1px)", backgroundSize: "32px 32px"}} />
+          {/* SVG circles */}
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1440 480" preserveAspectRatio="xMidYMid slice" fill="none">
-            <circle cx="-60" cy="-60" r="300" stroke="rgba(139,92,246,0.09)" strokeWidth="1"/>
-            <circle cx="-60" cy="-60" r="430" stroke="rgba(139,92,246,0.05)" strokeWidth="1"/>
-            <circle cx="1500" cy="540" r="340" stroke="rgba(99,102,241,0.07)" strokeWidth="1"/>
-            <circle cx="1500" cy="540" r="470" stroke="rgba(99,102,241,0.04)" strokeWidth="1"/>
-            <circle cx="720" cy="240" r="200" stroke="rgba(167,139,250,0.05)" strokeWidth="1"/>
-            <circle cx="720" cy="240" r="310" stroke="rgba(167,139,250,0.03)" strokeWidth="1"/>
-            <line x1="0" y1="1" x2="1440" y2="1" stroke="rgba(139,92,246,0.1)" strokeWidth="1"/>
-            <line x1="0" y1="479" x2="1440" y2="479" stroke="rgba(139,92,246,0.07)" strokeWidth="1"/>
+            <circle cx="-60" cy="-60" r="300" stroke="rgba(139,92,246,0.07)" strokeWidth="1"/>
+            <circle cx="-60" cy="-60" r="430" stroke="rgba(139,92,246,0.04)" strokeWidth="1"/>
+            <circle cx="1500" cy="540" r="340" stroke="rgba(99,102,241,0.06)" strokeWidth="1"/>
+            <circle cx="1500" cy="540" r="470" stroke="rgba(99,102,241,0.03)" strokeWidth="1"/>
+            <circle cx="720" cy="240" r="200" stroke="rgba(139,92,246,0.05)" strokeWidth="1"/>
+            <line x1="0" y1="1" x2="1440" y2="1" stroke="rgba(139,92,246,0.08)" strokeWidth="1"/>
+            <line x1="0" y1="479" x2="1440" y2="479" stroke="rgba(139,92,246,0.05)" strokeWidth="1"/>
           </svg>
-          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#07070f] to-transparent" />
+          {/* Bottom fade */}
+          <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-white to-transparent dark:from-[#07070f]" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
+                <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-brand/10 border border-brand/20 rounded-full px-4 py-1.5 mb-6">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
@@ -103,7 +109,7 @@ export default async function HomePage() {
                 {totalProducts > 0 ? `${totalProducts.toLocaleString("ru-RU")} товаров в наличии` : "Маркетплейс цифровых товаров"}
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] mb-5">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-[1.1] mb-5">
               Магазин{" "}
               <span className="text-brand">цифровых товаров</span>
             </h1>
