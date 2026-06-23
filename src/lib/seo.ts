@@ -3,6 +3,7 @@ import sanitizeHtml from "sanitize-html"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 const SITE_NAME = "GamePlaza"
+const DEFAULT_OG_IMAGE = SITE_URL + "/api/og?title=GamePlaza%20%E2%80%94%20%D1%86%D0%B8%D1%84%D1%80%D0%BE%D0%B2%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B"
 
 const TRANSLIT: Record<string, string> = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
@@ -20,6 +21,10 @@ function stripHtml(html: string): string {
   return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
 }
 
+function cleanText(html: string): string {
+  return stripHtml(html).replace(/\s+/g, " ").trim()
+}
+
 export function buildProductMetadata(product: {
   name: string
   description: string
@@ -29,12 +34,12 @@ export function buildProductMetadata(product: {
 }): Metadata {
   const title = `${product.name} — купить дешево | ${SITE_NAME}`
   const description = (
-    stripHtml(product.description) ||
-    `Купить ${product.name}. Моментальная доставка, безопасная оплата и поддержка покупателей.`
+    cleanText(product.description) ||
+    `Купить ${product.name} за ${product.price} ₽. Мгновенная доставка, безопасная оплата, гарантия качества.`
   ).slice(0, 160)
   const url = `${SITE_URL}/product/${product.slug}`
   const ogImage = SITE_URL + "/api/og?title=" + encodeURIComponent(product.name) + "&price=" + product.price + (product.imageUrl ? "&img=" + encodeURIComponent(product.imageUrl) : "")
-  const images = [{ url: ogImage, width: 1200, height: 630 }, ...(product.imageUrl ? [{ url: product.imageUrl }] : [])]
+  const images = [{ url: ogImage, width: 1200, height: 630 }]
 
   return {
     title: { absolute: title },
@@ -52,7 +57,7 @@ export function buildProductMetadata(product: {
       card: "summary_large_image",
       title: { absolute: title },
       description,
-      images: product.imageUrl ? [product.imageUrl] : [],
+      images: [ogImage],
     },
     alternates: { canonical: url },
   }
@@ -80,9 +85,9 @@ export function buildCatalogMetadata(opts: {
   } else if (isSearch) {
     title = `Поиск: ${query} | ${SITE_NAME}`
     description = `Результаты поиска «${query}». Цифровые товары: игры, ключи, подписки по выгодным ценам.`
-    canonical = `${SITE_URL}/catalog?q=${encodeURIComponent(query)}`
+    canonical = `${SITE_URL}/catalog`
   } else if (categoryName && categorySlug) {
-    title = `${categoryName} | ${SITE_NAME}`
+    title = `Купить ${categoryName} — цифровые товары | ${SITE_NAME}`
     description = `Купить товары из категории ${categoryName} по выгодным ценам. Моментальная доставка через Digiseller.`
     canonical = `${SITE_URL}/catalog/${categorySlug}`
   } else {
@@ -98,7 +103,14 @@ export function buildCatalogMetadata(opts: {
     description,
     robots: { index: !isSearch, follow: true },
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, siteName: SITE_NAME, type: "website" },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: SITE_NAME,
+      type: "website",
+      images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630 }],
+    },
     twitter: { card: "summary_large_image", title, description },
   }
 }
@@ -126,4 +138,4 @@ export function generateSlug(name: string, id: number): string {
   return `${base}-${id}`
 }
 
-export { stripHtml }
+export { stripHtml, cleanText }
