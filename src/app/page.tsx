@@ -74,7 +74,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden bg-[#07070f]">
         <div className="hero-overlay absolute inset-0 bg-gradient-to-br from-brand/25 via-[#0a0a0f] to-purple-950/20" />
         <div className="hero-blob absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand/8 rounded-full blur-3xl pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
