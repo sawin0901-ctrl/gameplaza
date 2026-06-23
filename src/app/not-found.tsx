@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: { absolute: "Страница не найдена | GamePlaza" },
+  description: "Запрошенная страница не найдена. Возможно, товар был удалён или вы перешли по устаревшей ссылке.",
+  robots: { index: false, follow: false },
 }
 
 const POPULAR = [
