@@ -500,59 +500,70 @@ export async function scrapePlatiReviews(productId: number, limit = 8): Promise<
     const $ = cheerio.load(data)
     const reviews: PlatiReview[] = []
 
-    // Plati.market review selectors (they change layout periodically)
-    const containerSelectors = [
-      ".lot-review-item",
-      ".review-item",
-      ".reviews-item",
-      "[itemprop='review']",
-      ".goods-review",
-      ".item-review",
-      ".feedback-item",
-      ".review",
-    ]
-
-    for (const sel of containerSelectors) {
-      const items = $(sel)
-      if (items.length === 0) continue
-
-      items.each((_, el) => {
+    // ── Method A: current Plati layout (2025+) ─────────────────────────────
+    // Reviews are in #ResponsesBlock li, text in [data-tr-type="review"]
+    const trReviews = $('[data-tr-type="review"]')
+    if (trReviews.length > 0) {
+      trReviews.each((_, el) => {
         if (reviews.length >= limit) return false
-
-        // Text — try several inner selectors
-        const text = (
-          $(el).find(".review-text, .review__text, .feedback-text, .comment, [itemprop='reviewBody'], .lot-review-item__text").first().text().trim() ||
-          $(el).find("p").first().text().trim()
-        ).replace(/\s+/g, " ").trim()
-
+        const text = $(el).text().replace(/\s+/g, " ").trim()
         if (!text || text.length < 5) return
 
-        // Rating: thumbs up (👍) = positive = 5 stars; thumbs down (👎) = negative = 2 stars
-        const isNeg =
-          $(el).find(".icon--thumb-down, .thumb-down, .dislike, [class*='negative'], [class*='thumbs-down']").length > 0 ||
-          $(el).hasClass("negative") || $(el).hasClass("review--negative") || $(el).hasClass("bad")
+        const li = $(el).closest("li")
+
+        // Rating: look for thumbs-down indicator in the li
+        const isNeg = li.find('[class*="thumb-down"],[class*="thumbDown"],[class*="dislike"]').length > 0
         const rating = isNeg ? 2 : 5
 
-        // Date: try datetime attr first, then text in DD.MM.YYYY or YYYY-MM-DD
-        const timeEl = $(el).find("time, .date, .review-date, .feedback-date, [class*='date']").first()
-        const dateAttr = timeEl.attr("datetime") ?? timeEl.attr("data-date") ?? ""
-        const dateText = dateAttr || timeEl.text().trim()
+        // Date: find any element inside li that looks like DD.MM.YYYY
         let date: Date | undefined
-
-        if (dateText) {
-          const iso = new Date(dateText)
-          if (!isNaN(iso.getTime())) {
-            date = iso
-          } else {
-            const m = dateText.match(/(\d{2})\.(\d{2})\.(\d{4})/)
-            if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
-          }
-        }
+        li.find("*").each((_, node) => {
+          if (date) return false
+          const txt = $(node).clone().children().remove().end().text().trim()
+          const m = txt.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+          if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
+        })
 
         reviews.push({ text, rating, date })
       })
+    }
 
-      if (reviews.length > 0) break
+    // ── Method B: legacy Plati selectors (older layout) ─────────────────────
+    if (reviews.length === 0) {
+      const containerSelectors = [
+        ".lot-review-item", ".review-item", ".reviews-item",
+        "[itemprop='review']", ".goods-review", ".item-review",
+        ".feedback-item",
+      ]
+      for (const sel of containerSelectors) {
+        const items = $(sel)
+        if (items.length === 0) continue
+        items.each((_, el) => {
+          if (reviews.length >= limit) return false
+          const text = (
+            $(el).find(".review-text,.review__text,.feedback-text,.comment,[itemprop='reviewBody'],.lot-review-item__text").first().text().trim() ||
+            $(el).find("p").first().text().trim()
+          ).replace(/\s+/g, " ").trim()
+          if (!text || text.length < 5) return
+          const isNeg =
+            $(el).find(".icon--thumb-down,.thumb-down,.dislike").length > 0 ||
+            $(el).hasClass("negative") || $(el).hasClass("bad")
+          const rating = isNeg ? 2 : 5
+          const timeEl = $(el).find("time,.date,.review-date,[class*='date']").first()
+          const dateText = timeEl.attr("datetime") ?? timeEl.attr("data-date") ?? timeEl.text().trim()
+          let date: Date | undefined
+          if (dateText) {
+            const iso = new Date(dateText)
+            if (!isNaN(iso.getTime())) date = iso
+            else {
+              const m = dateText.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+              if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
+            }
+          }
+          reviews.push({ text, rating, date })
+        })
+        if (reviews.length > 0) break
+      }
     }
 
     // Fallback: try JSON-LD Review entries
