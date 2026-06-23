@@ -18,6 +18,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   openGraph: { siteName: "GamePlaza", locale: "ru_RU", type: "website" },
   twitter: { card: "summary_large_image" },
+  icons: {
+    icon: [
+      { url: "/icon", sizes: "32x32", type: "image/png" },
+      { url: "/icon", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/icon",
+  },
   other: {
     "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
     ...(process.env.YANDEX_VERIFICATION ? { "yandex-verification": process.env.YANDEX_VERIFICATION } : {}),
