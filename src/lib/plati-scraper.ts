@@ -265,7 +265,7 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
         const metaDesc = $("meta[name='description']").first().attr("content") ?? ""
         const ogDesc2  = $("meta[property='og:description']").first().attr("content") ?? ""
         const descText = metaDesc + " " + ogDesc2
-        const descMatch = descText.match(/(\d[\d\s]{1,6})\s*(?:₽|руб)/i)
+        const descMatch = descText.match(/(\d[\d\s]{1,6})\s*(?:₽|руб(?:лей|ля)?|р\.)/i)
         if (descMatch) {
           const p = parseFloat(descMatch[1].replace(/\s/g, ""))
           if (p >= 100 && p < 100000) rubPrice = Math.ceil(p)
@@ -299,8 +299,8 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       // Method 3: visible price in page text (₽ symbol) — skip variant modifiers (+N ₽)
       if (!rubPrice) {
         const bodyText = $("body").text()
-        const cleanText = bodyText.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?)/gi, "")
-        const matches = [...cleanText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
+        const cleanText = bodyText.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?|р\.)/gi, "")
+        const matches = [...cleanText.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб(?:лей|ля)?|р\.)/g)]
         const candidates = matches
           .map(m => parseFloat(m[1].replace(/\s/g, "")))
           .filter(p => p >= 100 && p < 50000)
@@ -321,8 +321,8 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     // Last resort: scan page body when price is zero or suspiciously low (USD mistagged as RUB)
     if (price < 30) {
       const bodyText2 = $("body").text()
-      const cleanBody = bodyText2.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?)/gi, "")
-      const bodyMatches = [...cleanBody.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб)/g)]
+      const cleanBody = bodyText2.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?|р\.)/gi, "")
+      const bodyMatches = [...cleanBody.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб(?:лей|ля)?|р\.)/g)]
       const bodyCandidates = bodyMatches.map(m => parseFloat(m[1].replace(/\s/g, ""))).filter(p => p >= 30 && p < 100000)
       if (bodyCandidates.length > 0) {
         price = Math.ceil(bodyCandidates[0])
