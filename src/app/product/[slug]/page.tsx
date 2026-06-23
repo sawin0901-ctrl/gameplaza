@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : null
 
-  const descriptionText = (stripHtml(product.description) || product.name).slice(0, 300)
+  const descriptionText = (stripHtml(product.description).replace(/\s+/g, " ").trim() || product.name).slice(0, 300)
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
     name: product.name,
     url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/product/${product.slug}`,
     description: descriptionText,
-    image: product.imageUrl ?? undefined,
+    image: product.imageUrl ? (product.imageUrl.startsWith("/") ? (process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site") + product.imageUrl : product.imageUrl) : undefined,
     aggregateRating: avgRating
       ? {
           "@type": "AggregateRating",
