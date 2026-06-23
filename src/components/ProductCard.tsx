@@ -113,7 +113,10 @@ export default function ProductCard({
               <span className="text-[var(--text-3)] text-xs line-through">{oldPrice.toLocaleString("ru-RU")} ₽</span>
             )}
             {price > 50 ? (
-              <span className="text-[var(--text)] font-bold text-lg leading-none">{price.toLocaleString("ru-RU")} ₽</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-[var(--text)] font-bold text-lg leading-none">{price.toLocaleString("ru-RU")} ₽</span>
+              </div>
             ) : (
               <span className="text-[var(--text-3)] text-sm leading-none">Цена уточняется</span>
             )}
