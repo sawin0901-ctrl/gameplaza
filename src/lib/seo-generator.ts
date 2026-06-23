@@ -7,25 +7,17 @@ export interface SeoData {
 
 function buildPrompt(product: { name: string; description?: string | null; price: number; category?: string | null }): string {
   const raw = product.description ?? ""
-  const descText = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 600)
-  const catStr = product.category ? `, категория: ${product.category}` : ""
-  return `Ты SEO-копирайтер для российского цифрового магазина GamePlaza.
-Товар: "${product.name}"${catStr}, цена: ${product.price} руб.
-Краткое описание: ${descText || "цифровой продукт"}
-
-Верни ТОЛЬКО JSON (без пояснений, без markdown):
-{
-  "metaTitle": "title 50-60 символов, включи название и слово купить",
-  "metaDescription": "мета-описание 140-160 символов с ключевыми словами и ценой",
-  "metaKeywords": "5-8 ключевых слов через запятую",
-  "shortDesc": "короткое описание 1-2 предложения для карточки товара"
-}`
+  const descText = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 400)
+  const catStr = product.category ? ", категория: " + product.category : ""
+  return "Ты SEO-копирайтер для российского цифрового магазина GamePlaza.\nТовар: \"" + product.name + "\"" + catStr + ", цена: " + product.price + " руб.\nОписание: " + (descText || "цифровой продукт") + "\n\nВерни ТОЛЬКО JSON без пояснений:\n{\"metaTitle\":\"50-60 символов, включи название и купить\",\"metaDescription\":\"140-160 символов с ключевыми словами\",\"metaKeywords\":\"5-8 слов через запятую\",\"shortDesc\":\"1-2 предложения\"}"
 }
 
 function parseJson(text: string): SeoData | null {
   try {
     const match = text.match(/\{[\s\S]+\}/)
-    return match ? JSON.parse(match[0]) as SeoData : null
+    if (!match) return null
+    const d = JSON.parse(match[0]) as SeoData
+    return d?.metaTitle && d?.metaDescription ? d : null
   } catch { return null }
 }
 
@@ -36,8 +28,8 @@ async function callAnthropic(prompt: string): Promise<string | null> {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      signal: AbortSignal.timeout(15000),
-      body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 512, messages: [{ role: "user", content: prompt }] }),
+      signal: AbortSignal.timeout(6000),
+      body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 400, messages: [{ role: "user", content: prompt }] }),
     })
     if (!res.ok) return null
     const d = await res.json()
@@ -52,8 +44,8 @@ async function callDeepSeek(prompt: string): Promise<string | null> {
     const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "content-type": "application/json" },
-      signal: AbortSignal.timeout(15000),
-      body: JSON.stringify({ model: "deepseek-chat", max_tokens: 512, messages: [{ role: "user", content: prompt }] }),
+      signal: AbortSignal.timeout(6000),
+      body: JSON.stringify({ model: "deepseek-chat", max_tokens: 400, messages: [{ role: "user", content: prompt }] }),
     })
     if (!res.ok) return null
     const d = await res.json()
@@ -70,24 +62,17 @@ async function callGemini(prompt: string): Promise<string | null> {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(6000),
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 512 },
+          generationConfig: { temperature: 0.6, maxOutputTokens: 400 },
         }),
       }
     )
-    if (!res.ok) {
-      const err = await res.text().catch(() => "")
-      console.error("[SEO Gemini]", res.status, err.slice(0, 200))
-      return null
-    }
+    if (!res.ok) { console.error("[SEO Gemini]", res.status); return null }
     const d = await res.json()
     return d.candidates?.[0]?.content?.parts?.[0]?.text ?? null
-  } catch (e) {
-    console.error("[SEO Gemini error]", e)
-    return null
-  }
+  } catch (e) { console.error("[SEO Gemini]", e); return null }
 }
 
 export async function generateSeoForProduct(product: {
@@ -99,7 +84,7 @@ export async function generateSeoForProduct(product: {
       const text = await caller(prompt)
       if (!text) continue
       const seo = parseJson(text)
-      if (seo?.metaTitle && seo?.metaDescription) return seo
+      if (seo) return seo
     } catch { continue }
   }
   return null
