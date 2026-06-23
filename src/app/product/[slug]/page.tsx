@@ -224,19 +224,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 {product.name}
               </h1>
 
-              {product.price > 50 && (
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span className="text-2xl font-bold text-white">
-                    {product.price.toLocaleString("ru-RU")} ₽
-                  </span>
-                  {product.oldPrice && product.oldPrice > product.price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      {product.oldPrice.toLocaleString("ru-RU")} ₽
-                    </span>
-                  )}
-                </div>
-              )}
-
               {reviews.length > 0 && avgRating && (
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex text-yellow-400 text-sm leading-none">
