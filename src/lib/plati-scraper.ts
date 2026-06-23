@@ -384,12 +384,17 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     const videoSrc = $("iframe[src*='youtube'], iframe[src*='youtu.be']").first().attr("src")
     const videoUrl = videoSrc ?? undefined
 
-    // Stock
-    const availHref = $("[itemprop='availability']").first().attr("href") ?? ""
-    const stockText = $(".goods-status, .stock-status, .availability").first().text().toLowerCase()
-    const inStock = availHref.includes("InStock") ||
+    // Stock — check availability from schema attribute (href or content) and visible text
+    const availEl = $("[itemprop='availability']").first()
+    const availHref = (availEl.attr("href") ?? availEl.attr("content") ?? "").toLowerCase()
+    const stockText = $(".goods-status, .stock-status, .availability, .goods-availability").first().text().toLowerCase()
+    const isOutOfStock = availHref.includes("outofstock") ||
+      stockText.includes("нет") || stockText.includes("отсутств") || stockText.includes("unavailable")
+    const inStock = !isOutOfStock && (
+      availHref.includes("instock") ||
       $("[itemscope] [itemprop='availability'][href*='InStock']").length > 0 ||
-      (!stockText.includes("нет") && !stockText.includes("отсутств") && !stockText.includes("unavailable"))
+      availHref === "" && !stockText
+    )
 
     // Rating
     const ratingVal = $("[itemprop='ratingValue']").first().attr("content") ?? $("[itemprop='ratingValue']").first().text()
