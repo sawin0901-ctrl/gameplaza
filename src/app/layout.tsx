@@ -1,14 +1,11 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
 import DigisellerScript from "../components/DigisellerScript"
 import Providers from "../components/Providers"
 import { ThemeProvider } from "../components/ThemeProvider"
 import { Suspense } from "react"
 import AnalyticsTracker from "../components/AnalyticsTracker"
-import { CurrencyTicker } from "../components/CurrencyTicker"
-import ScrollToTop from "../components/ScrollToTop"
+import SiteShell from "../components/SiteShell"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 
@@ -23,9 +20,7 @@ export const metadata: Metadata = {
       { url: "/icon", sizes: "32x32", type: "image/png" },
       { url: "/icon", sizes: "16x16", type: "image/png" },
     ],
-    apple: [
-      { url: "/apple-icon", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
     shortcut: "/icon",
   },
   other: {
@@ -83,13 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AnalyticsTracker />
             </Suspense>
             <DigisellerScript />
-            <CurrencyTicker />
-        <Header />
-            <main id="main-content" className="min-h-screen">
+            <SiteShell>
               {children}
-            </main>
-            <Footer />
-            <ScrollToTop />
+            </SiteShell>
           </Providers>
         </ThemeProvider>
       </body>
