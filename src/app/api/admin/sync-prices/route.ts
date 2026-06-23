@@ -1,69 +1,93 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../../../../lib/auth"
 import { prisma } from "../../../../lib/prisma"
-import { getDigisellerProducts, getProductPublicPrice } from "../../../../lib/digiseller"
+import { getDigisellerProducts } from "../../../../lib/digiseller"
 import { getImportSettings, applyMarkup } from "../../../../lib/import-settings"
 
 export const dynamic = "force-dynamic"
 
-export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
+export async function POST() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const settings = await getImportSettings()
 
-    // Step 1: Get all seller's own products from Digiseller (most reliable source)
+    // Load all pages from Digiseller seller API
     const sellerPriceMap = new Map<number, number>()
+    let sellerError: string | null = null
     try {
       let page = 1
-      while (true) {
+      let totalPages = 1
+      do {
         const result = await getDigisellerProducts(page, 200)
         for (const p of result.rows) {
           if (p.price_rub > 0) sellerPriceMap.set(p.id_goods, p.price_rub)
         }
-        if (page >= result.pages) break
+        totalPages = result.pages
         page++
-      }
-    } catch {}
+      } while (page <= totalPages)
+    } catch (err) {
+      sellerError = err instanceof Error ? err.message : "Ошибка Digiseller API"
+    }
 
-    // Step 2: Get all active products from DB
+    // If seller API failed entirely — return error, do not fallback to 400 individual calls
+    if (sellerPriceMap.size === 0) {
+      return NextResponse.json({
+        updated: 0, skipped: 0, total: 0,
+        sellerProductsFound: 0,
+        error: sellerError ?? "Digiseller не вернул товары. Проверьте DIGISELLER_SELLER_ID и DIGISELLER_API_KEY в .env",
+      }, { status: 422 })
+    }
+
+    // Get all active products whose digiId is known in seller's list
     const dbProducts = await prisma.product.findMany({
-      where: { isActive: true },
-      select: { id: true, digisellerProductId: true, price: true, name: true },
+      where: { isActive: true, digisellerProductId: { in: Array.from(sellerPriceMap.keys()) } },
+      select: { id: true, digisellerProductId: true, price: true },
     })
 
-    let updated = 0, skipped = 0, fromPublicApi = 0
+    let updated = 0
+    let skipped = 0
+    const updates: { id: string; price: number }[] = []
 
     for (const product of dbProducts) {
-      const digiId = product.digisellerProductId
-      let rawPrice = sellerPriceMap.get(digiId) ?? 0
-
-      // Fallback: use public Digiseller API for products not in seller's list
-      if (!rawPrice) {
-        rawPrice = await getProductPublicPrice(digiId)
-        if (rawPrice > 0) fromPublicApi++
-      }
-
-      if (!rawPrice || rawPrice <= 0) { skipped++; continue }
+      const rawPrice = sellerPriceMap.get(product.digisellerProductId) ?? 0
+      if (!rawPrice) { skipped++; continue }
 
       const newPrice = applyMarkup(rawPrice, settings)
-      if (Math.abs(newPrice - product.price) < 0.01) { skipped++; continue }
+      if (Math.abs(newPrice - Number(product.price)) < 0.01) { skipped++; continue }
 
-      await prisma.product.update({
-        where: { id: product.id },
-        data: { price: newPrice, updatedAt: new Date() },
-      })
-      updated++
+      updates.push({ id: product.id, price: newPrice })
+    }
+
+    // Batch update in parallel (max 20 concurrent)
+    const CHUNK = 20
+    for (let i = 0; i < updates.length; i += CHUNK) {
+      const chunk = updates.slice(i, i + CHUNK)
+      await Promise.all(
+        chunk.map(u =>
+          prisma.product.update({ where: { id: u.id }, data: { price: u.price, updatedAt: new Date() } })
+            .then(() => { updated++ })
+            .catch(() => { skipped++ })
+        )
+      )
     }
 
     return NextResponse.json({
-      updated, skipped, fromPublicApi,
+      updated,
+      skipped,
       total: dbProducts.length,
       sellerProductsFound: sellerPriceMap.size,
+      notInSeller: (await prisma.product.count({ where: { isActive: true } })) - dbProducts.length,
     })
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Ошибка синхронизации" }, { status: 500 })
+    console.error("[sync-prices]", err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Ошибка синхронизации" },
+      { status: 500 }
+    )
   }
 }
