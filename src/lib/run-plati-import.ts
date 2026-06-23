@@ -1,4 +1,4 @@
-import { scrapePlatiProduct } from "./plati-scraper"
+import { scrapePlatiProduct, scrapePlatiReviews } from "./plati-scraper"
 import { downloadImage, downloadImages } from "./image-downloader"
 import { getImportSettings, applyMarkup } from "./import-settings"
 import { generateSlug } from "./seo"
