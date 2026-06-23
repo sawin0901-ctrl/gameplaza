@@ -3,6 +3,42 @@ import { useEffect, useState } from "react"
 
 interface Review { id: string; rating: number; text: string; isApproved: boolean; createdAt: string; user: { name?: string; email: string }; product: { name: string; slug: string } }
 
+function SyncPlatiBtn() {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  async function sync() {
+    if (!confirm("Импортировать отзывы с Plati.Market для всех товаров? Это займёт несколько минут.")) return
+    setLoading(true); setResult(null)
+    let offset = 0; let totalImported = 0; let batch = 20
+    try {
+      while (true) {
+        const r = await fetch("/api/admin/sync-plati-reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ batchSize: batch, offset, maxReviews: 8 }),
+        })
+        const d = await r.json()
+        totalImported += d.imported ?? 0
+        if (d.remaining <= 0 || d.processed === 0) break
+        offset = d.nextOffset
+      }
+      setResult(`Готово! Импортировано ${totalImported} отзывов`)
+    } catch { setResult("Ошибка синхронизации") }
+    setLoading(false)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={sync} disabled={loading}
+        className="px-3 py-1.5 rounded-lg text-sm bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 flex items-center gap-1.5">
+        {loading ? <span className="animate-spin">⟳</span> : "⬇"} Импорт отзывов Plati
+      </button>
+      {result && <span className="text-xs text-green-400">{result}</span>}
+    </div>
+  )
+}
+
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [filter, setFilter] = useState("all")
@@ -36,6 +72,7 @@ export default function ReviewsPage() {
           <p className="text-[var(--text-3)] text-sm mt-1">Всего: {total}</p>
         </div>
         <div className="flex gap-2">
+          <SyncPlatiBtn />
           {(["all", "pending", "approved"] as const).map(f => (
             <button key={f} onClick={() => { setFilter(f); load(f) }}
               className={`px-3 py-1.5 rounded-lg text-sm ${filter === f ? "bg-brand text-white" : "border border-[var(--border)] text-[var(--text-2)]"}`}>
