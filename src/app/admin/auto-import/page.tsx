@@ -79,6 +79,7 @@ export default function AutoImportPage() {
   const [startId, setStartId] = useState("")
   const [endId, setEndId] = useState("")
   const [err, setErr] = useState("")
+  const [delay, setDelay] = useState("10")
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchStatus = async () => {
@@ -109,8 +110,8 @@ export default function AutoImportPage() {
   }
 
   const handleStart = () => tab === "range"
-    ? act("/api/admin/auto-import/start", { mode: "range", startId, endId })
-    : act("/api/admin/auto-import/start", { mode: "list", ids: idsText })
+    ? act("/api/admin/auto-import/start", { mode: "range", startId, endId, delaySeconds: delay })
+    : act("/api/admin/auto-import/start", { mode: "list", ids: idsText, delaySeconds: delay })
 
   const isActive = session && (session.status === "running" || session.status === "paused")
   const pct = session ? calcPct(session) : 0
@@ -120,7 +121,7 @@ export default function AutoImportPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-[var(--text)]">Автоматический импорт товаров</h1>
-        <p className="text-[var(--text-3)] text-sm mt-1">1 товар в минуту · Состояние в БД · Продолжается после перезапуска</p>
+        <p className="text-[var(--text-3)] text-sm mt-1">Настраиваемая задержка между товарами · Состояние в БД · Продолжается после перезапуска</p>
       </div>
 
       {loading ? (
@@ -140,6 +141,7 @@ export default function AutoImportPage() {
                       ? `Диапазон: ${session.startId.toLocaleString()} — ${session.endId.toLocaleString()}`
                       : `Список: ${session.totalCount.toLocaleString()} товаров`}
                   </span>
+                  <span className="text-[var(--text-3)] text-sm">· {session.delaySeconds}с между товарами</span>
                 </div>
                 <div className="flex gap-2">
                   {session.status === "running" && (
@@ -242,6 +244,37 @@ export default function AutoImportPage() {
                 </div>
               )}
 
+              {/* Delay setting */}
+              <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-4 space-y-2">
+                <label className="text-sm font-medium text-[var(--text)]">Задержка между товарами</label>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {[["5с", "5"], ["10с", "10"], ["30с", "30"], ["1м", "60"], ["2м", "120"], ["5м", "300"]].map(([label, val]) => (
+                    <button key={val} onClick={() => setDelay(val)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                        delay === val
+                          ? "bg-brand text-white border-brand"
+                          : "bg-[var(--bg-secondary)] text-[var(--text-2)] border-[var(--border)] hover:border-brand"
+                      }`}>
+                      {label}
+                    </button>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min={5} max={3600} value={delay}
+                      onChange={e => setDelay(e.target.value)}
+                      className="w-20 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-sm text-[var(--text)] focus:border-brand focus:outline-none text-center"
+                    />
+                    <span className="text-xs text-[var(--text-3)]">сек</span>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--text-3)]">
+                  {+delay < 60
+                    ? `~${Math.floor(240 / +delay)} товаров за вызов cron`
+                    : `~${Math.max(1, Math.floor(240 / +delay))} товар за вызов cron`}
+                  {" · "}скорость: {+delay <= 1 ? "макс" : `1 товар каждые ${+delay}с`}
+                </p>
+              </div>
+
               {err && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-500 text-sm">{err}</div>
               )}
@@ -252,7 +285,7 @@ export default function AutoImportPage() {
               </button>
 
               <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-4 text-sm text-[var(--text-3)] space-y-1">
-                <p>• Импорт работает в фоне — 1 товар в минуту через cron</p>
+                <p>• Импорт работает в фоне через cron (вызывается каждую минуту)</p>
                 <p>• Прогресс сохраняется в БД и переживает любые перезапуски</p>
                 <p>• Товары, уже импортированные ранее, автоматически пропускаются</p>
                 <p>• Ошибки логируются и импорт продолжается со следующего товара</p>
