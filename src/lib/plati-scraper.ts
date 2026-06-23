@@ -257,7 +257,7 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       $("meta[property='product:price:currency']").first().attr("content") ?? "RUB"
 
     // If price is in USD — find RUB price from page
-    if (price > 0 && (currency === "USD" || (currency !== "RUB" && price < 200) || price < 30)) {
+    if (price > 0 && (currency === "USD" || (currency !== "RUB" && price < 200) || price < 100)) {
       let rubPrice = 0
 
       // Method 0: meta description — Plati writes "и это будет стоить N₽" in <head>
@@ -360,7 +360,7 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       } catch {}
     }
     // Last resort: scan page body when price is zero or suspiciously low (USD mistagged as RUB)
-    if (price < 30) {
+    if (price < 100) {
       const bodyText2 = $("body").text()
       const cleanBody = bodyText2.replace(/\+\s*\d[\d\s]*\s*(?:₽|руб(?:лей|ля)?|р\.)/gi, "")
       const bodyMatches = [...cleanBody.matchAll(/(\d[\d\s]{1,6})\s*(?:₽|руб(?:лей|ля)?|р\.)/g)]
