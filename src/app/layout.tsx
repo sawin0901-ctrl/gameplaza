@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
 }
 
-const themeScript = `(function(){try{var s=localStorage.getItem('gp-theme');var p=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var t=s||p;document.documentElement.setAttribute('data-theme',t);if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`
+const themeScript = `(function(){try{var s=localStorage.getItem('gp-theme')||'light';document.documentElement.setAttribute('data-theme',s);if(s==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`
 
 const orgJsonLd = JSON.stringify({
   "@context": "https://schema.org",
@@ -60,7 +60,7 @@ const siteJsonLd = JSON.stringify({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className="dark" suppressHydrationWarning>
+    <html lang="ru" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLd }} />
