@@ -62,6 +62,12 @@ const JUNK_RE = [
   /криптовалют/i,
   /ставки на спорт/i,
   /казино/i,
+  /^МТС[\s\-(]/i,
+  /^МегаФон[\s\-(]/i,
+  /^Билайн[\s\-(]/i,
+  /^Теле2[\s\-(]/i,
+  /^Ростелеком[\s\-(]/i,
+  /пополнение (?:телефон|моб)/i,
 ]
 
 const MIN_PRICE_RUB = 30
@@ -91,6 +97,10 @@ export async function runPlatiImport(platiId: number): Promise<PlatiImportResult
     if (raw.price <= 0) return { status: "skipped", reason: "Нет цены", duration: dur() }
     if (raw.price < MIN_PRICE_RUB) return { status: "skipped", reason: `Цена слишком низкая (${raw.price} ₽)`, duration: dur() }
     if (!raw.imageUrl) return { status: "skipped", reason: "Нет изображения", duration: dur() }
+
+    if (!raw.inStock) {
+      return { status: "skipped", reason: "Товар не в наличии на Plati.Market", duration: dur() }
+    }
 
     for (const re of JUNK_RE) {
       if (re.test(raw.name)) return { status: "skipped", reason: "Мусорный товар (название)", duration: dur() }
