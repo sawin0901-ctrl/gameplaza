@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
   if (!sess || sess.user.role !== "admin") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { mode, ids, startId, endId } = body
+  const { mode, ids, startId, endId, delaySeconds } = body
+  const delay = Math.max(5, Math.min(3600, parseInt(delaySeconds ?? "10") || 10))
 
   const active = await prisma.autoImportSession.findFirst({ where: { status: { in: ["running", "paused"] } } })
   if (active) return NextResponse.json({ error: "Уже есть активная сессия. Сбросьте её перед запуском новой." }, { status: 400 })
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     const s = parseInt(startId), e = parseInt(endId)
     if (isNaN(s) || isNaN(e) || s > e || s < 1) return NextResponse.json({ error: "Неверный диапазон ID" }, { status: 400 })
     const session = await prisma.autoImportSession.create({
-      data: { mode: "range", status: "running", startId: s, endId: e, currentId: s, totalCount: e - s + 1 },
+      data: { mode: "range", status: "running", startId: s, endId: e, currentId: s, totalCount: e - s + 1, delaySeconds: delay },
     })
     return NextResponse.json({ ok: true, sessionId: session.id, totalCount: session.totalCount })
   }
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   const unique = [...new Set(platiIds)]
   if (unique.length === 0) return NextResponse.json({ error: "Не найдено ни одного ID товара" }, { status: 400 })
 
-  const session = await prisma.autoImportSession.create({ data: { mode: "list", status: "running", totalCount: unique.length } })
+  const session = await prisma.autoImportSession.create({ data: { mode: "list", status: "running", totalCount: unique.length, delaySeconds: delay } })
   const BATCH = 500
   for (let i = 0; i < unique.length; i += BATCH) {
     await prisma.autoImportItem.createMany({
