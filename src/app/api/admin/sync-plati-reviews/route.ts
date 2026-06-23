@@ -15,12 +15,12 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const batchSize = Math.min(Number(body.batchSize) || 20, 50)
   const offset    = Math.max(Number(body.offset) || 0, 0)
-  const maxReviews = Math.min(Number(body.maxReviews) || 8, 15)
+  const maxReviews = Math.min(Number(body.maxReviews) || 5, 10)
 
   // Only Plati products
   const products = await prisma.product.findMany({
     where: { importSource: "plati", isActive: true },
-    select: { id: true, digisellerProductId: true, name: true },
+    select: { id: true, digisellerProductId: true, name: true, platiUrl: true },
     orderBy: { importedAt: "asc" },
     take: batchSize,
     skip: offset,
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       })
       if (existing >= maxReviews) { skipped++; continue }
 
-      const reviews = await scrapePlatiReviews(platiId, maxReviews)
+      const reviews = await scrapePlatiReviews(platiId, maxReviews, product.platiUrl ?? undefined)
       if (reviews.length === 0) { skipped++; continue }
 
       // Get already imported review texts to avoid duplicates
