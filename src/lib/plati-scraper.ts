@@ -493,49 +493,76 @@ export interface PlatiReview {
   date?: Date
 }
 
-export async function scrapePlatiReviews(productId: number, limit = 8): Promise<PlatiReview[]> {
-  const url = `https://plati.market/itm/${productId}`
+export async function scrapePlatiReviews(productId: number, limit = 5, platiUrl?: string): Promise<PlatiReview[]> {
+  const reviews: PlatiReview[] = []
+
+  function parseDate(txt: string): Date | undefined {
+    if (!txt) return undefined
+    const iso = new Date(txt)
+    if (!isNaN(iso.getTime())) return iso
+    const m = txt.match(/(\d{2})\.(\d{2})\.(\d{4})/)
+    if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
+    return undefined
+  }
+
+  // ── Method 0: Digiseller reviews page (SSR, no JS required) ─────────────
+  // oplata.info/asp2/otzyvy.asp?id_d=ID is a pure ASP.NET page with all reviews
   try {
-    const { data } = await axios.get(url, { headers: BROWSER_HEADERS, timeout: 20000 })
-    const $ = cheerio.load(data)
-    const reviews: PlatiReview[] = []
-
-    // ── Method A: current Plati layout (2025+) ─────────────────────────────
-    // Reviews are in #ResponsesBlock li, text in [data-tr-type="review"]
-    const trReviews = $('[data-tr-type="review"]')
-    if (trReviews.length > 0) {
-      trReviews.each((_, el) => {
-        if (reviews.length >= limit) return false
-        const text = $(el).text().replace(/\s+/g, " ").trim()
-        if (!text || text.length < 5) return
-
-        const li = $(el).closest("li")
-
-        // Rating: look for thumbs-down indicator in the li
-        const isNeg = li.find('[class*="thumb-down"],[class*="thumbDown"],[class*="dislike"]').length > 0
-        const rating = isNeg ? 2 : 5
-
-        // Date: find any element inside li that looks like DD.MM.YYYY
-        let date: Date | undefined
-        li.find("*").each((_, node) => {
-          if (date) return false
-          const txt = $(node).clone().children().remove().end().text().trim()
-          const m = txt.match(/(\d{2})\.(\d{2})\.(\d{4})/)
-          if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
+    const otzUrl = `https://www.oplata.info/asp2/otzyvy.asp?id_d=${productId}`
+    const otzResp = await axios.get(otzUrl, { headers: BROWSER_HEADERS, timeout: 15000, validateStatus: () => true })
+    if (otzResp.status === 200 && typeof otzResp.data === "string" && otzResp.data.length > 500) {
+      const $o = cheerio.load(otzResp.data)
+      // Common Digiseller review containers on their legacy ASP pages
+      const selectors = ["[data-tr-type='review']", ".review-text", ".feedback-text", ".otzyv", ".review", "td.color-text-primary"]
+      for (const sel of selectors) {
+        const items = $o(sel)
+        if (items.length === 0) continue
+        items.each((_, el) => {
+          if (reviews.length >= limit) return false
+          const text = $o(el).text().replace(/\s+/g, " ").trim()
+          if (!text || text.length < 10) return
+          const li = $o(el).closest("li,tr,div.review,div.otzyv")
+          const isNeg = li.find('[class*="thumb-down"],[class*="negative"],[class*="dislike"]').length > 0
+          let date: Date | undefined
+          li.find("*").each((_, node) => {
+            if (date) return false
+            const t = $o(node).clone().children().remove().end().text().trim()
+            date = parseDate(t)
+          })
+          reviews.push({ text, rating: isNeg ? 2 : 5, date })
         })
-
-        reviews.push({ text, rating, date })
-      })
+        if (reviews.length > 0) break
+      }
     }
+  } catch { /* ignore */ }
 
-    // ── Method B: legacy Plati selectors (older layout) ─────────────────────
+  if (reviews.length >= limit) return reviews.slice(0, limit)
+
+  // ── Method 1: Plati.Market product page HTML (SSR content only) ──────────
+  const pageUrl = platiUrl ?? `https://plati.market/itm/${productId}`
+  try {
+    const { data } = await axios.get(pageUrl, { headers: BROWSER_HEADERS, timeout: 20000 })
+    const $ = cheerio.load(data)
+
+    // 1a. Current layout: [data-tr-type="review"] in #ResponsesBlock
+    $('[data-tr-type="review"]').each((_, el) => {
+      if (reviews.length >= limit) return false
+      const text = $(el).text().replace(/\s+/g, " ").trim()
+      if (!text || text.length < 10) return
+      const li = $(el).closest("li")
+      const isNeg = li.find('[class*="thumb-down"],[class*="thumbDown"],[class*="dislike"]').length > 0
+      let date: Date | undefined
+      li.find("*").each((_, node) => {
+        if (date) return false
+        const t = $(node).clone().children().remove().end().text().trim()
+        date = parseDate(t)
+      })
+      reviews.push({ text, rating: isNeg ? 2 : 5, date })
+    })
+
+    // 1b. Legacy CSS selectors
     if (reviews.length === 0) {
-      const containerSelectors = [
-        ".lot-review-item", ".review-item", ".reviews-item",
-        "[itemprop='review']", ".goods-review", ".item-review",
-        ".feedback-item",
-      ]
-      for (const sel of containerSelectors) {
+      for (const sel of [".lot-review-item", ".review-item", ".reviews-item", "[itemprop='review']", ".goods-review", ".feedback-item"]) {
         const items = $(sel)
         if (items.length === 0) continue
         items.each((_, el) => {
@@ -544,29 +571,17 @@ export async function scrapePlatiReviews(productId: number, limit = 8): Promise<
             $(el).find(".review-text,.review__text,.feedback-text,.comment,[itemprop='reviewBody'],.lot-review-item__text").first().text().trim() ||
             $(el).find("p").first().text().trim()
           ).replace(/\s+/g, " ").trim()
-          if (!text || text.length < 5) return
-          const isNeg =
-            $(el).find(".icon--thumb-down,.thumb-down,.dislike").length > 0 ||
-            $(el).hasClass("negative") || $(el).hasClass("bad")
-          const rating = isNeg ? 2 : 5
+          if (!text || text.length < 10) return
+          const isNeg = $(el).find(".icon--thumb-down,.thumb-down,.dislike").length > 0 || $(el).hasClass("negative") || $(el).hasClass("bad")
           const timeEl = $(el).find("time,.date,.review-date,[class*='date']").first()
           const dateText = timeEl.attr("datetime") ?? timeEl.attr("data-date") ?? timeEl.text().trim()
-          let date: Date | undefined
-          if (dateText) {
-            const iso = new Date(dateText)
-            if (!isNaN(iso.getTime())) date = iso
-            else {
-              const m = dateText.match(/(\d{2})\.(\d{2})\.(\d{4})/)
-              if (m) date = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]))
-            }
-          }
-          reviews.push({ text, rating, date })
+          reviews.push({ text, rating: isNeg ? 2 : 5, date: parseDate(dateText) })
         })
         if (reviews.length > 0) break
       }
     }
 
-    // Fallback: try JSON-LD Review entries
+    // 1c. JSON-LD review entries
     if (reviews.length === 0) {
       $("script[type='application/ld+json']").each((_, el) => {
         if (reviews.length >= limit) return false
@@ -576,22 +591,19 @@ export async function scrapePlatiReviews(productId: number, limit = 8): Promise<
           for (const item of items) {
             if (reviews.length >= limit) break
             if (typeof item !== "object" || item === null) continue
-            const r = item as Record<string, unknown>
-            const text = String(r.reviewBody ?? r.description ?? "").trim()
-            if (!text || text.length < 5) continue
-            const ratingVal = (r.reviewRating as Record<string, unknown>)?.ratingValue
-            const rating = ratingVal ? Math.round(Number(ratingVal)) : 5
-            const dateStr = String(r.datePublished ?? "")
-            const date = dateStr ? new Date(dateStr) : undefined
-            reviews.push({ text, rating: Math.min(5, Math.max(1, rating)), date: date && !isNaN(date.getTime()) ? date : undefined })
+            const rv = item as Record<string, unknown>
+            const text = String(rv.reviewBody ?? rv.description ?? "").trim()
+            if (!text || text.length < 10) continue
+            const ratingVal = (rv.reviewRating as Record<string, unknown>)?.ratingValue
+            const rating = ratingVal ? Math.min(5, Math.max(1, Math.round(Number(ratingVal)))) : 5
+            reviews.push({ text, rating, date: parseDate(String(rv.datePublished ?? "")) })
           }
         } catch {}
       })
     }
-
-    return reviews.slice(0, limit)
   } catch (err) {
     console.error(`[plati-scraper] reviews ${productId}:`, err instanceof Error ? err.message : String(err))
-    return []
   }
+
+  return reviews.slice(0, limit)
 }
