@@ -5,7 +5,7 @@ import { runPlatiImport } from "../../../../lib/run-plati-import"
 export const dynamic = "force-dynamic"
 export const maxDuration = 300
 
-const SAFE_WINDOW_MS = 240_000 // 4 min — leaves buffer before 5-min timeout
+const SAFE_WINDOW_MS = 240_000
 
 export async function GET(req: NextRequest) {
   if (!process.env.CRON_SECRET) return NextResponse.json({ error: "CRON_SECRET not set" }, { status: 500 })
@@ -24,10 +24,39 @@ export async function GET(req: NextRequest) {
   const maxPerBatch = Math.max(1, Math.floor(SAFE_WINDOW_MS / delayMs))
   const batchResults: { platiId: number; status: string; duration: number }[] = []
 
-  for (let i = 0; i < maxPerBatch; i++) {
-    let platiId: number | null = null
+  if (session.mode === "range") {
+    // Atomically claim the entire batch range upfront to prevent concurrent cron overlap
+    const batchStart = session.currentId || session.startId
+    if (batchStart > session.endId) {
+      await prisma.autoImportSession.update({ where: { id: session.id }, data: { status: "completed" } })
+      return NextResponse.json({ status: "completed" })
+    }
+    const batchEnd = Math.min(batchStart + maxPerBatch - 1, session.endId)
+    // Claim the range — next cron call will start from batchEnd + 1
+    await prisma.autoImportSession.update({
+      where: { id: session.id },
+      data: { currentId: batchEnd + 1, updatedAt: new Date() },
+    })
 
-    if (session.mode === "list") {
+    for (let platiId = batchStart; platiId <= batchEnd; platiId++) {
+      const result = await runPlatiImport(platiId)
+      const inc: Record<string, { increment: number }> = {}
+      if (result.status === "success") inc.doneCount = { increment: 1 }
+      else if (result.status === "error") inc.errorCount = { increment: 1 }
+      else if (result.status === "skipped") inc.skipCount = { increment: 1 }
+      else if (result.status === "duplicate") inc.dupCount = { increment: 1 }
+      await prisma.autoImportSession.update({ where: { id: session.id }, data: { ...inc, updatedAt: new Date() } })
+      await prisma.autoImportLog.create({
+        data: { sessionId: session.id, platiId, status: result.status,
+          productName: result.productName ?? null, errorMsg: result.reason ?? null, duration: result.duration },
+      })
+      batchResults.push({ platiId, status: result.status, duration: result.duration })
+      console.log(`[auto-import] range #${platiId} => ${result.status} (${result.duration}ms)`)
+      if (platiId < batchEnd) await new Promise<void>(r => setTimeout(r, delayMs))
+    }
+  } else {
+    // List mode: process one item at a time (items are marked "processing" to prevent duplicates)
+    for (let i = 0; i < maxPerBatch; i++) {
       const item = await prisma.autoImportItem.findFirst({
         where: { sessionId: session.id, status: "pending" },
         orderBy: { id: "asc" },
@@ -42,63 +71,26 @@ export async function GET(req: NextRequest) {
         break
       }
       await prisma.autoImportItem.update({ where: { id: item.id }, data: { status: "processing" } })
-      platiId = item.platiId
-    } else {
-      const nextId = session.currentId || session.startId
-      if (nextId > session.endId) {
-        await prisma.autoImportSession.update({ where: { id: session.id }, data: { status: "completed" } })
-        break
-      }
-      await prisma.autoImportSession.update({
-        where: { id: session.id },
-        data: { currentId: nextId + 1, updatedAt: new Date() },
-      })
-      platiId = nextId
-    }
-
-    const result = await runPlatiImport(platiId)
-
-    if (session.mode === "list") {
+      const result = await runPlatiImport(item.platiId)
       await prisma.autoImportItem.updateMany({
-        where: { sessionId: session.id, platiId, status: "processing" },
+        where: { sessionId: session.id, platiId: item.platiId, status: "processing" },
         data: { status: result.status, processedAt: new Date() },
       })
-    }
-
-    const inc: Record<string, { increment: number }> = {}
-    if (result.status === "success") inc.doneCount = { increment: 1 }
-    else if (result.status === "error") inc.errorCount = { increment: 1 }
-    else if (result.status === "skipped") inc.skipCount = { increment: 1 }
-    else if (result.status === "duplicate") inc.dupCount = { increment: 1 }
-
-    await prisma.autoImportSession.update({
-      where: { id: session.id },
-      data: { ...inc, updatedAt: new Date() },
-    })
-
-    await prisma.autoImportLog.create({
-      data: {
-        sessionId: session.id,
-        platiId,
-        status: result.status,
-        productName: result.productName ?? null,
-        errorMsg: result.reason ?? null,
-        duration: result.duration,
-      },
-    })
-
-    batchResults.push({ platiId, status: result.status, duration: result.duration })
-    console.log(`[auto-import] #${platiId} => ${result.status} (${result.duration}ms) [${i + 1}/${maxPerBatch}]`)
-
-    // Wait configured delay before next product (skip delay after last item)
-    if (i < maxPerBatch - 1) {
-      await new Promise<void>(resolve => setTimeout(resolve, delayMs))
+      const inc: Record<string, { increment: number }> = {}
+      if (result.status === "success") inc.doneCount = { increment: 1 }
+      else if (result.status === "error") inc.errorCount = { increment: 1 }
+      else if (result.status === "skipped") inc.skipCount = { increment: 1 }
+      else if (result.status === "duplicate") inc.dupCount = { increment: 1 }
+      await prisma.autoImportSession.update({ where: { id: session.id }, data: { ...inc, updatedAt: new Date() } })
+      await prisma.autoImportLog.create({
+        data: { sessionId: session.id, platiId: item.platiId, status: result.status,
+          productName: result.productName ?? null, errorMsg: result.reason ?? null, duration: result.duration },
+      })
+      batchResults.push({ platiId: item.platiId, status: result.status, duration: result.duration })
+      console.log(`[auto-import] list #${item.platiId} => ${result.status} (${result.duration}ms)`)
+      if (i < maxPerBatch - 1) await new Promise<void>(r => setTimeout(r, delayMs))
     }
   }
 
-  return NextResponse.json({
-    processed: batchResults.length,
-    delaySeconds: session.delaySeconds,
-    results: batchResults,
-  })
+  return NextResponse.json({ processed: batchResults.length, delaySeconds: session.delaySeconds, results: batchResults })
 }
