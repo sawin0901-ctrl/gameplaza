@@ -341,20 +341,24 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
     }
 
 
-    // Method 5: Plati.Market API fallback (variant products with JS-rendered prices)
+    // Method 5: Digiseller payment page — reliable RUB price for any Plati product
+    // URL: oplata.info/asp2/pay_wm.asp?id_d=ID always has <span id=price_value> in RUB
     if (price < 30) {
       try {
-        const apiUrl = `https://plati.market/api/search/goods/info/?id=${productId}&visibleOnly=true`
-        const apiResp = await axios.get(apiUrl, { headers: BROWSER_HEADERS, timeout: 8000, validateStatus: () => true })
-        if (apiResp.status === 200 && apiResp.data && typeof apiResp.data === "object") {
-          const d = apiResp.data as Record<string, unknown>
-          const items = Array.isArray(d?.items) ? (d.items as Record<string, unknown>[]) : []
-          const ap = [Number(d?.price_rub ?? 0), Number(items[0]?.price_rub ?? 0)].find(p => p >= 30 && p < 100000)
-          if (ap) { price = Math.ceil(ap); console.log(`[plati-scraper] API price ${productId}: ${price}`) }
+        const payUrl = `https://www.oplata.info/asp2/pay_wm.asp?id_d=${productId}`
+        const payResp = await axios.get(payUrl, { headers: BROWSER_HEADERS, timeout: 10000, validateStatus: () => true })
+        if (payResp.status === 200 && typeof payResp.data === "string") {
+          const $pay = cheerio.load(payResp.data)
+          const priceText = $pay("#price_value").first().text().trim()
+          const currText  = $pay("#price_currency").first().text().trim().toUpperCase()
+          const dp = parseFloat(priceText)
+          if (dp >= 30 && dp < 100000 && (currText === "RUB" || currText === "")) {
+            price = Math.ceil(dp)
+            console.log(`[plati-scraper] Digiseller page price ${productId}: ${price} RUB`)
+          }
         }
       } catch {}
     }
-
     // Last resort: scan page body when price is zero or suspiciously low (USD mistagged as RUB)
     if (price < 30) {
       const bodyText2 = $("body").text()
