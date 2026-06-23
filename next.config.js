@@ -20,6 +20,16 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 800],
   },
 
+  async rewrites() {
+    return [
+      { source: "/favicon.ico", destination: "/icon" },
+      { source: "/favicon-32x32.png", destination: "/icon" },
+      { source: "/favicon-16x16.png", destination: "/icon" },
+      { source: "/apple-touch-icon.png", destination: "/apple-icon" },
+      { source: "/apple-touch-icon-precomposed.png", destination: "/apple-icon" },
+    ]
+  },
+
   async headers() {
     const csp = [
       "default-src 'self'",
