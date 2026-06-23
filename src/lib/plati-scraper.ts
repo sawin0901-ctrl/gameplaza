@@ -287,13 +287,21 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
         })
       } catch {}
 
-      // Method 2: meta tags for RUB price
+      // Method 2: meta tags — prefer RUB-tagged price, fallback to any price >= 200
       if (!rubPrice) {
-        const metaRub = $("meta[property='product:price:amount'][content]")
-          .toArray()
-          .map(el => parseFloat($(el).attr("content") ?? "0"))
-          .find(p => p > 200)
-        if (metaRub) rubPrice = Math.ceil(metaRub)
+        const priceMetas = $("meta[property='product:price:amount']").toArray()
+        const currMetas  = $("meta[property='product:price:currency']").toArray()
+        for (let i = 0; i < priceMetas.length; i++) {
+          const curr = ($(currMetas[i] ?? currMetas[0]).attr("content") ?? "").toUpperCase()
+          if (curr === "RUB") {
+            const p = parseFloat($(priceMetas[i]).attr("content") ?? "0")
+            if (p >= 30) { rubPrice = Math.ceil(p); break }
+          }
+        }
+        if (!rubPrice) {
+          const highPrice = priceMetas.map(el => parseFloat($(el).attr("content") ?? "0")).find(p => p >= 200 && p < 100000)
+          if (highPrice) rubPrice = Math.ceil(highPrice)
+        }
       }
 
       // Method 3: visible price in page text (₽ symbol) — skip variant modifiers (+N ₽)
@@ -309,6 +317,21 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
         }
       }
 
+      // Method 4: scan raw HTML for price_rub field (Plati SSR hydration data)
+      if (!rubPrice) {
+        const rawHtml = $.html()
+        const htmlPats: RegExp[] = [
+          /"price_rub"\s*:\s*(\d+(?:\.\d+)?)/,
+          /"priceRub"\s*:\s*(\d+(?:\.\d+)?)/,
+          /"price"\s*:\s*"?(\d+(?:\.\d+)?)"?[^}]{0,100}"currency"\s*:\s*"RUB"/,
+          /"currency"\s*:\s*"RUB"[^}]{0,100}"price"\s*:\s*"?(\d+(?:\.\d+)?)"?/,
+        ]
+        for (const pat of htmlPats) {
+          const m = rawHtml.match(pat)
+          if (m) { const p = parseFloat(m[1]); if (p >= 30 && p < 100000) { rubPrice = Math.ceil(p); break } }
+        }
+      }
+
       if (rubPrice > 0) {
         console.log(`[plati-scraper] RUB price found: ${rubPrice} (was ${price} ${currency})`)
         price = rubPrice
@@ -317,6 +340,20 @@ export async function scrapePlatiProduct(productId: number): Promise<PlatiProduc
       }
     }
 
+
+    // Method 5: Plati.Market API fallback (variant products with JS-rendered prices)
+    if (price < 30) {
+      try {
+        const apiUrl = `https://plati.market/api/search/goods/info/?id=${productId}&visibleOnly=true`
+        const apiResp = await axios.get(apiUrl, { headers: BROWSER_HEADERS, timeout: 8000, validateStatus: () => true })
+        if (apiResp.status === 200 && apiResp.data && typeof apiResp.data === "object") {
+          const d = apiResp.data as Record<string, unknown>
+          const items = Array.isArray(d?.items) ? (d.items as Record<string, unknown>[]) : []
+          const ap = [Number(d?.price_rub ?? 0), Number(items[0]?.price_rub ?? 0)].find(p => p >= 30 && p < 100000)
+          if (ap) { price = Math.ceil(ap); console.log(`[plati-scraper] API price ${productId}: ${price}`) }
+        }
+      } catch {}
+    }
 
     // Last resort: scan page body when price is zero or suspiciously low (USD mistagged as RUB)
     if (price < 30) {
