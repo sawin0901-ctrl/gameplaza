@@ -72,6 +72,8 @@ export default async function CategoryPage({ params, searchParams }: { params: {
   const totalPages = Math.ceil(total / PAGE_SIZE)
   const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"
 
+  const faq = getCategoryFaq(category)
+
   function buildUrl(params2: Record<string, string | number | undefined>) {
     const sp = new URLSearchParams()
     if (sort !== "newest") sp.set("sort", sort)
