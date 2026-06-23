@@ -41,7 +41,7 @@ const orgJsonLd = JSON.stringify({
   "@type": "Organization",
   name: "GamePlaza",
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
+  logo: `${SITE_URL}/apple-icon`,
   email: "support@gameplaza.site",
   description: "Магазин цифровых товаров: игры, ключи активации, подписки",
 })
