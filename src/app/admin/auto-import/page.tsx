@@ -268,10 +268,11 @@ export default function AutoImportPage() {
                   </div>
                 </div>
                 <p className="text-xs text-[var(--text-3)]">
-                  {+delay < 60
-                    ? `~${Math.floor(240 / +delay)} товаров за вызов cron`
-                    : `~${Math.max(1, Math.floor(240 / +delay))} товар за вызов cron`}
-                  {" · "}скорость: {+delay <= 1 ? "макс" : `1 товар каждые ${+delay}с`}
+                  {(() => {
+                    const perBatch = Math.max(1, Math.floor(55 / +delay))
+                    const perHour = perBatch * 60
+                    return `${perBatch} товар(ов) в минуту · ~${perHour.toLocaleString("ru-RU")} в час`
+                  })()}
                 </p>
               </div>
 
