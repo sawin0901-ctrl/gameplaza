@@ -75,8 +75,26 @@ export default async function HomePage() {
     <div>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden bg-[#07070f]">
-        <div className="hero-overlay absolute inset-0 bg-gradient-to-br from-brand/25 via-[#0a0a0f] to-purple-950/20" />
-        <div className="hero-blob absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-brand/8 rounded-full blur-3xl pointer-events-none" />
+        {/* Background: dark space + glowing orbs + dot grid + SVG geometry */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0018] via-[#080812] to-[#07070f]" />
+          <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-purple-600/20 blur-[140px]" />
+          <div className="absolute -top-10 -left-32 w-[500px] h-[400px] rounded-full bg-indigo-800/15 blur-[100px]" />
+          <div className="absolute -top-10 -right-32 w-[500px] h-[400px] rounded-full bg-violet-900/15 blur-[100px]" />
+          <div className="absolute inset-0"
+            style={{backgroundImage: "radial-gradient(circle, rgba(167,139,250,0.18) 1px, transparent 1px)", backgroundSize: "32px 32px"}} />
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1440 480" preserveAspectRatio="xMidYMid slice" fill="none">
+            <circle cx="-60" cy="-60" r="300" stroke="rgba(139,92,246,0.09)" strokeWidth="1"/>
+            <circle cx="-60" cy="-60" r="430" stroke="rgba(139,92,246,0.05)" strokeWidth="1"/>
+            <circle cx="1500" cy="540" r="340" stroke="rgba(99,102,241,0.07)" strokeWidth="1"/>
+            <circle cx="1500" cy="540" r="470" stroke="rgba(99,102,241,0.04)" strokeWidth="1"/>
+            <circle cx="720" cy="240" r="200" stroke="rgba(167,139,250,0.05)" strokeWidth="1"/>
+            <circle cx="720" cy="240" r="310" stroke="rgba(167,139,250,0.03)" strokeWidth="1"/>
+            <line x1="0" y1="1" x2="1440" y2="1" stroke="rgba(139,92,246,0.1)" strokeWidth="1"/>
+            <line x1="0" y1="479" x2="1440" y2="479" stroke="rgba(139,92,246,0.07)" strokeWidth="1"/>
+          </svg>
+          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#07070f] to-transparent" />
+        </div>
         <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-brand/10 border border-brand/20 rounded-full px-4 py-1.5 mb-6">
