@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import DigisellerScript from "../components/DigisellerScript"
 import Providers from "../components/Providers"
@@ -27,8 +27,11 @@ export const metadata: Metadata = {
     "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
     ...(process.env.YANDEX_VERIFICATION ? { "yandex-verification": process.env.YANDEX_VERIFICATION } : {}),
   },
+}
+
+export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0a0a0f" },
     { media: "(prefers-color-scheme: light)", color: "#7c3aed" },
   ],
 }
