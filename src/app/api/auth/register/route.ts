@@ -5,6 +5,7 @@ import crypto from "crypto"
 import { rateLimit } from "../../../../lib/rate-limit"
 import { sendVerificationEmail } from "../../../../lib/email"
 import { z } from "zod"
+import { checkBotEmail } from "../../../../lib/bot-protection"
 
 const RegisterSchema = z.object({
   name: z
@@ -45,6 +46,15 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, email, password } = parsed.data
+
+    // Reject obviously bot-generated email addresses
+    const botCheck = checkBotEmail(email)
+    if (botCheck.bot) {
+      return NextResponse.json(
+        { error: "Этот адрес email не может быть использован для регистрации." },
+        { status: 400 },
+      )
+    }
 
     const exists = await prisma.user.findUnique({ where: { email } })
     if (exists) {
