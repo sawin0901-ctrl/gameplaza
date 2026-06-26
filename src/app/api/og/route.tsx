@@ -2,11 +2,30 @@ import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
 
+const ALLOWED_IMG_HOSTS = [
+  "digiseller.ru", "cdn.digiseller.ru", "graph.digiseller.ru",
+  "digiseller.mycdn.ink", "plati.market", "www.plati.market",
+  "shop.digiseller.com", "api.digiseller.com",
+]
+
+function isSafeImgUrl(url: string | null): string | null {
+  if (!url) return null
+  try {
+    const { hostname, protocol } = new URL(url)
+    if (protocol !== "https:") return null
+    if (ALLOWED_IMG_HOSTS.some(h => hostname === h || hostname.endsWith("." + h))) return url
+    // Allow own /uploads/ paths by absolute URL
+    const siteHost = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site").replace(/\/$/, "")
+    if (url.startsWith(siteHost + "/uploads/")) return url
+  } catch {}
+  return null
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const title = (searchParams.get("title") ?? "GamePlaza").slice(0, 80)
   const price = searchParams.get("price")
-  const imgUrl = searchParams.get("img")
+  const imgUrl = isSafeImgUrl(searchParams.get("img"))
 
   const priceStr = price ? Number(price).toLocaleString("ru-RU") + " руб." : ""
 
