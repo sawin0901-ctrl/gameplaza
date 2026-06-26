@@ -22,10 +22,24 @@ export async function GET() {
   return NextResponse.json({
     total,
     items: [
-      tickets > 0 && { type: "ticket", count: tickets, label: "Открытых тикетов", href: "/admin/tickets", icon: "💬" },
-      sysErrors > 0 && { type: "error", count: sysErrors, label: "Системных ошибок (24ч)", href: "/admin/monitoring", icon: "🔴" },
-      cspViolations > 0 && { type: "csp", count: cspViolations, label: "CSP нарушений", href: "/admin/security", icon: "🛡️" },
-      importErrors > 0 && { type: "import", count: importErrors, label: "Ошибок импорта (24ч)", href: "/admin/import/plati", icon: "⚠️" },
+      tickets > 0      && { type: "ticket", count: tickets,        label: "Открытых тикетов",       href: "/admin/tickets",    icon: "💬" },
+      sysErrors > 0    && { type: "error",  count: sysErrors,      label: "Системных ошибок (24ч)", href: "/admin/monitoring", icon: "🔴" },
+      cspViolations > 0 && { type: "csp",  count: cspViolations,  label: "CSP нарушений",           href: "/admin/security",   icon: "🛡️" },
+      importErrors > 0 && { type: "import", count: importErrors,   label: "Ошибок импорта (24ч)",   href: "/admin/import/plati", icon: "⚠️" },
     ].filter(Boolean),
   })
+}
+
+// Dismiss all: mark all new systemLog entries as read
+export async function PATCH() {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "admin")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { count } = await prisma.systemLog.updateMany({
+    where: { status: "new" },
+    data: { status: "read" },
+  })
+
+  return NextResponse.json({ ok: true, dismissed: count })
 }
