@@ -11,7 +11,7 @@ const PAGE_SIZE = 24
 export const metadata: Metadata = {
   title: { absolute: "Акции и скидки на цифровые товары | GamePlaza" },
   description: "Лучшие скидки на игры, ключи и программы. Сэкономьте на покупке цифровых товаров в GamePlaza.",
-  alternates: { canonical: "https://gameplaza.site/catalog/discount" },
+  alternates: { canonical: "/catalog/discount" },
 }
 
 export default async function DiscountPage({ searchParams }: { searchParams: Record<string, string> }) {

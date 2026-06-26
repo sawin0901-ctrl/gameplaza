@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../../../lib/auth"
 import { prisma } from "../../../lib/prisma"
+import { rateLimit } from "../../../lib/rate-limit"
 import { z } from "zod"
 
 export const dynamic = "force-dynamic"
@@ -50,6 +51,10 @@ const createSchema = z.object({
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  if (!rateLimit(`order:${session.user.id}`, 10, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Слишком много заказов. Попробуйте через час." }, { status: 429 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }) }
