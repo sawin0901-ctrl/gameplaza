@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: { absolute: "Условия использования | GamePlaza" },
   description: "Условия использования сервиса GamePlaza — правила покупки цифровых товаров, ключей и подписок.",
+  alternates: { canonical: "/terms" },
 }
 
 export default function TermsPage() {

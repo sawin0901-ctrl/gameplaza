@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: { absolute: "Политика конфиденциальности | GamePlaza" },
   description: "Политика конфиденциальности и обработки персональных данных GamePlaza",
+  alternates: { canonical: "/privacy" },
 }
 
 export default function PrivacyPage() {

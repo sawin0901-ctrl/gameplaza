@@ -5,6 +5,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: { absolute: "Отзывы покупателей | GamePlaza" },
   description: "Отзывы покупателей о цифровых товарах GamePlaza. Реальные отзывы о играх, ключах и программном обеспечении.",
+  alternates: { canonical: "/reviews" },
 }
 
 export const revalidate = 300

@@ -5,6 +5,7 @@ import { prisma } from "../../lib/prisma"
 export const metadata: Metadata = {
   title: { absolute: "О нас — GamePlaza" },
   description: "GamePlaza — маркетплейс цифровых товаров. Официальный партнёр Digiseller. Игры, ПО, ключи активации по лучшим ценам с мгновенной доставкой.",
+  alternates: { canonical: "/about" },
   openGraph: {
     title: "О нас — GamePlaza",
     description: "Официальный партнёр Digiseller. Цифровые товары с мгновенной доставкой.",

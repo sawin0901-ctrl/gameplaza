@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: { absolute: "Политика возврата | GamePlaza" },
   description: "Условия возврата средств и обмена цифровых товаров в GamePlaza",
+  alternates: { canonical: "/refund" },
 }
 
 export default function RefundPage() {
