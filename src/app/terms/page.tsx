@@ -9,7 +9,7 @@ export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-white mb-2">Условия использования</h1>
-      <p className="text-gray-500 text-sm mb-10">Последнее обновление: июнь 2025</p>
+      <p className="text-gray-500 text-sm mb-10">Последнее обновление: июнь 2026 г.</p>
 
       <div className="space-y-8 text-gray-300 leading-relaxed">
         <section>

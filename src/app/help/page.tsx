@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import HelpClient from "./HelpClient"
 
 export const metadata: Metadata = {
-  title: "Помощь и FAQ — ответы на частые вопросы | GamePlaza",
+  title: { absolute: "Помощь и FAQ — ответы на частые вопросы | GamePlaza" },
   description: "Ответы на частые вопросы о покупках, оплате, доставке ключей и поддержке в магазине GamePlaza.",
   alternates: { canonical: "/help" },
   openGraph: {

@@ -7,7 +7,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Избранное — GamePlaza",
+  title: { absolute: "Избранное — GamePlaza" },
 }
 
 export default async function WishlistPage() {

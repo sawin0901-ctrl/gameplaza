@@ -163,18 +163,18 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-600 mb-5 flex items-center gap-1.5 flex-wrap">
-        <a href="/" className="hover:text-white transition-colors">Главная</a>
+        <Link href="/" className="hover:text-white transition-colors">Главная</Link>
         <span>/</span>
-        <a href="/catalog" className="hover:text-white transition-colors">Каталог</a>
+        <Link href="/catalog" className="hover:text-white transition-colors">Каталог</Link>
         {product.category && (
           <>
             <span>/</span>
-            <a
+            <Link
               href={`/catalog/${product.category.slug}`}
               className="hover:text-white transition-colors"
             >
               {product.category.name}
-            </a>
+            </Link>
           </>
         )}
         <span>/</span>

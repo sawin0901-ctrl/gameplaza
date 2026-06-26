@@ -8,7 +8,7 @@ import ChangePasswordForm from "./ChangePasswordForm"
 import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: "Профиль — GamePlaza",
+  title: { absolute: "Профиль — GamePlaza" },
   robots: { index: false, follow: false },
 }
 

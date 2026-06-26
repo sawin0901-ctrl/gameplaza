@@ -3,7 +3,7 @@ import Link from "next/link"
 import { prisma } from "../../lib/prisma"
 
 export const metadata: Metadata = {
-  title: "О нас — GamePlaza",
+  title: { absolute: "О нас — GamePlaza" },
   description: "GamePlaza — маркетплейс цифровых товаров. Официальный партнёр Digiseller. Игры, ПО, ключи активации по лучшим ценам с мгновенной доставкой.",
   openGraph: {
     title: "О нас — GamePlaza",
