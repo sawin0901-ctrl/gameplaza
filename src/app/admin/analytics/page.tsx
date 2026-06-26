@@ -488,44 +488,154 @@ function UtmTab({ d }: { d: DashboardData }) {
 
 function ExportTab({ period }: { period: number }) {
   const [loading, setLoading] = useState<string | null>(null)
+  const [done, setDone] = useState<string | null>(null)
 
-  async function download(type: string, label: string) {
+  async function download(type: string, filename: string) {
     setLoading(type)
+    setDone(null)
     try {
       const res = await fetch(`/api/analytics/export?type=${type}&period=${period}`)
-      if (!res.ok) throw new Error()
+      if (!res.ok) throw new Error("Ошибка сервера")
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url; a.download = `${type}-${period}d.csv`; a.click()
+      a.href = url
+      a.download = filename
+      a.click()
       URL.revokeObjectURL(url)
-    } catch { alert("Ошибка при экспорте") }
+      setDone(type)
+      setTimeout(() => setDone(null), 3000)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Ошибка при экспорте")
+    }
     setLoading(null)
   }
 
-  const exports = [
-    { type: "pageviews", label: "Просмотры страниц", desc: "Все просмотры с источником, UTM, устройством, страной (до 10К строк)" },
-    { type: "events", label: "События", desc: "Покупки, просмотры товаров, добавления в корзину, регистрации" },
-    { type: "summary", label: "Сводка по дням", desc: "Агрегированная статистика: просмотры, визиты, заказы, выручка по дням" },
+  const dateStr = new Date().toISOString().split("T")[0]
+
+  const mainExports = [
+    {
+      type: "xlsx",
+      label: "Excel (.xlsx)",
+      desc: "7 листов: Сводка, По дням, Трафик, Страницы, Товары, География, UTM. Откройте в Excel и постройте графики одним кликом.",
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-emerald-600">
+          <rect x="2" y="2" width="20" height="20" rx="3" fill="currentColor" opacity="0.12"/>
+          <path d="M8 7l2.5 5L8 17m8-10l-2.5 5 2.5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      color: "border-emerald-200 bg-emerald-50",
+      btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
+      filename: `analytics-${period}d-${dateStr}.xlsx`,
+    },
+    {
+      type: "word",
+      label: "Word (.doc)",
+      desc: "Готовый отчёт с таблицами и встроенными диаграммами. Открывается в Microsoft Word и LibreOffice Writer.",
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-blue-600">
+          <rect x="2" y="2" width="20" height="20" rx="3" fill="currentColor" opacity="0.12"/>
+          <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+        </svg>
+      ),
+      color: "border-blue-200 bg-blue-50",
+      btnClass: "bg-blue-600 hover:bg-blue-700 text-white",
+      filename: `analytics-${period}d-${dateStr}.doc`,
+    },
+  ]
+
+  const csvExports = [
+    { type: "pageviews", label: "Просмотры (CSV)", desc: "Сырые данные — до 10K строк, с UTM, устройством, страной", filename: `pageviews-${period}d-${dateStr}.csv` },
+    { type: "events",   label: "События (CSV)",   desc: "Покупки, просмотры товаров, регистрации",                  filename: `events-${period}d-${dateStr}.csv` },
+    { type: "summary",  label: "Сводка (CSV)",    desc: "Агрегат по дням: просмотры, визиты, заказы, выручка",      filename: `summary-${period}d-${dateStr}.csv` },
   ]
 
   return (
-    <div className="space-y-4 max-w-lg">
-      <div className="card p-4 mb-2 border-amber-500/20">
-        <p className="text-amber-400 text-sm">📁 Файлы сохраняются в формате CSV с поддержкой Excel (UTF-8 BOM)</p>
-      </div>
-      {exports.map(e => (
-        <div key={e.type} className="card p-5 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-white font-medium mb-1">{e.label}</p>
-            <p className="text-gray-500 text-xs">{e.desc}</p>
-          </div>
-          <button onClick={() => download(e.type, e.label)} disabled={loading === e.type}
-            className="btn-outline text-sm py-2 px-4 flex-shrink-0 disabled:opacity-50">
-            {loading === e.type ? "⏳" : "⬇"} CSV
-          </button>
+    <div className="space-y-6 max-w-2xl">
+      {/* Main exports */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Готовые отчёты</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {mainExports.map(e => (
+            <div key={e.type} className={`border rounded-2xl p-5 ${e.color}`}>
+              <div className="flex items-start gap-3 mb-3">
+                {e.icon}
+                <div>
+                  <p className="font-semibold text-gray-900">{e.label}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{e.desc}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => download(e.type, e.filename)}
+                disabled={loading === e.type}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${
+                  done === e.type
+                    ? "bg-emerald-500 text-white"
+                    : e.btnClass
+                }`}
+              >
+                {loading === e.type ? (
+                  <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Создаю отчёт...</>
+                ) : done === e.type ? (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>Скачано</>
+                ) : (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Скачать {e.label}</>
+                )}
+              </button>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+
+      {/* Что внутри Excel */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <p className="text-sm font-semibold text-gray-900 mb-3">Что внутри Excel-файла:</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            ["📊 Лист 1", "Сводка KPI за период"],
+            ["📈 Лист 2", "Посещаемость по дням"],
+            ["🌐 Лист 3", "Источники трафика"],
+            ["📄 Лист 4", "Топ страниц"],
+            ["🎮 Лист 5", "Топ товаров по продажам"],
+            ["🌍 Лист 6", "География посетителей"],
+            ["📣 Лист 7", "UTM-кампании"],
+          ].map(([sheet, desc]) => (
+            <div key={sheet} className="flex items-center gap-2 text-xs">
+              <span className="font-medium text-gray-700 w-16 shrink-0">{sheet}</span>
+              <span className="text-gray-400">{desc}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-3 border-t border-gray-100 pt-3">
+          Откройте Excel → выделите «По дням» → Вставка → График → выберите любой тип
+        </p>
+      </div>
+
+      {/* Raw CSV */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Сырые данные (CSV)</p>
+        <div className="space-y-2">
+          {csvExports.map(e => (
+            <div key={e.type} className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-800">{e.label}</p>
+                <p className="text-xs text-gray-400">{e.desc}</p>
+              </div>
+              <button
+                onClick={() => download(e.type, e.filename)}
+                disabled={!!loading}
+                className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+              >
+                {loading === e.type
+                  ? <span className="w-3 h-3 border border-gray-400 border-t-gray-700 rounded-full animate-spin" />
+                  : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                }
+                CSV
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

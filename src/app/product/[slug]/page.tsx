@@ -1,4 +1,5 @@
 import { cache } from "react"
+import Link from "next/link"
 import { prisma } from "../../../lib/prisma"
 import { buildProductMetadata, buildBreadcrumbJsonLd, stripHtml } from "../../../lib/seo"
 import { sanitizeDescription } from "../../../lib/sanitize"
