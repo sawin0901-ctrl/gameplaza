@@ -1,5 +1,11 @@
 import { prisma } from "./prisma"
 
+let _settingsCache: ImportSettings | null = null
+let _settingsCacheAt = 0
+const SETTINGS_TTL = 5 * 60 * 1000
+
+export function invalidateSettingsCache() { _settingsCache = null }
+
 export interface ImportSettings {
   markupType: "none" | "fixed" | "percent"
   markupValue: number
@@ -17,24 +23,28 @@ const DEFAULTS: ImportSettings = {
 }
 
 export async function getImportSettings(): Promise<ImportSettings> {
+  if (_settingsCache && Date.now() - _settingsCacheAt < SETTINGS_TTL) return _settingsCache
   try {
     const rows = await prisma.systemSetting.findMany({
       where: { key: { startsWith: "import_" } },
     })
     const map = new Map(rows.map(r => [r.key, r.value]))
-    return {
+    _settingsCache = {
       markupType: (map.get("import_markup_type") ?? DEFAULTS.markupType) as ImportSettings["markupType"],
       markupValue: parseFloat(map.get("import_markup_value") ?? "0") || 0,
       markupMinProfit: parseFloat(map.get("import_markup_min_profit") ?? "0") || 0,
       syncEnabled: map.get("import_sync_enabled") === "true",
       syncInterval: parseInt(map.get("import_sync_interval") ?? "60", 10) || 60,
     }
+    _settingsCacheAt = Date.now()
+    return _settingsCache
   } catch {
     return { ...DEFAULTS }
   }
 }
 
 export async function saveImportSettings(s: Partial<ImportSettings>): Promise<void> {
+  invalidateSettingsCache()
   const entries: { key: string; value: string }[] = []
   if (s.markupType !== undefined) entries.push({ key: "import_markup_type", value: s.markupType })
   if (s.markupValue !== undefined) entries.push({ key: "import_markup_value", value: String(s.markupValue) })
