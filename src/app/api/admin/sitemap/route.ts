@@ -30,7 +30,7 @@ export async function GET() {
           products: productCount,
         },
         sitemapFiles: sitemapPages + 1, // +1 for static/categories sitemap
-        sitemapIndex: `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://gameplaza.site"}/sitemap.xml`,
+        sitemapIndex: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site"}/sitemap.xml`,
       },
       generatedAt: new Date().toISOString(),
     })

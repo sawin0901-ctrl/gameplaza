@@ -33,8 +33,8 @@ const nextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.digiseller.ru https://digiseller.com http://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
-      "style-src 'self' 'unsafe-inline' https://shop.digiseller.com http://shop.digiseller.com https://api.digiseller.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.digiseller.ru https://digiseller.com https://shop.digiseller.com https://api.digiseller.com",
+      "style-src 'self' 'unsafe-inline' https://shop.digiseller.com https://api.digiseller.com",
       "img-src 'self' data: blob: https://digiseller.ru https://cdn.digiseller.ru https://graph.digiseller.ru https://digiseller.mycdn.ink https://plati.market https://www.plati.market https://shop.digiseller.com https://digiseller.com https://api.digiseller.com",
       "connect-src 'self' https://digiseller.com https://shop.digiseller.com https://api.digiseller.com https://o0.ingest.sentry.io",
       "font-src 'self' data: https://shop.digiseller.com https://api.digiseller.com https://digiseller.com https://www.digiseller.com",
@@ -60,6 +60,7 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
         ],
       },
       {

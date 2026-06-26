@@ -9,20 +9,20 @@ import { useLocale } from "./LocaleProvider"
 import { ThemeToggle } from "./ThemeToggle"
 
 const CATS = [
-  { name: "Steam Games",    slug: "steam",         emoji: "🎮" },
-  { name: "Xbox",           slug: "xbox",           emoji: "🎯" },
-  { name: "PlayStation",    slug: "playstation",    emoji: "🕹️" },
-  { name: "Nintendo",       slug: "nintendo",       emoji: "🎪" },
-  { name: "Game Pass",      slug: "game-pass",      emoji: "⭐" },
-  { name: "Keys",           slug: "keys",           emoji: "🔑" },
-  { name: "Software",       slug: "software",       emoji: "💻" },
-  { name: "Antivirus",      slug: "antivirus",      emoji: "🛡️" },
-  { name: "Windows",        slug: "windows",        emoji: "🪟" },
-  { name: "Office",         slug: "office",         emoji: "📊" },
-  { name: "VPN",            slug: "vpn",            emoji: "🔒" },
-  { name: "Subscriptions",  slug: "subscriptions",  emoji: "✨" },
-  { name: "Gift Cards",     slug: "gift-cards",     emoji: "🎁" },
-  { name: "Steam Wallet",   slug: "steam-wallet",   emoji: "💳" },
+  { name: "Игры Steam",        slug: "steam",         emoji: "🎮" },
+  { name: "Xbox",              slug: "xbox",           emoji: "🎯" },
+  { name: "PlayStation",       slug: "playstation",    emoji: "🕹️" },
+  { name: "Nintendo",          slug: "nintendo",       emoji: "🎪" },
+  { name: "Game Pass",         slug: "game-pass",      emoji: "⭐" },
+  { name: "Ключи активации",   slug: "keys",           emoji: "🔑" },
+  { name: "Программы",         slug: "software",       emoji: "💻" },
+  { name: "Антивирусы",        slug: "antivirus",      emoji: "🛡️" },
+  { name: "Windows",           slug: "windows",        emoji: "🪟" },
+  { name: "Office",            slug: "office",         emoji: "📊" },
+  { name: "VPN & Безопасность",slug: "vpn",            emoji: "🔒" },
+  { name: "Подписки",          slug: "subscriptions",  emoji: "✨" },
+  { name: "Подарочные карты",  slug: "gift-cards",     emoji: "🎁" },
+  { name: "Steam Кошелёк",     slug: "steam-wallet",   emoji: "💳" },
 ]
 
 interface Suggestion {

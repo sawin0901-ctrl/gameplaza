@@ -27,6 +27,10 @@ export const metadata: Metadata = {
     "google-site-verification": process.env.GOOGLE_SITE_VERIFICATION ?? "",
     ...(process.env.YANDEX_VERIFICATION ? { "yandex-verification": process.env.YANDEX_VERIFICATION } : {}),
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
+    { media: "(prefers-color-scheme: light)", color: "#7c3aed" },
+  ],
 }
 
 const themeScript = `(function(){try{var s=localStorage.getItem('gp-theme')||'light';document.documentElement.setAttribute('data-theme',s);if(s==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`
