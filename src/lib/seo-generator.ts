@@ -144,8 +144,9 @@ export async function generateSeoForProduct(product: {
       const text = await caller(prompt)
       if (!text) continue
       const seo = parseJson(text)
-      if (seo) return seo
-    } catch { continue }
+      if (seo) { console.log("[SEO OK]", caller.name); return seo }
+      console.error("[SEO PARSE FAIL]", caller.name, JSON.stringify(text.slice(0, 120)))
+    } catch (e) { console.error("[SEO THROW]", caller.name, e); continue }
   }
   return null
 }
