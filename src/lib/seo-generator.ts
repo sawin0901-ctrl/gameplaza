@@ -126,8 +126,8 @@ async function callCloudflare(prompt: string): Promise<string | null> {
       console.error("[SEO Cloudflare]", res.status, body.slice(0, 200))
       return null
     }
-    const d = await res.json() as { result?: { response?: string } }
-    return d.result?.response ?? null
+    const d = await res.json() as { result?: { response?: string; choices?: Array<{ message?: { content?: string } }> } }
+    return d.result?.response ?? d.result?.choices?.[0]?.message?.content ?? null
   } catch (e) { console.error("[SEO Cloudflare]", e); return null }
 }
 
