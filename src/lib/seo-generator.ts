@@ -44,13 +44,17 @@ async function callDeepSeek(prompt: string): Promise<string | null> {
     const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "content-type": "application/json" },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({ model: "deepseek-chat", max_tokens: 400, messages: [{ role: "user", content: prompt }] }),
     })
-    if (!res.ok) return null
+    if (!res.ok) {
+      const body = await res.text().catch(() => "")
+      console.error("[SEO DeepSeek]", res.status, body.slice(0, 200))
+      return null
+    }
     const d = await res.json()
     return d.choices?.[0]?.message?.content ?? null
-  } catch { return null }
+  } catch (e) { console.error("[SEO DeepSeek]", e); return null }
 }
 
 async function callGemini(prompt: string): Promise<string | null> {
@@ -62,14 +66,18 @@ async function callGemini(prompt: string): Promise<string | null> {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.6, maxOutputTokens: 400 },
         }),
       }
     )
-    if (!res.ok) { console.error("[SEO Gemini]", res.status); return null }
+    if (!res.ok) {
+      const body = await res.text().catch(() => "")
+      console.error("[SEO Gemini]", res.status, body.slice(0, 200))
+      return null
+    }
     const d = await res.json()
     return d.candidates?.[0]?.content?.parts?.[0]?.text ?? null
   } catch (e) { console.error("[SEO Gemini]", e); return null }
