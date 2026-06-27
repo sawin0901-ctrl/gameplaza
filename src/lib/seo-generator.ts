@@ -126,10 +126,13 @@ async function callCloudflare(prompt: string): Promise<string | null> {
       console.error("[SEO Cloudflare]", res.status, body.slice(0, 200))
       return null
     }
-    const d = await res.json() as { result?: { response?: string; choices?: Array<{ message?: { content?: string } }> } }
-    const text = d.result?.response ?? d.result?.choices?.[0]?.message?.content ?? null
-    console.log("[SEO Cloudflare] raw:", JSON.stringify(text?.slice(0, 150)))
-    return text
+    const d = await res.json() as Record<string, unknown>
+    console.log("[SEO Cloudflare] result:", JSON.stringify(d).slice(0, 300))
+    const result = d.result as Record<string, unknown> | undefined
+    const text = (result?.response as string | undefined)
+      ?? ((result?.choices as Array<{message?: {content?: string}}> | undefined)?.[0]?.message?.content)
+      ?? null
+    return typeof text === "string" ? text : null
   } catch (e) { console.error("[SEO Cloudflare]", e); return null }
 }
 
