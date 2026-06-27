@@ -110,6 +110,7 @@ async function callGroq(prompt: string): Promise<string | null> {
 async function callCloudflare(prompt: string): Promise<string | null> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
   const apiToken = process.env.CLOUDFLARE_API_TOKEN
+  console.log("[CF]", accountId ? accountId.slice(0, 8) + "..." : "MISSING", apiToken ? "TOKEN_OK" : "MISSING")
   if (!accountId || !apiToken) return null
   try {
     const res = await fetch(
