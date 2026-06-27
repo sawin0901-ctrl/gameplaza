@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       where: force ? {} : { metaTitle: null },
       select: { id: true, name: true, description: true, price: true, category: { select: { name: true } } },
       take: safe,
-      orderBy: { createdAt: "desc" },
+      orderBy: { updatedAt: "desc" },
     })
 
     const encoder = new TextEncoder()
