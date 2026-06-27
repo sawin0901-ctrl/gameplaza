@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface Category { id: string; name: string; slug: string; metaTitle?: string; metaDesc?: string }
 interface SEOData { global: Record<string, string>; categories: Category[] }
@@ -24,40 +24,35 @@ function ProviderBadge({ name, active }: { name: string; active: boolean }) {
   )
 }
 
+type BatchResult = { processed: number; updated: number; errors: number; errorMsg?: string; failedNames?: string[]; providers?: Record<string, boolean> }
+
 function AiSeoWidget() {
   const [stats, setStats] = useState<GenStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState<Progress | null>(null)
-  const [result, setResult] = useState<{ processed: number; updated: number; errors: number; errorMsg?: string; failedNames?: string[]; providers?: Record<string, boolean> } | null>(null)
-  const [batchSize, setBatchSize] = useState(10)
+  const [result, setResult] = useState<BatchResult | null>(null)
+  const [batchSize, setBatchSize] = useState(50)
+  const [autoTotal, setAutoTotal] = useState<{ updated: number; processed: number; errors: number } | null>(null)
+  const stopRef = useRef(false)
 
   const loadStats = () =>
     fetch("/api/admin/seo/generate").then(r => r.ok ? r.json() : null).then(d => d && setStats(d))
 
   useEffect(() => { loadStats() }, [])
 
-  async function run() {
-    setLoading(true)
-    setResult(null)
-    setProgress(null)
-
+  async function runBatch(size: number): Promise<BatchResult | null> {
     try {
       const response = await fetch("/api/admin/seo/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchSize }),
+        body: JSON.stringify({ batchSize: size }),
       })
-
-      if (!response.body) {
-        setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Нет ответа от сервера" })
-        setLoading(false)
-        return
-      }
+      if (!response.body) return { processed: 0, updated: 0, errors: 1, errorMsg: "Нет ответа от сервера" }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ""
-      let gotResult = false
+      let last: BatchResult | null = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -68,33 +63,49 @@ function AiSeoWidget() {
         for (const line of lines) {
           if (!line.trim()) continue
           try {
-            const data = JSON.parse(line)
-            if (data.done) {
-              setResult(data)
-              setProgress(null)
-              gotResult = true
-              loadStats()
-            } else {
-              setProgress(data)
-            }
-          } catch { /* ignore parse errors */ }
+            const data = JSON.parse(line) as BatchResult & { done?: boolean }
+            if (data.done) { last = data; setProgress(null) }
+            else setProgress(data as unknown as Progress)
+          } catch { /* ignore */ }
         }
       }
-
-      // Дочитать остаток буфера (если сервер вернул JSON без \n)
-      if (!gotResult && buffer.trim()) {
-        try {
-          const data = JSON.parse(buffer)
-          setResult(data)
-        } catch {
-          setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Неожиданный ответ сервера: " + buffer.slice(0, 100) })
-        }
+      if (!last && buffer.trim()) {
+        try { last = JSON.parse(buffer) } catch { last = { processed: 0, updated: 0, errors: 1, errorMsg: "Ошибка ответа" } }
       }
+      return last
     } catch (e) {
-      setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Ошибка соединения: " + String(e) })
-    } finally {
-      setLoading(false)
+      return { processed: 0, updated: 0, errors: 1, errorMsg: "Ошибка соединения: " + String(e) }
     }
+  }
+
+  async function run() {
+    setLoading(true); setResult(null); setProgress(null); setAutoTotal(null)
+    stopRef.current = false
+    const res = await runBatch(batchSize)
+    if (res) setResult(res)
+    await loadStats()
+    setLoading(false)
+  }
+
+  async function runAll() {
+    setLoading(true); setResult(null); setProgress(null)
+    stopRef.current = false
+    let acc = { updated: 0, processed: 0, errors: 0 }
+    setAutoTotal(acc)
+
+    while (!stopRef.current) {
+      const res = await runBatch(50)
+      if (!res) break
+      acc = { updated: acc.updated + res.updated, processed: acc.processed + res.processed, errors: acc.errors + res.errors }
+      setAutoTotal({ ...acc })
+      if (res.errorMsg) break
+      const fresh = await fetch("/api/admin/seo/generate").then(r => r.json()).catch(() => null)
+      if (fresh) setStats(fresh)
+      if (!fresh || fresh.withoutSeo === 0) break
+      await new Promise(r => setTimeout(r, 400))
+    }
+
+    setLoading(false); setProgress(null)
   }
 
   const hasProvider = stats ? Object.values(stats.providers ?? {}).some(Boolean) : true
@@ -136,39 +147,67 @@ function AiSeoWidget() {
         <select value={batchSize} onChange={e => setBatchSize(Number(e.target.value))}
           disabled={loading}
           className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 disabled:opacity-50">
-          <option value={5}>5 товаров</option>
           <option value={10}>10 товаров</option>
           <option value={25}>25 товаров</option>
           <option value={50}>50 товаров</option>
         </select>
         <button onClick={run} disabled={loading || !hasProvider}
           className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-violet-700 transition-colors">
-          {loading ? "Генерирую..." : "Сгенерировать SEO"}
+          {loading && !autoTotal ? "Генерирую..." : "Сгенерировать SEO"}
         </button>
+        <button onClick={runAll} disabled={loading || !hasProvider}
+          className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors">
+          {loading && autoTotal ? "Обработка..." : "Обработать все"}
+        </button>
+        {loading && (
+          <button onClick={() => { stopRef.current = true }}
+            className="px-4 py-2 bg-rose-100 text-rose-700 rounded-xl text-sm font-medium hover:bg-rose-200 transition-colors">
+            Стоп
+          </button>
+        )}
       </div>
 
-      {loading && progress && (
+      {loading && autoTotal && (
+        <div className="mt-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <p className="text-sm font-medium text-emerald-700 mb-1">
+            Авто-режим: обновлено {autoTotal.updated} | ошибок {autoTotal.errors} | всего обработано {autoTotal.processed}
+          </p>
+          {progress && (
+            <>
+              <p className="text-xs text-emerald-600 mb-1">Текущий батч: {progress.processed}/{progress.total}</p>
+              <div className="bg-emerald-200 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300" style={{ width: pct + "%" }} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {loading && !autoTotal && progress && (
         <div className="mt-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200">
           <p className="text-sm font-medium text-violet-700 mb-2">
             Обработано: {progress.processed}/{progress.total} | Обновлено: {progress.updated} | Ошибок: {progress.errors}
           </p>
           <div className="bg-violet-200 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-violet-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: pct + "%" }}
-            />
+            <div className="bg-violet-600 h-2 rounded-full transition-all duration-300" style={{ width: pct + "%" }} />
           </div>
           <p className="text-xs text-violet-500 mt-1">{pct}%</p>
         </div>
       )}
 
-      {loading && !progress && (
+      {loading && !progress && !autoTotal && (
         <div className="mt-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-sm text-violet-600">
           Подключаюсь к AI...
         </div>
       )}
 
-      {result && (
+      {!loading && autoTotal && (
+        <div className="mt-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+          <p className="font-medium">Авто-режим завершён: обновлено {autoTotal.updated} | ошибок {autoTotal.errors}</p>
+        </div>
+      )}
+
+      {result && !autoTotal && (
         <div className={"mt-3 px-4 py-3 rounded-xl text-sm " + (result.errorMsg || (result as Record<string,unknown>).error || (result.errors > 0 && result.updated === 0) ? "bg-rose-50 border border-rose-200 text-rose-700" : "bg-emerald-50 border border-emerald-200 text-emerald-700")}>
           {result.errorMsg || (result as Record<string,unknown>).error ? (
             <p>{result.errorMsg || String((result as Record<string,unknown>).error)}</p>
