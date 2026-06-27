@@ -107,11 +107,35 @@ async function callGroq(prompt: string): Promise<string | null> {
   } catch (e) { console.error("[SEO Groq]", e); return null }
 }
 
+async function callCloudflare(prompt: string): Promise<string | null> {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN
+  if (!accountId || !apiToken) return null
+  try {
+    const res = await fetch(
+      "https://api.cloudflare.com/client/v4/accounts/" + accountId + "/ai/run/@cf/meta/llama-3.1-8b-instruct",
+      {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + apiToken, "content-type": "application/json" },
+        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: 400 }),
+      }
+    )
+    if (!res.ok) {
+      const body = await res.text().catch(() => "")
+      console.error("[SEO Cloudflare]", res.status, body.slice(0, 200))
+      return null
+    }
+    const d = await res.json() as { result?: { response?: string } }
+    return d.result?.response ?? null
+  } catch (e) { console.error("[SEO Cloudflare]", e); return null }
+}
+
 export async function generateSeoForProduct(product: {
   name: string; description?: string | null; price: number; category?: string | null
 }): Promise<SeoData | null> {
   const prompt = buildPrompt(product)
-  for (const caller of [callGroq, callDeepSeek, callAnthropic, callGemini]) {
+  for (const caller of [callCloudflare, callGroq, callDeepSeek, callAnthropic, callGemini]) {
     try {
       const text = await caller(prompt)
       if (!text) continue
@@ -124,9 +148,10 @@ export async function generateSeoForProduct(product: {
 
 export async function checkSeoProviders(): Promise<Record<string, boolean>> {
   return {
-    groq:      !!process.env.GROQ_API_KEY,
-    deepseek:  !!process.env.DEEPSEEK_API_KEY,
-    anthropic: !!process.env.ANTHROPIC_API_KEY,
-    gemini:    !!process.env.GEMINI_API_KEY,
+    cloudflare: !!(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
+    groq:       !!process.env.GROQ_API_KEY,
+    deepseek:   !!process.env.DEEPSEEK_API_KEY,
+    anthropic:  !!process.env.ANTHROPIC_API_KEY,
+    gemini:     !!process.env.GEMINI_API_KEY,
   }
 }

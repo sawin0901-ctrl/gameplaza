@@ -109,10 +109,11 @@ function AiSeoWidget() {
         </div>
         {stats?.providers && (
           <div className="flex gap-1.5 flex-wrap justify-end">
-            <ProviderBadge name="Groq"      active={!!stats.providers.groq} />
-            <ProviderBadge name="DeepSeek"  active={!!stats.providers.deepseek} />
-            <ProviderBadge name="Anthropic" active={!!stats.providers.anthropic} />
-            <ProviderBadge name="Gemini"    active={!!stats.providers.gemini} />
+            <ProviderBadge name="Cloudflare" active={!!stats.providers.cloudflare} />
+            <ProviderBadge name="Groq"       active={!!stats.providers.groq} />
+            <ProviderBadge name="DeepSeek"   active={!!stats.providers.deepseek} />
+            <ProviderBadge name="Anthropic"  active={!!stats.providers.anthropic} />
+            <ProviderBadge name="Gemini"     active={!!stats.providers.gemini} />
           </div>
         )}
       </div>
