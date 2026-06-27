@@ -83,11 +83,35 @@ async function callGemini(prompt: string): Promise<string | null> {
   } catch (e) { console.error("[SEO Gemini]", e); return null }
 }
 
+async function callGroq(prompt: string): Promise<string | null> {
+  const key = process.env.GROQ_API_KEY
+  if (!key) return null
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "content-type": "application/json" },
+      signal: AbortSignal.timeout(15000),
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text().catch(() => "")
+      console.error("[SEO Groq]", res.status, body.slice(0, 200))
+      return null
+    }
+    const d = await res.json()
+    return d.choices?.[0]?.message?.content ?? null
+  } catch (e) { console.error("[SEO Groq]", e); return null }
+}
+
 export async function generateSeoForProduct(product: {
   name: string; description?: string | null; price: number; category?: string | null
 }): Promise<SeoData | null> {
   const prompt = buildPrompt(product)
-  for (const caller of [callAnthropic, callDeepSeek, callGemini]) {
+  for (const caller of [callGroq, callDeepSeek, callAnthropic, callGemini]) {
     try {
       const text = await caller(prompt)
       if (!text) continue
@@ -100,8 +124,9 @@ export async function generateSeoForProduct(product: {
 
 export async function checkSeoProviders(): Promise<Record<string, boolean>> {
   return {
-    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    groq:      !!process.env.GROQ_API_KEY,
     deepseek:  !!process.env.DEEPSEEK_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
     gemini:    !!process.env.GEMINI_API_KEY,
   }
 }
