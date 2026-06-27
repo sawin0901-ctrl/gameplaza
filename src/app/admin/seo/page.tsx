@@ -41,43 +41,60 @@ function AiSeoWidget() {
     setResult(null)
     setProgress(null)
 
-    const response = await fetch("/api/admin/seo/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ batchSize }),
-    })
+    try {
+      const response = await fetch("/api/admin/seo/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchSize }),
+      })
 
-    if (!response.body) {
-      setLoading(false)
-      return
-    }
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ""
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split("\n")
-      buffer = lines.pop() ?? ""
-      for (const line of lines) {
-        if (!line.trim()) continue
-        try {
-          const data = JSON.parse(line)
-          if (data.done) {
-            setResult(data)
-            setProgress(null)
-            setLoading(false)
-            loadStats()
-          } else {
-            setProgress(data)
-          }
-        } catch { /* ignore parse errors */ }
+      if (!response.body) {
+        setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Нет ответа от сервера" })
+        setLoading(false)
+        return
       }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let gotResult = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const data = JSON.parse(line)
+            if (data.done) {
+              setResult(data)
+              setProgress(null)
+              gotResult = true
+              loadStats()
+            } else {
+              setProgress(data)
+            }
+          } catch { /* ignore parse errors */ }
+        }
+      }
+
+      // Дочитать остаток буфера (если сервер вернул JSON без \n)
+      if (!gotResult && buffer.trim()) {
+        try {
+          const data = JSON.parse(buffer)
+          setResult(data)
+        } catch {
+          setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Неожиданный ответ сервера: " + buffer.slice(0, 100) })
+        }
+      }
+    } catch (e) {
+      setResult({ processed: 0, updated: 0, errors: 1, errorMsg: "Ошибка соединения: " + String(e) })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const hasProvider = stats ? Object.values(stats.providers ?? {}).some(Boolean) : true
