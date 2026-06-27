@@ -167,9 +167,11 @@ function AiSeoWidget() {
       )}
 
       {result && (
-        <div className={"mt-3 px-4 py-3 rounded-xl text-sm " + (result.errors > 0 && result.updated === 0 ? "bg-rose-50 border border-rose-200 text-rose-700" : "bg-emerald-50 border border-emerald-200 text-emerald-700")}>
-          {result.errorMsg ? (
-            <p>{result.errorMsg}</p>
+        <div className={"mt-3 px-4 py-3 rounded-xl text-sm " + (result.errorMsg || (result as Record<string,unknown>).error || (result.errors > 0 && result.updated === 0) ? "bg-rose-50 border border-rose-200 text-rose-700" : "bg-emerald-50 border border-emerald-200 text-emerald-700")}>
+          {result.errorMsg || (result as Record<string,unknown>).error ? (
+            <p>{result.errorMsg || String((result as Record<string,unknown>).error)}</p>
+          ) : result.processed == null ? (
+            <p className="font-mono text-xs break-all">Ответ сервера: {JSON.stringify(result)}</p>
           ) : (
             <>
               <p className="font-medium">Обработано: {result.processed} | Обновлено: {result.updated} | Ошибок: {result.errors}</p>
