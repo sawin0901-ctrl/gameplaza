@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
         const CONCURRENCY = 3
         for (let i = 0; i < products.length; i += CONCURRENCY) {
-          if (consecutiveFails >= 5) {
+          if (consecutiveFails >= 10) {
             errors += products.length - i
             processed = products.length
             break
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           if (i + CONCURRENCY < products.length) await new Promise(r => setTimeout(r, 200))
         }
 
-        const aborted = consecutiveFails >= 5 && errors > 0
+        const aborted = consecutiveFails >= 10 && errors > 0
         send({
           processed,
           updated,

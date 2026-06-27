@@ -118,7 +118,7 @@ async function callCloudflare(prompt: string): Promise<string | null> {
         method: "POST",
         headers: { "Authorization": "Bearer " + apiToken, "content-type": "application/json" },
         signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: 400 }),
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: 800 }),
       }
     )
     if (!res.ok) {
@@ -127,7 +127,6 @@ async function callCloudflare(prompt: string): Promise<string | null> {
       return null
     }
     const d = await res.json() as Record<string, unknown>
-    console.log("[SEO Cloudflare] result:", JSON.stringify(d).slice(0, 300))
     const result = d.result as Record<string, unknown> | undefined
     const text = (result?.response as string | undefined)
       ?? ((result?.choices as Array<{message?: {content?: string}}> | undefined)?.[0]?.message?.content)
