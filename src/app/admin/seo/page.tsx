@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 interface Category { id: string; name: string; slug: string; metaTitle?: string; metaDesc?: string }
 interface SEOData { global: Record<string, string>; categories: Category[] }
 interface GenStats { total: number; withSeo: number; withoutSeo: number; providers: Record<string, boolean> }
+interface Progress { processed: number; updated: number; errors: number; total: number }
 
 const GLOBAL_FIELDS = [
   { key: "site_title",       label: "Заголовок сайта",            placeholder: "GamePlaza — купить игровые ключи" },
@@ -26,6 +27,7 @@ function ProviderBadge({ name, active }: { name: string; active: boolean }) {
 function AiSeoWidget() {
   const [stats, setStats] = useState<GenStats | null>(null)
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState<Progress | null>(null)
   const [result, setResult] = useState<{ processed: number; updated: number; errors: number; errorMsg?: string; failedNames?: string[]; providers?: Record<string, boolean> } | null>(null)
   const [batchSize, setBatchSize] = useState(10)
 
@@ -35,17 +37,51 @@ function AiSeoWidget() {
   useEffect(() => { loadStats() }, [])
 
   async function run() {
-    setLoading(true); setResult(null)
-    const r = await fetch("/api/admin/seo/generate", {
+    setLoading(true)
+    setResult(null)
+    setProgress(null)
+
+    const response = await fetch("/api/admin/seo/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ batchSize }),
     })
-    const d = await r.json()
-    setResult(d); setLoading(false); loadStats()
+
+    if (!response.body) {
+      setLoading(false)
+      return
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ""
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split("\n")
+      buffer = lines.pop() ?? ""
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const data = JSON.parse(line)
+          if (data.done) {
+            setResult(data)
+            setProgress(null)
+            setLoading(false)
+            loadStats()
+          } else {
+            setProgress(data)
+          }
+        } catch { /* ignore parse errors */ }
+      }
+    }
+    setLoading(false)
   }
 
   const hasProvider = stats ? Object.values(stats.providers ?? {}).some(Boolean) : true
+  const pct = progress ? Math.round((progress.processed / progress.total) * 100) : 0
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
@@ -79,7 +115,8 @@ function AiSeoWidget() {
 
       <div className="flex gap-3 items-center flex-wrap">
         <select value={batchSize} onChange={e => setBatchSize(Number(e.target.value))}
-          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700">
+          disabled={loading}
+          className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 disabled:opacity-50">
           <option value={5}>5 товаров</option>
           <option value={10}>10 товаров</option>
           <option value={25}>25 товаров</option>
@@ -90,6 +127,27 @@ function AiSeoWidget() {
           {loading ? "Генерирую..." : "Сгенерировать SEO"}
         </button>
       </div>
+
+      {loading && progress && (
+        <div className="mt-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200">
+          <p className="text-sm font-medium text-violet-700 mb-2">
+            Обработано: {progress.processed}/{progress.total} | Обновлено: {progress.updated} | Ошибок: {progress.errors}
+          </p>
+          <div className="bg-violet-200 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-violet-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: pct + "%" }}
+            />
+          </div>
+          <p className="text-xs text-violet-500 mt-1">{pct}%</p>
+        </div>
+      )}
+
+      {loading && !progress && (
+        <div className="mt-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-sm text-violet-600">
+          Подключаюсь к AI...
+        </div>
+      )}
 
       {result && (
         <div className={"mt-3 px-4 py-3 rounded-xl text-sm " + (result.errors > 0 && result.updated === 0 ? "bg-rose-50 border border-rose-200 text-rose-700" : "bg-emerald-50 border border-emerald-200 text-emerald-700")}>
